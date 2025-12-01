@@ -1,0 +1,11 @@
+/* assets/css/style.css */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.btn-primary {
+  background-color: #667eea;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #5a6fd8;
+}
