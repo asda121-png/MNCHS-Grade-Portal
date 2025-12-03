@@ -336,11 +336,11 @@ $users = [
             <i class="bi bi-grid-fill"></i>
             <span class="nav-text">Dashboard</span>
         </a>
-        <a href="#" class="nav-link">
+        <a href="users.php" class="nav-link">
             <i class="bi bi-people-fill"></i>
             <span class="nav-text">Users</span>
         </a>
-        <a href="#" class="nav-link">
+        <a href="classes.php" class="nav-link">
             <i class="bi bi-journal-bookmark-fill"></i>
             <span class="nav-text">Classes</span>
         </a>
