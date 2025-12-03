@@ -1,15 +1,5 @@
 <?php
-// index.php
-require_once '../database/config.php';
 
-// Must be logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-$role = $_SESSION['role'];
-$full_name = $_SESSION['full_name'] ?? 'User';
 ?>
 <!DOCTYPE html>
 <html lang="en">
