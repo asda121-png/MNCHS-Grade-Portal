@@ -1,6 +1,6 @@
 <?php
 // login.php - FINAL WORKING VERSION
-require_once 'config.php';
+require_once '../database/config.php';
 
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
