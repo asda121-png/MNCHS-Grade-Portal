@@ -1,62 +1,78 @@
 <?php
-// login.php
+// login.php - FINAL WORKING VERSION
 require_once 'config.php';
 
-// Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
 
-$error = '';
+$input_err = $password_err = $login_err = "";
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    if (empty($username) || empty($password)) {
-        $error = "Please fill in all fields.";
-    } else {
-        // Prevent SQL injection
-        $stmt = $conn->prepare("SELECT id, username, password, role, full_name FROM users WHERE username = ?");
-        $stmt->bind_param("s", $username);
+    $input        = trim($_POST["input"] ?? "");     // username or email
+    $password_raw = $_POST["password"] ?? "";
+
+    if (empty($input)) {
+        $input_err = "Enter username or email.";
+    }
+    if (empty($password_raw)) {
+        $password_err = "Enter password.";
+    }
+
+    // === 1. HARD-CODED ADMIN ===
+    if (empty($input_err) && empty($password_err)) {
+        if ($input === "admin@email.com" && $password_raw === "Admin123") {
+            $_SESSION["loggedin"]   = true;
+            $_SESSION["user_id"]    = 0;
+            $_SESSION["email"]      = $input;
+            $_SESSION["role"]       = "admin";
+            $_SESSION["full_name"]  = "School Administrator";
+            header("Location: admin/dashboard.php");
+            exit;
+        }
+    }
+
+    // === 2. DATABASE USERS ===
+    if (empty($input_err) && empty($password_err)) {
+        $stmt = $conn->prepare("
+            SELECT id, password, role, full_name, email 
+            FROM users 
+            WHERE username = ? OR email = ?
+        ");
+        $stmt->bind_param("ss", $input, $input);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
 
-            // Verify password (stored as password_hash)
-            if (password_verify($password, $user['password'])) {
-                // Login successful
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['full_name'] = $user['full_name'];
-                $_SESSION['role'] = $user['role'];
+            // DEBUG: Remove after testing
+            // echo "Stored hash: " . $user['password'] . "<br>";
+            // echo "Verify: " . (password_verify($password_raw, $user['password']) ? "YES" : "NO");
 
-                // Redirect based on role
-                switch ($user['role']) {
-                    case 'admin':
-                        header("Location: admin/dashboard.php");
-                        break;
-                    case 'teacher':
-                        header("Location: teacher/dashboard.php");
-                        break;
-                    case 'student':
-                        header("Location: student/dashboard.php");
-                        break;
-                    case 'parent':
-                        header("Location: parent/dashboard.php");
-                        break;
-                    default:
-                        header("Location: index.php");
-                }
-                exit();
+            if (password_verify($password_raw, $user['password'])) {
+                $_SESSION["loggedin"]   = true;
+                $_SESSION["user_id"]    = $user['id'];
+                $_SESSION["email"]      = $user['email'];
+                $_SESSION["username"]   = $input;
+                $_SESSION["role"]       = $user['role'];
+                $_SESSION["full_name"]  = $user['full_name'];
+
+                $page = match ($user['role']) {
+                    'teacher' => 'teacher/dashboard.php',
+                    'student' => 'student/dashboard.php',
+                    'parent'  => 'parent/dashboard.php',
+                    default   => 'index.php'
+                };
+                header("Location: $page");
+                exit;
             } else {
-                $error = "Invalid username or password.";
+                $login_err = "Incorrect password.";
             }
         } else {
-            $error = "Invalid username or password.";
+            $login_err = "No account found.";
         }
         $stmt->close();
     }
@@ -66,73 +82,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Grade Portal - Login</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="assets/css/style.css" rel="stylesheet">
-  <style>
-    body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      height: 100vh;
-      display: flex;
-      align-items: center;
-    }
-    .login-card {
-      max-width: 400px;
-      border-radius: 15px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    }
-    .school-logo {
-      width: 80px;
-      height: 80px;
-      background: #fff;
-      border-radius: 50%;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      color: #667eea;
-      font-weight: bold;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MNCHS Grade Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; height: 100vh; display: flex; align-items: center; }
+        .card { max-width: 420px; margin: auto; }
+        .logo { width: 70px; height: 70px; background: #0d6efd; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 28px; margin: 0 auto 1rem; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card login-card mx-auto p-4">
-      <div class="text-center">
-        <div class="school-logo">S</div>
-        <h4 class="mb-1">Sunshine High School</h4>
-        <p class="text-muted">Grade Portal Login</p>
-      </div>
+<div class="card p-4 shadow">
+    <div class="text-center">
+        <div ><img src="logo.png" style="height: 9vh; width:7vw;"></div><br>
+        <h4>MNCHS Grade Portal</h4>
+    </div>
 
-      <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
-      <?php endif; ?>
+    <?php if ($login_err): ?>
+        <div class="alert alert-danger"><?= $login_err ?></div>
+    <?php endif; ?>
 
-      <form method="POST" action="">
+    <form method="post">
         <div class="mb-3">
-          <label class="form-label">Username</label>
-          <input type="text" name="username" class="form-control" required 
-                 value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+            <label>Username or Email</label>
+            <input type="text" name="input" class="form-control <?=!empty($input_err)?'is-invalid':''?>"
+                   value="<?= htmlspecialchars($_POST['input']??'') ?>">
+            <div class="invalid-feedback"><?= $input_err ?></div>
         </div>
         <div class="mb-3">
-          <label class="form-label">Password</label>
-          <input type="password" name="password" class="form-control" required>
+            <label>Password</label>
+            <input type="password" name="password" class="form-control <?=!empty($password_err)?'is-invalid':''?>">
+            <div class="invalid-feedback"><?= $password_err ?></div>
         </div>
         <button type="submit" class="btn btn-primary w-100">Login</button>
-      </form>
+    </form>
 
-      <div class="text-center mt-3">
+    <div class="text-center mt-3">
         <small class="text-muted">
-          <a href="#" class="text-decoration-none">Forgot Password?</a>
+            <strong>Admin:</strong> admin@email.com / Admin123<br>
+            <strong>Teacher:</strong> tmary / password123<br>
+            <strong>Student:</strong> s67890 / password123<br>
+            <strong>Parent:</strong> p67890 / password123
         </small>
-      </div>
     </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</div>
 </body>
 </html>
