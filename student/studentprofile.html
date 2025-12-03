@@ -93,10 +93,10 @@
     <aside class="sidebar">
         <h2><i class="fas fa-tachometer-alt"></i> Menu</h2>
         <ul>
-            <li><a href="dashbaord.php"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="grades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
-            <li><a href="values.html"><i class="fas fa-heart"></i> Observed Values</a></li>
-            <li><a href="studentprofile.html" class="active"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+           <li><a href="studentdashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="studentgrades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
+            <li><a href="studentvalues.html"><i class="fas fa-heart"></i> Observed Values</a></li>
+            <li><a href="studentprofile.html"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
         </ul>
     </aside>
 
@@ -167,6 +167,17 @@
         menuIcon.addEventListener('click', function(e) {
             e.preventDefault();
             sidebar.classList.toggle('show');
+        });
+
+        // Dynamically set active sidebar link
+        const currentPage = window.location.pathname.split('/').pop();
+        const sidebarLinks = document.querySelectorAll('.sidebar ul li a');
+
+        sidebarLinks.forEach(link => {
+            const linkPage = link.getAttribute('href').split('/').pop();
+            if (linkPage === currentPage) {
+                link.classList.add('active');
+            }
         });
     });
 </script>
