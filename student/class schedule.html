@@ -1,0 +1,101 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
+    header('Location: ../login.php');
+    exit();
+}
+$student_name = $_SESSION['student_name'] ?? 'Student';
+$grade_level  = $_SESSION['grade_level'] ?? '11';
+$section      = $_SESSION['section'] ?? 'STEM-A';
+$school_year  = "2025–2026";
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Schedule | MNCHS Grade Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #800000; --primary-dark: #660000; --accent: #FFD700;
+            --text: #2d3436; --text-light: #636e72; --shadow: 0 8px 25px rgba(0,0,0,0.08);
+            --transition: all 0.3s ease;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Poppins',sans-serif; background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%); color:var(--text); min-height:100vh; }
+        .header { background:linear-gradient(90deg,var(--primary),var(--primary-dark)); color:white; padding:1.2rem 2rem; box-shadow:0 4px 15px rgba(128,0,0,0.3); position:sticky; top:0; z-index:1000; display:flex; justify-content:space-between; align-items:center; }
+        .header h1 { font-size:1.8rem; font-weight:600; display:flex; align-items:center; gap:12px; }
+        .header h1 i { color:var(--accent); font-size:2rem; }
+        .user-info a { color:var(--accent); text-decoration:none; font-weight:500; }
+        .user-info a:hover { color:#ffed4e; }
+        .container { display:flex; min-height:calc(100vh - 80px); }
+        .sidebar { width:260px; background:white; padding:2rem 1.5rem; box-shadow:5px 0 15px rgba(0,0,0,0.05); position:sticky; top:80px; height:calc(100vh - 80px); overflow-y:auto; }
+        .sidebar h2 { color:var(--primary); font-size:1.4rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px; }
+        .sidebar ul li a { display:flex; align-items:center; gap:12px; padding:14px 18px; color:var(--text); text-decoration:none; border-radius:12px; font-weight:500; transition:var(--transition); }
+        .sidebar ul { list-style-type: none; }
+        .sidebar ul li { margin-bottom: 8px; }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background:var(--primary); color:white; transform:translateX(5px); box-shadow:0 5px 15px rgba(128,0,0,0.2); }
+        .sidebar ul li a i { width:20px; text-align:center; font-size:1.1rem; }
+        .main-content { flex:1; padding:2.5rem; }
+        .page-title { color:var(--primary); font-size:2rem; display:flex; align-items:center; gap:12px; margin-bottom:.5rem; }
+        .subtitle { color:var(--text-light); font-size:1.1rem; margin-bottom:2rem; }
+        table { width:100%; border-collapse:collapse; background:white; border-radius:16px; overflow:hidden; box-shadow:var(--shadow); }
+        th { background:linear-gradient(90deg,var(--primary),var(--primary-dark)); color:white; padding:1.2rem; text-align:left; }
+        td { padding:1.1rem 1.2rem; border-bottom:1px solid #eee; }
+        tr:hover { background:#f8f9fa; }
+        .time-slot { font-weight:600; color:var(--primary); }
+        @media (max-width:768px) { .container{flex-direction:column;} .sidebar{width:100%;height:auto;position:relative;} }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <h1>MNCHS Grade Portal</h1>
+    <div class="user-info">
+        <span><?php echo htmlspecialchars($student_name); ?></span>
+        <a href="../logout.php">Logout</a>
+    </div>
+</header>
+
+<div class="container">
+    <aside class="sidebar">
+        <h2>Menu</h2>
+        <ul>
+            <li><a href="dashbaord.php"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="grades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
+            <li><a href="class schedule.html" class="active"><i class="fas fa-calendar-alt"></i> Class Schedule</a></li>
+            <li><a href="profile.php"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <h1 class="page-title">Class Schedule</h1>
+        <p class="subtitle">Grade <?php echo htmlspecialchars($grade_level); ?> - <?php echo htmlspecialchars($section); ?> • School Year <?php echo $school_year; ?></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Subject</th>
+                    <th>Teacher</th>
+                    <th>Room</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="time-slot">07:30 - 08:30</td><td>English</td><td>Ms. Reyes</td><td>RM 201</td></tr>
+                <tr><td class="time-slot">08:30 - 09:30</td><td>Mathematics</td><td>Mr. Santos</td><td>RM 201</td></tr>
+                <tr><td class="time-slot">09:30 - 09:45</td><td colspan="3" style="text-align:center; font-style:italic; color:var(--text-light);">Recess</td></tr>
+                <tr><td class="time-slot">09:45 - 10:45</td><td>Science</td><td>Mrs. Cruz</td><td>RM 202</td></tr>
+                <tr><td class="time-slot">10:45 - 11:45</td><td>Filipino</td><td>Gng. Dela Cruz</td><td>RM 201</td></tr>
+                <tr><td class="time-slot">11:45 - 12:45</td><td colspan="3" style="text-align:center; font-style:italic; color:var(--text-light);">Lunch Break</td></tr>
+                <tr><td class="time-slot">12:45 - 01:45</td><td>Araling Panlipunan</td><td>Mr. Garcia</td><td>RM 203</td></tr>
+                <tr><td class="time-slot">01:45 - 02:45</td><td>Research</td><td>Ms. Fernandez</td><td>Comp Lab</td></tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+</body>
+</html>
