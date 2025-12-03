@@ -5,13 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: linear-gradient(rgba(128, 0, 0, 0.7), rgba(128, 0, 0, 0.7)), url('assets/images/background.avif');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+    </style>
 </head>
 <body class="bg-[#0D1117] text-white font-sans flex justify-center items-center min-h-screen">
 
     <div class="flex flex-col items-center w-[340px]">
-        <img src="logo.png" alt="Logo" class="w-20 h-20 mb-6">
 
-        <div class="bg-[#010409] border border-[#21262D] rounded-lg p-6 w-full">
+        <div class="bg-[#010409] border border-[#21262D] rounded-lg p-6 w-full flex flex-col items-center">
+            <img src="assets/images/logo.png" alt="Logo" class="w-28 h-24 mb-6 rounded-none">
             <h1 class="text-2xl font-light text-center mb-6">Sign in to your account</h1>
             <form>
                 <div class="mb-4">
