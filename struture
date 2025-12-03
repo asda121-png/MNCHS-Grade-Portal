@@ -70,3 +70,13 @@ my-website/
 ├── package.json
 ├── README.md
 └── sitemap.xml
+
+
+
+  --mn-red: #E0322B;
+            --mn-white: #FFFFFF;
+            --mn-black: #000000;
+            --mn-gold: #F6D64A;
+            --mn-blue: #0095D9;
+            --mn-flame-red: #E2241C;
+            --mn-flame-orange: #F39822;
