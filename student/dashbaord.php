@@ -267,7 +267,6 @@
     <header class="header">
         <h1><i class="fas fa-graduation-cap"></i> MNCHS Grade Portal</h1>
         <div class="user-info">
-            <span><i class="fas fa-user"></i> </span>
             <a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </div>
     </header>
@@ -278,7 +277,7 @@
             <ul>
                 <li><a href="dashbaord.php" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
                 <li><a href="grades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
-                <li><a href="schedule.php"><i class="fas fa-calendar-alt"></i> Class Schedule</a></li>
+                <li><a href="values.html"><i class="fas fa-heart"></i> Observed Values</a></li>
                 <li><a href="profile.php"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
             </ul>
         </aside>
@@ -317,11 +316,6 @@
                     <i class="fas fa-chart-line"></i>
                     <h3>View My Grades</h3>
                     <p>Check your latest grades and performance</p>
-                </a>
-                <a href="schedule.php" class="link-card">
-                    <i class="fas fa-clock"></i>
-                    <h3>Class Schedule</h3>
-                    <p>See your daily class timetable</p>
                 </a>
                 <a href="profile.php" class="link-card">
                     <i class="fas fa-user-edit"></i>
