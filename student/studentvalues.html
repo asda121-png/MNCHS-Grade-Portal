@@ -35,9 +35,23 @@ $school_year  = "2025–2026";
         .header { background:linear-gradient(90deg,var(--primary),var(--primary-dark)); color:white; padding:1.2rem 2rem; box-shadow:0 4px 15px rgba(128,0,0,0.3); position:sticky; top:0; z-index:1000; display:flex; justify-content:space-between; align-items:center; }
         .header h1 { font-size:1.8rem; font-weight:600; display:flex; align-items:center; gap:12px; }
         .header h1 i { color:var(--accent); font-size:2rem; }
-        .user-info a { color:var(--accent); text-decoration:none; font-weight:500; margin-left: 15px; }
+        .user-info { display: flex; align-items: center; gap: 25px; }
         .menu-icon { display: none; color: white; font-size: 1.5rem; text-decoration: none; margin-right: 1rem; }
-        .user-info a:hover { color:#ffed4e; }
+        .notification-bell {
+            position: relative;
+            color: white;
+            font-size: 1.3rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .notification-bell:hover { color: var(--accent); }
+        .notification-badge {
+            position: absolute; top: -5px; right: -8px; background-color: #e74c3c;
+            color: white; border-radius: 50%; width: 18px; height: 18px;
+            font-size: 0.7rem; font-weight: 700; display: flex;
+            justify-content: center; align-items: center;
+            border: 2px solid var(--primary-dark);
+        }
 
         /* Layout */
         .container { display:flex; min-height:calc(100vh - 80px); }
@@ -92,8 +106,11 @@ $school_year  = "2025–2026";
     <a href="#" class="menu-icon"><i class="fas fa-bars"></i></a>
     <h1><i class="fas fa-graduation-cap"></i> MNCHS Grade Portal</h1>
     <div class="user-info">
+        <a href="#" class="notification-bell">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge">3</span>
+        </a>
         <span><?php echo htmlspecialchars($student_name); ?></span>
-        <a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 </header>
 
@@ -103,8 +120,9 @@ $school_year  = "2025–2026";
         <ul>
             <li><a href="studentdashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="studentgrades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
-            <li><a href="studentvalues.html"><i class="fas fa-heart"></i> Observed Values</a></li>
+            <li><a href="studentvalues.html" class="active"><i class="fas fa-heart"></i> Observed Values</a></li>
             <li><a href="studentprofile.html"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+            <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </aside>
 

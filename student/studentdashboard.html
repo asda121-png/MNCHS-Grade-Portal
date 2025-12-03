@@ -1,4 +1,14 @@
 
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
+    header('Location: ../login.php');
+    exit();
+}
+$student_name = $_SESSION['student_name'] ?? 'Student';
+$grade_level  = $_SESSION['grade_level'] ?? '11';
+$section      = $_SESSION['section'] ?? 'STEM-A';
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -68,18 +78,34 @@
             font-size: 1rem;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 25px;
         }
 
-        .user-info a {
-            color: var(--accent);
+        .notification-bell {
+            position: relative;
+            color: white;
+            font-size: 1.3rem;
             text-decoration: none;
-            font-weight: 500;
             transition: var(--transition);
         }
-
-        .user-info a:hover {
-            color: #ffed4e;
+        .notification-bell:hover {
+            color: var(--accent);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--primary-dark);
         }
 
         .container {
@@ -267,7 +293,11 @@
     <header class="header">
         <h1><i class="fas fa-graduation-cap"></i> MNCHS Grade Portal</h1>
         <div class="user-info">
-            <a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            <a href="#" class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </a>
+            <span><?php echo htmlspecialchars($student_name); ?></span>
         </div>
     </header>
 
@@ -279,13 +309,14 @@
             <li><a href="studentgrades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
             <li><a href="studentvalues.html"><i class="fas fa-heart"></i> Observed Values</a></li>
             <li><a href="studentprofile.html"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+            <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
             <div class="welcome-card">
-                <h2>Welcome back, </h2>
-                <p>You are currently enrolled in <strong>Grade </strong></p>
+                <h2>Welcome back, <?php echo htmlspecialchars(explode(' ', $student_name)[0]); ?>!</h2>
+                <p>You are currently enrolled in <strong>Grade <?php echo htmlspecialchars($grade_level); ?> - <?php echo htmlspecialchars($section); ?></strong></p>
             </div>
 
             <div class="stats-grid">
