@@ -79,7 +79,6 @@
             </a>
             <a href="#" onclick="switchTab('notifications')" id="nav-notifications" class="sidebar-link block px-6 py-3 flex items-center">
                 <i class="fas fa-bell w-6"></i> Notifications
-                <!-- Sidebar Badge (Synced with Header) -->
                 <span id="nav-badge-notifications" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
             </a>
             <a href="#" onclick="switchTab('attendance')" id="nav-attendance" class="sidebar-link block px-6 py-3 flex items-center">
@@ -100,46 +99,41 @@
                     <p class="text-xs text-gray-300">Parent Account</p>
                 </div>
             </div>
-            <button onclick="alert('Logged out successfully (Demo)')" class="mt-4 w-full py-2 bg-maroon-800 hover:bg-maroon-700 active:scale-95 transition-all rounded text-sm text-white">Logout</button>
+            <!-- UPDATED LOGOUT BUTTON: Now calls showLogoutModal() -->
+            <button onclick="showLogoutModal()" class="mt-4 w-full py-2 bg-maroon-800 hover:bg-maroon-700 active:scale-95 transition-all rounded text-sm text-white">Logout</button>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
         
-        <!-- Header with Notification Interface -->
+        <!-- Header -->
         <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-30 relative">
-            <!-- Mobile Logo -->
             <div class="md:hidden text-maroon-900 text-xl font-bold flex items-center gap-2">
                 <img src="assets/images/logo.png" onerror="this.style.display='none'" alt="Logo" class="w-8 h-8 rounded-full border border-yellow-400">
                 MNCHS
             </div>
             
             <div class="flex items-center gap-6 ml-auto">
-                
-                <!-- NOTIFICATION BELL INTERFACE -->
+                <!-- Notification Bell -->
                 <div class="relative">
                     <button onclick="toggleNotificationDropdown()" class="relative p-2 text-gray-500 hover:text-maroon-900 transition focus:outline-none">
                         <i class="fas fa-bell text-xl"></i>
                         <span id="header-badge-notifications" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white hidden">0</span>
                     </button>
-
-                    <!-- Notification Dropdown Panel -->
+                    <!-- Dropdown -->
                     <div id="notification-dropdown" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 hidden transform origin-top-right transition-all z-50">
                         <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
                             <h3 class="font-bold text-gray-800">Notifications</h3>
                             <button onclick="markAllRead()" class="text-xs text-maroon-900 hover:underline font-medium">Mark all read</button>
                         </div>
-                        <div id="dropdown-list" class="max-h-80 overflow-y-auto scrollbar-thin">
-                            <!-- Populated by JS -->
-                        </div>
+                        <div id="dropdown-list" class="max-h-80 overflow-y-auto scrollbar-thin"></div>
                         <div class="p-3 border-t border-gray-100 text-center">
                             <button onclick="switchTab('notifications'); toggleNotificationDropdown()" class="text-sm text-maroon-900 font-semibold hover:text-maroon-700">View All Notifications</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Student Switcher -->
                 <div class="flex items-center gap-2">
                     <label for="studentSelect" class="text-sm font-medium text-gray-600 hidden sm:block">Student:</label>
                     <select id="studentSelect" onchange="changeStudent()" class="bg-gray-50 border border-gray-300 text-maroon-900 text-sm rounded-lg focus:ring-maroon-900 block p-2 font-bold cursor-pointer">
@@ -206,13 +200,11 @@
                         <h3 class="text-lg font-bold text-gray-800">Recent Notifications</h3>
                         <a href="#" onclick="switchTab('notifications')" class="text-sm text-maroon-900 font-semibold hover:text-maroon-700 hover:underline transition">View All</a>
                     </div>
-                    <div id="overview-notifications-list" class="space-y-4">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="overview-notifications-list" class="space-y-4"></div>
                 </div>
             </div>
 
-            <!-- FULL NOTIFICATIONS PAGE -->
+            <!-- NOTIFICATIONS -->
             <div id="view-notifications" class="fade-in hidden">
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <div>
@@ -286,12 +278,27 @@
         </div>
     </main>
 
-    <!-- Modal -->
+    <!-- ASSIGNMENT DETAIL MODAL -->
     <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-100">
             <h3 class="text-xl font-bold text-maroon-900 mb-2">Assignment Details</h3>
             <p class="text-gray-600 mb-4">View detailed breakdown of this grade.</p>
             <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition">Close</button>
+        </div>
+    </div>
+
+    <!-- ADDED: LOGOUT CONFIRMATION MODAL -->
+    <div id="logout-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[60] flex items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center transform transition-all scale-100">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                <i class="fas fa-sign-out-alt text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Logout</h3>
+            <p class="text-gray-500 mb-6">Do you want to log out?</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="hideLogoutModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-medium transition active:scale-95">No</button>
+                <button onclick="performLogout()" class="px-4 py-2 bg-maroon-900 text-white rounded hover:bg-maroon-800 font-medium transition active:scale-95">Yes</button>
+            </div>
         </div>
     </div>
 
@@ -371,7 +378,7 @@
         function init() {
             renderDashboard();
             renderNotificationsPage('all');
-            updateNotificationDropdown(); // Initial Render
+            updateNotificationDropdown(); 
         }
 
         function changeStudent() {
@@ -383,6 +390,22 @@
             if(!document.getElementById('view-attendance').classList.contains('hidden')) {
                 loadAttendance();
             }
+        }
+
+        // --- LOGOUT MODAL FUNCTIONS ---
+        function showLogoutModal() {
+            document.getElementById('logout-modal').classList.remove('hidden');
+        }
+
+        function hideLogoutModal() {
+            document.getElementById('logout-modal').classList.add('hidden');
+        }
+
+        function performLogout() {
+            // Replace this with your actual PHP logout redirect:
+            // window.location.href = 'logout.php';
+            alert('Redirecting to login page...');
+            hideLogoutModal();
         }
 
         // --- INTERFACE TOGGLES ---
@@ -414,7 +437,6 @@
             currentStudent.notifications.slice(0, 5).forEach(n => {
                 const bg = n.read ? 'bg-white' : 'bg-blue-50';
                 const dot = n.read ? '' : '<span class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></span>';
-                
                 let icon = 'fa-info-circle text-gray-400';
                 if(n.type === 'academic') icon = 'fa-book text-maroon-900';
                 if(n.type === 'attendance') icon = 'fa-clock text-yellow-600';
@@ -443,7 +465,7 @@
             document.getElementById('card-absences').innerText = currentStudent.absences;
             document.getElementById('card-missing').innerText = currentStudent.missing.length;
 
-            // Badges (Header & Sidebar)
+            // Badges
             const unreadCount = currentStudent.notifications.filter(n => !n.read).length;
             const badges = [document.getElementById('nav-badge-notifications'), document.getElementById('header-badge-notifications')];
             badges.forEach(b => {
@@ -455,10 +477,11 @@
                 }
             });
 
-            // Overview Notifications Widget (Existing)
+            // Overview Notifications Widget
             const overviewList = document.getElementById('overview-notifications-list');
             overviewList.innerHTML = '';
-            currentStudent.notifications.slice(0, 3).forEach(n => {
+            const recent = currentStudent.notifications.slice(0, 3);
+            recent.forEach(n => {
                 let colorClass = 'bg-gray-500';
                 if(n.type === 'academic') colorClass = 'bg-maroon-900';
                 if(n.type === 'attendance') colorClass = 'bg-yellow-500';

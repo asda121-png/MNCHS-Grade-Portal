@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNCHS Teacher Portal | Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        maroon: {
+                            50: '#fdf2f2',
+                            100: '#fde8e8',
+                            200: '#fbd5d5',
+                            300: '#f8b4b4',
+                            400: '#f98080',
+                            500: '#f05252',
+                            600: '#e02424',
+                            700: '#c81e1e',
+                            800: '#9b1c1c',
+                            900: '#800000', // Primary Brand Color
+                            950: '#550b0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .sidebar-link { transition: all 0.3s ease; border-left: 4px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { 
+            background-color: rgba(255,255,255,0.1); 
+            border-left-color: #fbbf24; 
+            padding-left: 2rem; 
+        }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom inputs for gradebook */
+        .grade-input { width: 100%; text-align: center; border: 1px solid transparent; background: transparent; }
+        .grade-input:focus { border-bottom: 2px solid #800000; outline: none; background: white; }
+
+        /* Custom Scrollbar for Notification Dropdown */
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-maroon-900 text-white flex flex-col hidden md:flex shadow-xl z-20 overflow-y-auto">
+        <div class="h-16 flex items-center justify-center border-b border-maroon-800 shrink-0">
+            <h1 class="text-2xl font-bold tracking-wider flex items-center gap-2">
+                <img src="assets/images/logo.png" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" 
+                     alt="Logo" 
+                     class="w-10 h-10 rounded-full border-2 border-yellow-400 bg-white object-cover">
+                <i class="fas fa-university text-lg hidden"></i> 
+                MNCHS
+            </h1>
+        </div>
+
+        <nav class="flex-1 py-6 space-y-1">
+            <a href="#" onclick="switchTab('overview')" id="nav-overview" class="sidebar-link active block px-6 py-3 flex items-center">
+                <i class="fas fa-chart-pie w-6"></i> Dashboard
+            </a>
+            <a href="#" onclick="switchTab('classes')" id="nav-classes" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-chalkboard w-6"></i> My Classes
+            </a>
+            <a href="#" onclick="switchTab('gradebook')" id="nav-gradebook" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-edit w-6"></i> Gradebook
+            </a>
+            <a href="#" onclick="switchTab('assignments')" id="nav-assignments" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-file-alt w-6"></i> Assignments
+            </a>
+            <a href="#" onclick="switchTab('attendance')" id="nav-attendance" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-user-check w-6"></i> Attendance
+            </a>
+            
+            <!-- NEW SECTIONS -->
+            <div class="px-6 py-2 text-xs font-bold text-gray-400 uppercase mt-4">Administrative</div>
+            
+            <a href="#" onclick="switchTab('meetings')" id="nav-meetings" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-handshake w-6"></i> Meetings
+            </a>
+            <a href="#" onclick="switchTab('events')" id="nav-events" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-calendar-star w-6"></i> Events & Programs
+            </a>
+            <a href="#" onclick="switchTab('behavior')" id="nav-behavior" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-exclamation-triangle w-6"></i> Student Behavior
+            </a>
+            <a href="#" onclick="switchTab('resources')" id="nav-resources" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-folder-open w-6"></i> Resources
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-maroon-800 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-maroon-700 flex items-center justify-center text-sm font-bold">
+                    TC
+                </div>
+                <div>
+                    <p class="text-sm font-semibold">Teacher Cruz</p>
+                    <p class="text-xs text-gray-300">Faculty ID: T-2023</p>
+                </div>
+            </div>
+            <button onclick="confirmLogout()" class="mt-4 w-full py-2 bg-maroon-800 hover:bg-maroon-700 active:scale-95 transition-all rounded text-sm text-white">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <!-- Header -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-30 relative">
+            <div class="md:hidden text-maroon-900 text-xl font-bold flex items-center gap-2">
+                MNCHS Faculty
+            </div>
+            
+            <div class="flex items-center gap-6 ml-auto">
+                <div class="text-sm text-gray-500 hidden sm:block">Term: <strong>Fall 2025</strong></div>
+                
+                <!-- NOTIFICATION BELL INTERFACE (NEW) -->
+                <div class="relative">
+                    <button onclick="toggleNotificationDropdown()" class="relative p-2 text-gray-500 hover:text-maroon-900 transition focus:outline-none">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="header-badge-notifications" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white hidden">0</span>
+                    </button>
+
+                    <!-- Notification Dropdown Panel -->
+                    <div id="notification-dropdown" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 hidden transform origin-top-right transition-all z-50">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                            <h3 class="font-bold text-gray-800">Notifications</h3>
+                            <button onclick="markAllRead()" class="text-xs text-maroon-900 hover:underline font-medium">Mark all read</button>
+                        </div>
+                        <div id="dropdown-list" class="max-h-80 overflow-y-auto scrollbar-thin">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="md:hidden ml-4 text-maroon-900"><i class="fas fa-bars text-2xl"></i></button>
+        </header>
+
+        <!-- Content Area -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-6 bg-gray-100" onclick="closeDropdownIfOutside(event)">
+            
+            <!-- OVERVIEW SECTION -->
+            <div id="view-overview" class="fade-in">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Faculty Dashboard</h2>
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-maroon-900">
+                        <h3 class="text-gray-500 font-medium">Total Students</h3>
+                        <h2 class="text-3xl font-bold text-gray-800 mt-2">142</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-600">
+                        <h3 class="text-gray-500 font-medium">Classes Today</h3>
+                        <h2 class="text-3xl font-bold text-gray-800 mt-2">4</h2>
+                        <p class="text-xs text-blue-600 font-semibold mt-1">Next: Math 10 (10:00 AM)</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-yellow-500">
+                        <h3 class="text-gray-500 font-medium">Pending Grades</h3>
+                        <h2 class="text-3xl font-bold text-gray-800 mt-2">28</h2>
+                        <p class="text-xs text-gray-400 mt-1">Quiz #3 (Science 8)</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
+                        <h3 class="text-gray-500 font-medium">Attendance</h3>
+                        <h2 class="text-3xl font-bold text-gray-800 mt-2">98%</h2>
+                        <p class="text-xs text-green-600 mt-1">Average this week</p>
+                    </div>
+                </div>
+
+                <!-- Schedule Widget -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Today's Schedule</h3>
+                        <div class="space-y-4">
+                            <div class="flex gap-4 items-center">
+                                <div class="w-16 text-center text-sm font-bold text-gray-500">08:00 AM</div>
+                                <div class="flex-1 bg-maroon-50 p-3 rounded border-l-4 border-maroon-900">
+                                    <h4 class="font-bold text-maroon-900">Mathematics 10 - Section A</h4>
+                                    <p class="text-xs text-gray-600">Room 304</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-center">
+                                <div class="w-16 text-center text-sm font-bold text-gray-500">10:00 AM</div>
+                                <div class="flex-1 bg-blue-50 p-3 rounded border-l-4 border-blue-600">
+                                    <h4 class="font-bold text-blue-900">Science 8 - Section B</h4>
+                                    <p class="text-xs text-gray-600">Lab 2</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 items-center opacity-50">
+                                <div class="w-16 text-center text-sm font-bold text-gray-500">01:00 PM</div>
+                                <div class="flex-1 bg-gray-50 p-3 rounded border-l-4 border-gray-400">
+                                    <h4 class="font-bold text-gray-700">Planning Period</h4>
+                                    <p class="text-xs text-gray-600">Faculty Office</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLASSES SECTION (NEW) -->
+            <div id="view-classes" class="fade-in hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">My Classes</h2>
+                    <button class="bg-maroon-900 text-white px-4 py-2 rounded hover:bg-maroon-800 transition shadow-sm">
+                        <i class="fas fa-plus mr-2"></i> Add Class
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Class Card 1 -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
+                        <div class="h-2 bg-maroon-900"></div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Mathematics 10</h3>
+                                    <p class="text-sm text-gray-500">Section A</p>
+                                </div>
+                                <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded">42 Students</span>
+                            </div>
+                            
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock w-6 text-center text-maroon-900"></i>
+                                    <span>Mon, Wed, Fri • 08:00 AM</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-map-marker-alt w-6 text-center text-maroon-900"></i>
+                                    <span>Room 304</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Syllabus Progress</span>
+                                    <span>65%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-maroon-900 h-1.5 rounded-full" style="width: 65%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 border-t pt-4">
+                                <button onclick="switchTab('gradebook')" class="flex-1 text-center text-sm font-medium text-maroon-900 hover:bg-gray-50 py-2 rounded transition">
+                                    Grades
+                                </button>
+                                <button class="flex-1 text-center text-sm font-medium text-gray-600 hover:bg-gray-50 py-2 rounded transition">
+                                    Roster
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class Card 2 -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
+                        <div class="h-2 bg-blue-600"></div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Science 8</h3>
+                                    <p class="text-sm text-gray-500">Section B</p>
+                                </div>
+                                <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded">38 Students</span>
+                            </div>
+                            
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock w-6 text-center text-blue-600"></i>
+                                    <span>Tue, Thu • 10:00 AM</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-map-marker-alt w-6 text-center text-blue-600"></i>
+                                    <span>Laboratory 2</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Syllabus Progress</span>
+                                    <span>40%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-blue-600 h-1.5 rounded-full" style="width: 40%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 border-t pt-4">
+                                <button onclick="switchTab('gradebook')" class="flex-1 text-center text-sm font-medium text-blue-900 hover:bg-gray-50 py-2 rounded transition">
+                                    Grades
+                                </button>
+                                <button class="flex-1 text-center text-sm font-medium text-gray-600 hover:bg-gray-50 py-2 rounded transition">
+                                    Roster
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Class Card 3 -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition opacity-75">
+                        <div class="h-2 bg-gray-400"></div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">Homeroom Guidance</h3>
+                                    <p class="text-sm text-gray-500">Section A</p>
+                                </div>
+                                <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded">42 Students</span>
+                            </div>
+                            
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-clock w-6 text-center text-gray-500"></i>
+                                    <span>Fri • 01:00 PM</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-map-marker-alt w-6 text-center text-gray-500"></i>
+                                    <span>Room 304</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Syllabus Progress</span>
+                                    <span>80%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-500 h-1.5 rounded-full" style="width: 80%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 border-t pt-4">
+                                <button onclick="switchTab('gradebook')" class="flex-1 text-center text-sm font-medium text-gray-800 hover:bg-gray-50 py-2 rounded transition">
+                                    Grades
+                                </button>
+                                <button class="flex-1 text-center text-sm font-medium text-gray-600 hover:bg-gray-50 py-2 rounded transition">
+                                    Roster
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRADEBOOK SECTION -->
+            <div id="view-gradebook" class="fade-in hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Gradebook</h2>
+                    <div class="flex gap-2">
+                        <select class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2.5 focus:ring-maroon-900 focus:border-maroon-900">
+                            <option>Mathematics 10 - Section A</option>
+                            <option>Science 8 - Section B</option>
+                        </select>
+                        <button onclick="saveGrades()" class="bg-maroon-900 text-white px-4 py-2 rounded hover:bg-maroon-800 transition shadow-sm">
+                            <i class="fas fa-save mr-2"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                            <tr>
+                                <th class="p-4 border-b w-1/4">Student Name</th>
+                                <th class="p-4 border-b text-center w-24">Quiz 1 (10%)</th>
+                                <th class="p-4 border-b text-center w-24">Quiz 2 (10%)</th>
+                                <th class="p-4 border-b text-center w-24">Midterm (30%)</th>
+                                <th class="p-4 border-b text-center w-24">Final (50%)</th>
+                                <th class="p-4 border-b text-center w-24 font-bold text-maroon-900">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-100">
+                            <tr>
+                                <td class="p-4 font-medium text-gray-800">Anderson, Liam</td>
+                                <td class="p-2"><input type="number" class="grade-input" value="85"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="88"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="90"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="89"></td>
+                                <td class="p-4 text-center font-bold text-maroon-900">89</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-gray-800">Cortez, Maria</td>
+                                <td class="p-2"><input type="number" class="grade-input" value="92"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="95"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="94"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="96"></td>
+                                <td class="p-4 text-center font-bold text-maroon-900">95</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-medium text-gray-800">Dela Cruz, Juan</td>
+                                <td class="p-2"><input type="number" class="grade-input" value="75"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="78"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value="80"></td>
+                                <td class="p-2"><input type="number" class="grade-input" value=""></td>
+                                <td class="p-4 text-center font-bold text-gray-400">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ASSIGNMENTS SECTION -->
+            <div id="view-assignments" class="fade-in hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Assignments & Activities</h2>
+                    <button onclick="toggleModal('assignment-modal')" class="bg-maroon-900 text-white px-4 py-2 rounded hover:bg-maroon-800 transition shadow-sm">
+                        <i class="fas fa-plus mr-2"></i> Create New
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Assignment Card -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 relative">
+                        <span class="absolute top-4 right-4 text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
+                        <h3 class="font-bold text-lg text-gray-800 mb-1">Quadratic Equations Quiz</h3>
+                        <p class="text-sm text-gray-500 mb-4">Mathematics 10 • Due: Oct 25</p>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600"><i class="fas fa-user-check mr-1"></i> 24/30 Submitted</span>
+                            <button class="text-maroon-900 hover:underline">Grade submissions</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 relative">
+                        <span class="absolute top-4 right-4 text-xs font-bold px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full">Draft</span>
+                        <h3 class="font-bold text-lg text-gray-800 mb-1">Final Project: Geometry</h3>
+                        <p class="text-sm text-gray-500 mb-4">Mathematics 10 • Scheduled: Nov 10</p>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">Not published</span>
+                            <button class="text-blue-600 hover:underline">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ATTENDANCE SECTION -->
+            <div id="view-attendance" class="fade-in hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold text-gray-800">Class Attendance</h2>
+                    <div class="flex gap-2">
+                        <input type="date" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2" value="<?php echo date('Y-m-d'); ?>">
+                        <select class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg p-2">
+                            <option>Mathematics 10 - Sec A</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+                        <h3 class="font-bold text-gray-700">Student List</h3>
+                        <div class="text-sm text-gray-500">Mark all: <button class="text-maroon-900 hover:underline ml-1">Present</button></div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-maroon-100 text-maroon-900 flex items-center justify-center font-bold text-xs">LA</div>
+                                <span class="font-medium text-gray-800">Anderson, Liam</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="toggleAttendance(this, 'P')" class="w-8 h-8 rounded-full border border-green-500 bg-green-500 text-white flex items-center justify-center text-xs font-bold hover:opacity-90">P</button>
+                                <button onclick="toggleAttendance(this, 'A')" class="w-8 h-8 rounded-full border border-gray-300 text-gray-400 flex items-center justify-center text-xs font-bold hover:border-red-500 hover:text-red-500">A</button>
+                                <button onclick="toggleAttendance(this, 'L')" class="w-8 h-8 rounded-full border border-gray-300 text-gray-400 flex items-center justify-center text-xs font-bold hover:border-yellow-500 hover:text-yellow-500">L</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-maroon-100 text-maroon-900 flex items-center justify-center font-bold text-xs">MC</div>
+                                <span class="font-medium text-gray-800">Cortez, Maria</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="toggleAttendance(this, 'P')" class="w-8 h-8 rounded-full border border-green-500 bg-green-500 text-white flex items-center justify-center text-xs font-bold hover:opacity-90">P</button>
+                                <button onclick="toggleAttendance(this, 'A')" class="w-8 h-8 rounded-full border border-gray-300 text-gray-400 flex items-center justify-center text-xs font-bold hover:border-red-500 hover:text-red-500">A</button>
+                                <button onclick="toggleAttendance(this, 'L')" class="w-8 h-8 rounded-full border border-gray-300 text-gray-400 flex items-center justify-center text-xs font-bold hover:border-yellow-500 hover:text-yellow-500">L</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="mt-6 w-full bg-maroon-900 text-white py-2 rounded hover:bg-maroon-800 transition">Submit Attendance</button>
+                </div>
+            </div>
+
+            <!-- MEETINGS SECTION (NEW) -->
+            <div id="view-meetings" class="fade-in hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Meetings & Conferences</h2>
+                        <p class="text-gray-500 text-sm">Manage parent-teacher conferences and faculty meetings.</p>
+                    </div>
+                    <button onclick="toggleModal('meeting-modal')" class="bg-maroon-900 text-white px-4 py-2 rounded hover:bg-maroon-800 transition shadow-sm">
+                        <i class="fas fa-plus mr-2"></i> Schedule Meeting
+                    </button>
+                </div>
+
+                <div class="space-y-4" id="meetings-list">
+                    <!-- Meeting Item -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="text-center px-4 border-r border-gray-200">
+                                <div class="text-xs text-gray-500 uppercase font-bold">Oct</div>
+                                <div class="text-2xl font-bold text-gray-800">28</div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Faculty Department Meeting</h4>
+                                <p class="text-sm text-gray-600">9:00 AM - 11:00 AM • Conference Room A</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">Upcoming</span>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-maroon-900 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="text-center px-4 border-r border-gray-200">
+                                <div class="text-xs text-gray-500 uppercase font-bold">Oct</div>
+                                <div class="text-2xl font-bold text-gray-800">30</div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Parent Conference: Anderson, Liam</h4>
+                                <p class="text-sm text-gray-600">2:00 PM - 2:30 PM • Room 304</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">Pending Confirmation</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENTS SECTION (NEW) -->
+            <div id="view-events" class="fade-in hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">School Events & Programs</h2>
+                    <button onclick="toggleModal('event-modal')" class="bg-maroon-900 text-white px-4 py-2 rounded hover:bg-maroon-800 transition shadow-sm">
+                        <i class="fas fa-calendar-plus mr-2"></i> Add Event
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="events-grid">
+                    <!-- Event Card -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden group">
+                        <div class="h-32 bg-maroon-900 flex items-center justify-center">
+                            <i class="fas fa-flag text-4xl text-white opacity-50"></i>
+                        </div>
+                        <div class="p-5">
+                            <div class="text-xs font-bold text-maroon-900 mb-2 uppercase">August</div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Buwan ng Wika</h3>
+                            <p class="text-sm text-gray-600 mb-4">Celebration of the Filipino language with contests and programs.</p>
+                            <button class="text-sm font-semibold text-maroon-900 hover:underline">View Details</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden group">
+                        <div class="h-32 bg-blue-600 flex items-center justify-center">
+                            <i class="fas fa-running text-4xl text-white opacity-50"></i>
+                        </div>
+                        <div class="p-5">
+                            <div class="text-xs font-bold text-blue-600 mb-2 uppercase">September</div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Intramurals 2025</h3>
+                            <p class="text-sm text-gray-600 mb-4">Annual sports competition between year levels.</p>
+                            <button class="text-sm font-semibold text-blue-600 hover:underline">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BEHAVIOR SECTION (NEW) -->
+            <div id="view-behavior" class="fade-in hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Student Behavior Log</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Log Form -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-4">Log New Incident</h3>
+                        <form onsubmit="logIncident(event)">
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Student</label>
+                                <input type="text" id="behavior-student" class="w-full border border-gray-300 rounded p-2 text-sm" placeholder="Search name...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <select id="behavior-type" class="w-full border border-gray-300 rounded p-2 text-sm">
+                                    <option value="Minor">Minor Misconduct</option>
+                                    <option value="Major">Major Offense</option>
+                                    <option value="Positive">Positive Commendation</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea id="behavior-desc" class="w-full border border-gray-300 rounded p-2 text-sm" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-maroon-900 text-white py-2 rounded hover:bg-maroon-800">Log Entry</button>
+                        </form>
+                    </div>
+
+                    <!-- History List -->
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="p-4 border-b border-gray-100 bg-gray-50 font-bold text-gray-700">Recent Logs</div>
+                        <table class="w-full text-left text-sm">
+                            <thead class="text-gray-500 border-b">
+                                <tr>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Student</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody id="behavior-list" class="divide-y divide-gray-100">
+                                <tr>
+                                    <td class="p-4">Oct 24</td>
+                                    <td class="p-4 font-medium">Dela Cruz, Juan</td>
+                                    <td class="p-4"><span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Minor</span></td>
+                                    <td class="p-4 text-gray-600">Disruptive behavior during lecture.</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4">Oct 22</td>
+                                    <td class="p-4 font-medium">Anderson, Liam</td>
+                                    <td class="p-4"><span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Positive</span></td>
+                                    <td class="p-4 text-gray-600">Helped clean up the laboratory after class.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESOURCES SECTION (NEW) -->
+            <div id="view-resources" class="fade-in hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Faculty Resources</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition text-center group cursor-pointer">
+                        <i class="fas fa-file-pdf text-4xl text-red-500 mb-3 group-hover:scale-110 transition"></i>
+                        <h3 class="font-bold text-gray-800">Faculty Handbook</h3>
+                        <p class="text-xs text-gray-500 mt-1">Updated 2025</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition text-center group cursor-pointer">
+                        <i class="fas fa-file-word text-4xl text-blue-500 mb-3 group-hover:scale-110 transition"></i>
+                        <h3 class="font-bold text-gray-800">Leave Form</h3>
+                        <p class="text-xs text-gray-500 mt-1">DOCX Format</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition text-center group cursor-pointer">
+                        <i class="fas fa-book text-4xl text-maroon-900 mb-3 group-hover:scale-110 transition"></i>
+                        <h3 class="font-bold text-gray-800">K-12 Curriculum</h3>
+                        <p class="text-xs text-gray-500 mt-1">Grade 7-10</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Create Assignment Modal -->
+    <div id="assignment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <h3 class="text-xl font-bold text-maroon-900 mb-4">Create New Assignment</h3>
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input type="text" class="w-full border border-gray-300 rounded p-2 focus:ring-maroon-900 focus:border-maroon-900" placeholder="e.g. Chapter 1 Quiz">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                    <select class="w-full border border-gray-300 rounded p-2">
+                        <option>Mathematics 10 - Section A</option>
+                        <option>Science 8 - Section B</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <input type="date" class="w-full border border-gray-300 rounded p-2">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="toggleModal('assignment-modal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded">Cancel</button>
+                    <button type="button" onclick="alert('Assignment Created!'); toggleModal('assignment-modal')" class="flex-1 bg-maroon-900 hover:bg-maroon-800 text-white py-2 rounded">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Schedule Meeting Modal -->
+    <div id="meeting-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <h3 class="text-xl font-bold text-maroon-900 mb-4">Schedule Meeting</h3>
+            <form class="space-y-4" onsubmit="saveMeeting(event)">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Subject / Parent Name</label>
+                    <input type="text" id="meeting-title" required class="w-full border border-gray-300 rounded p-2" placeholder="e.g. Mr. Santos (Parent)">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="meeting-date" required class="w-full border border-gray-300 rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Time & Location</label>
+                    <input type="text" id="meeting-loc" required class="w-full border border-gray-300 rounded p-2" placeholder="10:00 AM @ Office">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="toggleModal('meeting-modal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded">Cancel</button>
+                    <button type="submit" class="flex-1 bg-maroon-900 hover:bg-maroon-800 text-white py-2 rounded">Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <h3 class="text-xl font-bold text-maroon-900 mb-4">Add School Event</h3>
+            <form class="space-y-4" onsubmit="saveEvent(event)">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
+                    <input type="text" id="event-title" required class="w-full border border-gray-300 rounded p-2" placeholder="e.g. Christmas Party">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                    <input type="text" id="event-month" required class="w-full border border-gray-300 rounded p-2" placeholder="December">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="event-desc" required class="w-full border border-gray-300 rounded p-2" rows="2"></textarea>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="toggleModal('event-modal')" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded">Cancel</button>
+                    <button type="submit" class="flex-1 bg-maroon-900 hover:bg-maroon-800 text-white py-2 rounded">Add Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA (TEACHER NOTIFICATIONS) ---
+        const teacherNotifications = [
+            { id: 1, type: 'submission', title: 'Liam Anderson submitted "Geometry Project"', message: 'Submitted 10 minutes ago.', time: '10m ago', read: false },
+            { id: 2, type: 'system', title: 'Faculty Meeting Reminder', message: 'Department meeting tomorrow at 9:00 AM.', time: '2h ago', read: false },
+            { id: 3, type: 'submission', title: 'Maria Cortez submitted "Quiz #3"', message: 'Needs grading.', time: 'Yesterday', read: true },
+            { id: 4, type: 'system', title: 'Grade Submission Deadline', message: 'Final grades are due next Friday.', time: '2 days ago', read: true }
+        ];
+
+        function switchTab(tabName) {
+            // Hide all views
+            ['overview', 'classes', 'gradebook', 'assignments', 'attendance', 'meetings', 'events', 'behavior', 'resources'].forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if (el) el.classList.add('hidden');
+            });
+            
+            // Sidebar active state
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active', 'bg-white', 'bg-opacity-10', 'border-l-yellow-400'));
+            
+            // Show selected
+            const view = document.getElementById(`view-${tabName}`);
+            if(view) {
+                view.classList.remove('hidden');
+                document.getElementById(`nav-${tabName}`).classList.add('active');
+            }
+        }
+
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            if(modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // --- NOTIFICATION LOGIC ---
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if(!dropdown.classList.contains('hidden')) {
+                updateNotificationDropdown();
+            }
+        }
+
+        function closeDropdownIfOutside(event) {
+            // Close dropdown if clicked outside
+            const dropdown = document.getElementById('notification-dropdown');
+            const bellBtn = document.querySelector('button[onclick="toggleNotificationDropdown()"]');
+            
+            if (!dropdown.classList.contains('hidden') && 
+                !dropdown.contains(event.target) && 
+                !bellBtn.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        function updateNotificationDropdown() {
+            const list = document.getElementById('dropdown-list');
+            list.innerHTML = '';
+            
+            if(teacherNotifications.length === 0) {
+                list.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No new notifications.</div>';
+                return;
+            }
+
+            teacherNotifications.forEach(n => {
+                const bg = n.read ? 'bg-white' : 'bg-blue-50';
+                const dot = n.read ? '' : '<span class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></span>';
+                
+                let icon = 'fa-info-circle text-gray-400';
+                if(n.type === 'submission') icon = 'fa-file-upload text-green-600';
+                if(n.type === 'system') icon = 'fa-bullhorn text-blue-600';
+
+                list.innerHTML += `
+                    <div class="p-3 border-b border-gray-100 flex gap-3 hover:bg-gray-50 transition cursor-pointer ${bg}">
+                        <div class="mt-1"><i class="fas ${icon}"></i></div>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-800 leading-tight">${n.title}</p>
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-1">${n.message}</p>
+                            <p class="text-[10px] text-gray-400 mt-1">${n.time}</p>
+                        </div>
+                        ${dot}
+                    </div>
+                `;
+            });
+            
+            // Update Badge
+            const unreadCount = teacherNotifications.filter(n => !n.read).length;
+            const badge = document.getElementById('header-badge-notifications');
+            if(unreadCount > 0) {
+                badge.innerText = unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function markAllRead() {
+            teacherNotifications.forEach(n => n.read = true);
+            updateNotificationDropdown();
+        }
+
+        function saveGrades() {
+            // Simulate API call
+            const btn = document.querySelector('button[onclick="saveGrades()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i> Saved!';
+                btn.classList.replace('bg-maroon-900', 'bg-green-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-green-600', 'bg-maroon-900');
+                }, 2000);
+            }, 1000);
+        }
+
+        function toggleAttendance(btn, status) {
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(child => {
+                child.className = "w-8 h-8 rounded-full border border-gray-300 text-gray-400 flex items-center justify-center text-xs font-bold hover:border-gray-400";
+            });
+
+            if(status === 'P') btn.className = "w-8 h-8 rounded-full border border-green-500 bg-green-500 text-white flex items-center justify-center text-xs font-bold shadow-sm";
+            if(status === 'A') btn.className = "w-8 h-8 rounded-full border border-red-500 bg-red-500 text-white flex items-center justify-center text-xs font-bold shadow-sm";
+            if(status === 'L') btn.className = "w-8 h-8 rounded-full border border-yellow-500 bg-yellow-500 text-white flex items-center justify-center text-xs font-bold shadow-sm";
+        }
+
+        function confirmLogout() {
+            if(confirm("Are you sure you want to log out of the Faculty Portal?")) {
+                alert("Logging out...");
+            }
+        }
+
+        // --- NEW FUNCTIONALITY ---
+
+        function saveMeeting(e) {
+            e.preventDefault();
+            const title = document.getElementById('meeting-title').value;
+            const loc = document.getElementById('meeting-loc').value;
+            const dateStr = document.getElementById('meeting-date').value;
+            const dateObj = new Date(dateStr);
+            const day = dateObj.getDate();
+            const month = dateObj.toLocaleString('default', { month: 'short' });
+
+            const html = `
+                <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-maroon-900 flex items-center justify-between fade-in">
+                    <div class="flex items-center gap-4">
+                        <div class="text-center px-4 border-r border-gray-200">
+                            <div class="text-xs text-gray-500 uppercase font-bold">${month}</div>
+                            <div class="text-2xl font-bold text-gray-800">${day}</div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">${title}</h4>
+                            <p class="text-sm text-gray-600">${loc}</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">New</span>
+                </div>
+            `;
+            
+            document.getElementById('meetings-list').insertAdjacentHTML('afterbegin', html);
+            toggleModal('meeting-modal');
+            e.target.reset();
+        }
+
+        function saveEvent(e) {
+            e.preventDefault();
+            const title = document.getElementById('event-title').value;
+            const month = document.getElementById('event-month').value;
+            const desc = document.getElementById('event-desc').value;
+
+            const html = `
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden group fade-in">
+                    <div class="h-32 bg-gray-800 flex items-center justify-center">
+                        <i class="fas fa-star text-4xl text-white opacity-50"></i>
+                    </div>
+                    <div class="p-5">
+                        <div class="text-xs font-bold text-gray-600 mb-2 uppercase">${month}</div>
+                        <h3 class="font-bold text-lg text-gray-800 mb-2">${title}</h3>
+                        <p class="text-sm text-gray-600 mb-4">${desc}</p>
+                        <button class="text-sm font-semibold text-maroon-900 hover:underline">View Details</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('events-grid').insertAdjacentHTML('beforeend', html);
+            toggleModal('event-modal');
+            e.target.reset();
+        }
+
+        function logIncident(e) {
+            e.preventDefault();
+            const student = document.getElementById('behavior-student').value;
+            const type = document.getElementById('behavior-type').value;
+            const desc = document.getElementById('behavior-desc').value;
+            const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            let badgeClass = 'bg-gray-100 text-gray-700';
+            if(type === 'Minor') badgeClass = 'bg-yellow-100 text-yellow-700';
+            if(type === 'Major') badgeClass = 'bg-red-100 text-red-700';
+            if(type === 'Positive') badgeClass = 'bg-green-100 text-green-700';
+
+            const row = `
+                <tr class="fade-in">
+                    <td class="p-4">${date}</td>
+                    <td class="p-4 font-medium">${student}</td>
+                    <td class="p-4"><span class="px-2 py-1 ${badgeClass} text-xs rounded">${type}</span></td>
+                    <td class="p-4 text-gray-600">${desc}</td>
+                </tr>
+            `;
+            document.getElementById('behavior-list').insertAdjacentHTML('afterbegin', row);
+            e.target.reset();
+            alert('Incident Logged Successfully');
+        }
+
+        // Init
+        window.onload = function() {
+            switchTab('overview');
+            updateNotificationDropdown(); // Init notifications
+        }
+    </script>
+</body>
+</html>
