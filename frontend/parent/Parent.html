@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNCHS Parent Portal | Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        maroon: {
+                            50: '#fdf2f2',
+                            100: '#fde8e8',
+                            200: '#fbd5d5',
+                            300: '#f8b4b4',
+                            400: '#f98080',
+                            500: '#f05252',
+                            600: '#e02424',
+                            700: '#c81e1e',
+                            800: '#9b1c1c',
+                            900: '#800000', // Primary Brand Color
+                            950: '#550b0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .sidebar-link { transition: all 0.3s ease; border-left: 4px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { 
+            background-color: rgba(255,255,255,0.1); 
+            border-left-color: #fbbf24; 
+            padding-left: 2rem; 
+        }
+        .hover-card { transition: all 0.3s ease; }
+        .hover-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Scrollbar for Notification Dropdown */
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-maroon-900 text-white flex flex-col hidden md:flex shadow-xl z-20">
+        <div class="h-16 flex items-center justify-center border-b border-maroon-800">
+            <h1 class="text-2xl font-bold tracking-wider flex items-center gap-2">
+                <img src="assets/images/logo.png" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" 
+                     alt="Logo" 
+                     class="w-10 h-10 rounded-full border-2 border-yellow-400 bg-white object-cover">
+                <i class="fas fa-university text-lg hidden"></i> 
+                MNCHS
+            </h1>
+        </div>
+
+        <nav class="flex-1 py-6 space-y-2">
+            <a href="#" onclick="switchTab('overview')" id="nav-overview" class="sidebar-link active block px-6 py-3 flex items-center">
+                <i class="fas fa-home w-6"></i> Dashboard
+            </a>
+            <a href="#" onclick="switchTab('grades')" id="nav-grades" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-chart-bar w-6"></i> Grades & Report
+            </a>
+            <a href="#" onclick="switchTab('missing')" id="nav-missing" class="sidebar-link block px-6 py-3 flex items-center text-yellow-300 font-medium">
+                <i class="fas fa-exclamation-circle w-6"></i> Missing Items
+            </a>
+            <a href="#" onclick="switchTab('notifications')" id="nav-notifications" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-bell w-6"></i> Notifications
+                <!-- Sidebar Badge (Synced with Header) -->
+                <span id="nav-badge-notifications" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+            </a>
+            <a href="#" onclick="switchTab('attendance')" id="nav-attendance" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-calendar-check w-6"></i> Attendance
+            </a>
+            <a href="#" onclick="switchTab('teachers')" id="nav-teachers" class="sidebar-link block px-6 py-3 flex items-center">
+                <i class="fas fa-chalkboard-teacher w-6"></i> Teachers
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-maroon-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-maroon-700 flex items-center justify-center">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold">Mrs. Anderson</p>
+                    <p class="text-xs text-gray-300">Parent Account</p>
+                </div>
+            </div>
+            <button onclick="alert('Logged out successfully (Demo)')" class="mt-4 w-full py-2 bg-maroon-800 hover:bg-maroon-700 active:scale-95 transition-all rounded text-sm text-white">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <!-- Header with Notification Interface -->
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-30 relative">
+            <!-- Mobile Logo -->
+            <div class="md:hidden text-maroon-900 text-xl font-bold flex items-center gap-2">
+                <img src="assets/images/logo.png" onerror="this.style.display='none'" alt="Logo" class="w-8 h-8 rounded-full border border-yellow-400">
+                MNCHS
+            </div>
+            
+            <div class="flex items-center gap-6 ml-auto">
+                
+                <!-- NOTIFICATION BELL INTERFACE -->
+                <div class="relative">
+                    <button onclick="toggleNotificationDropdown()" class="relative p-2 text-gray-500 hover:text-maroon-900 transition focus:outline-none">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="header-badge-notifications" class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white hidden">0</span>
+                    </button>
+
+                    <!-- Notification Dropdown Panel -->
+                    <div id="notification-dropdown" class="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 hidden transform origin-top-right transition-all z-50">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                            <h3 class="font-bold text-gray-800">Notifications</h3>
+                            <button onclick="markAllRead()" class="text-xs text-maroon-900 hover:underline font-medium">Mark all read</button>
+                        </div>
+                        <div id="dropdown-list" class="max-h-80 overflow-y-auto scrollbar-thin">
+                            <!-- Populated by JS -->
+                        </div>
+                        <div class="p-3 border-t border-gray-100 text-center">
+                            <button onclick="switchTab('notifications'); toggleNotificationDropdown()" class="text-sm text-maroon-900 font-semibold hover:text-maroon-700">View All Notifications</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Switcher -->
+                <div class="flex items-center gap-2">
+                    <label for="studentSelect" class="text-sm font-medium text-gray-600 hidden sm:block">Student:</label>
+                    <select id="studentSelect" onchange="changeStudent()" class="bg-gray-50 border border-gray-300 text-maroon-900 text-sm rounded-lg focus:ring-maroon-900 block p-2 font-bold cursor-pointer">
+                        <option value="0">Liam Anderson (Grade 10)</option>
+                        <option value="1">Sophia Anderson (Grade 8)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="md:hidden ml-4 text-maroon-900">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </header>
+
+        <!-- Scrollable Content -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-6 bg-gray-100" onclick="closeDropdownIfOutside(event)">
+            
+            <!-- OVERVIEW -->
+            <div id="view-overview" class="fade-in">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Overview</h2>
+                    <p class="text-gray-500">Academic summary for <span class="current-student-name font-bold text-maroon-900">Liam</span>.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-maroon-900 hover-card cursor-default">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-gray-500 font-medium">Current GPA</h3>
+                            <span class="p-2 bg-green-100 text-green-600 rounded-full"><i class="fas fa-chart-line"></i></span>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <h2 id="card-gpa" class="text-4xl font-bold text-gray-800">3.4</h2>
+                            <span class="text-sm text-gray-500 mb-1">/ 4.0</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">Last updated: Today</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-600 hover-card cursor-default">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-gray-500 font-medium">Attendance</h3>
+                            <span class="p-2 bg-blue-100 text-blue-600 rounded-full"><i class="fas fa-user-clock"></i></span>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <h2 id="card-attendance" class="text-4xl font-bold text-gray-800">92%</h2>
+                        </div>
+                        <p id="card-absences" class="text-sm text-red-500 mt-2 font-medium">3 Absences this term</p>
+                    </div>
+
+                    <div onclick="switchTab('missing')" class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500 hover-card cursor-pointer">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-gray-500 font-medium">Missing Work</h3>
+                            <span class="p-2 bg-red-100 text-red-600 rounded-full"><i class="fas fa-exclamation-triangle"></i></span>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <h2 id="card-missing" class="text-4xl font-bold text-red-600">2</h2>
+                            <span class="text-sm text-gray-500 mb-1">Assignments</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">Click to view details</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <div class="flex items-center justify-between border-b pb-2 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Recent Notifications</h3>
+                        <a href="#" onclick="switchTab('notifications')" class="text-sm text-maroon-900 font-semibold hover:text-maroon-700 hover:underline transition">View All</a>
+                    </div>
+                    <div id="overview-notifications-list" class="space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- FULL NOTIFICATIONS PAGE -->
+            <div id="view-notifications" class="fade-in hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Notifications</h2>
+                        <p class="text-gray-500">Alerts, announcements, and activity logs.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="renderNotificationsPage('all')" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-maroon-900 transition focus:ring-2 focus:ring-maroon-900">All</button>
+                        <button onclick="renderNotificationsPage('unread')" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-maroon-900 transition focus:ring-2 focus:ring-maroon-900">Unread</button>
+                        <button onclick="markAllRead()" class="px-4 py-2 bg-maroon-900 text-white rounded-lg text-sm font-medium hover:bg-maroon-800 active:scale-95 transition shadow-sm">Mark all as read</button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <div id="notifications-list-container" class="divide-y divide-gray-100"></div>
+                </div>
+            </div>
+
+            <!-- GRADES -->
+            <div id="view-grades" class="fade-in hidden">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Grade Book</h2>
+                        <p class="text-gray-500">Current Term: <span class="font-semibold">Fall 2025</span></p>
+                    </div>
+                    <button class="bg-maroon-900 text-white px-4 py-2 rounded shadow hover:bg-maroon-800 active:scale-95 transition">
+                        <i class="fas fa-download mr-2"></i> Download Report
+                    </button>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                            <tr>
+                                <th class="p-4 border-b">Subject</th>
+                                <th class="p-4 border-b">Teacher</th>
+                                <th class="p-4 border-b">Assignments</th>
+                                <th class="p-4 border-b">Grade %</th>
+                                <th class="p-4 border-b">Letter</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grades-table-body" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MISSING ITEMS -->
+            <div id="view-missing" class="fade-in hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-red-700">Missing Quizzes & Assignments</h2>
+                    <p class="text-gray-500">Action Required: Please check with your student regarding these items.</p>
+                </div>
+                <div id="missing-list-container" class="space-y-4"></div>
+                <div id="no-missing-message" class="hidden flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-sm">
+                    <i class="fas fa-check-circle text-green-500 text-5xl mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800">All Caught Up!</h3>
+                    <p class="text-gray-500">No missing assignments or quizzes found.</p>
+                </div>
+            </div>
+            
+            <!-- ATTENDANCE -->
+            <div id="view-attendance" class="fade-in hidden">
+                 <div class="mb-6 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Attendance Record</h2>
+                        <p class="text-gray-500">Detailed list of attendance status</p>
+                    </div>
+                </div>
+                <div id="attendance-loader" class="flex justify-center py-10 hidden"><i class="fas fa-spinner fa-spin text-3xl text-maroon-900"></i></div>
+                <div id="attendance-container"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all scale-100">
+            <h3 class="text-xl font-bold text-maroon-900 mb-2">Assignment Details</h3>
+            <p class="text-gray-600 mb-4">View detailed breakdown of this grade.</p>
+            <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const students = [
+            {
+                id: 0,
+                name: "Liam Anderson",
+                grade: 10,
+                gpa: "89",
+                attendance: "92%",
+                absences: "3 Absences",
+                grades: [
+                    { subject: "Mathematics 10", teacher: "Mr. Smith", count: 12, percent: 81, letter: "Satisfactory" },
+                    { subject: "Science 10", teacher: "Dr. Al-Fayed", count: 15, percent: 88, letter: "Very Satisfactory" },
+                    { subject: "English 10", teacher: "Ms. Johnson", count: 10, percent: 85, letter: "Very Satisfactory" },
+                    { subject: "Filipino 10", teacher: "Bb. Reyes", count: 8, percent: 90, letter: "Outstanding" },
+                    { subject: "Araling Panlipunan 10", teacher: "Mrs. Davis", count: 8, percent: 92, letter: "Outstanding" },
+                    { subject: "MAPEH 10", teacher: "Coach R.", count: 5, percent: 94, letter: "Outstanding" },
+                    { subject: "Edukasyon sa Pagpapakatao (EsP)", teacher: "Mr. Cruz", count: 6, percent: 88, letter: "Very Satisfactory" },
+                    { subject: "TLE (ICT)", teacher: "Mr. Tan", count: 4, percent: 85, letter: "Very Satisfactory" }
+                ],
+                missing: [
+                    { type: "Quiz", subject: "Mathematics 10", title: "Polynomial Functions Quiz", date: "Oct 12, 2025" },
+                    { type: "Project", subject: "Araling Panlipunan 10", title: "Contemporary Issues Research", date: "Oct 15, 2025" }
+                ],
+                notifications: [
+                    { id: 1, type: 'academic', title: 'EsP 10 Quiz Grade Posted', message: 'Score: 88/100 (B+)', time: '2 hours ago', read: false },
+                    { id: 2, type: 'attendance', title: 'Absence Marked: Filipino', message: 'Please verify this absence if it was a mistake.', time: 'Yesterday', read: false },
+                    { id: 3, type: 'system', title: 'Report Card Available', message: 'First quarter report cards are now available for download.', time: '3 days ago', read: true },
+                    { id: 4, type: 'academic', title: 'Mathematics 10 Assignment Due', message: 'Polynomial Functions worksheet is due tomorrow.', time: '4 days ago', read: true }
+                ]
+            },
+            {
+                id: 1,
+                name: "Sophia Anderson",
+                grade: 8,
+                gpa: "94",
+                attendance: "100%",
+                absences: "0 Absences",
+                grades: [
+                    { subject: "Mathematics 8", teacher: "Mr. Jones", count: 10, percent: 95, letter: "Outstanding" },
+                    { subject: "Science 8", teacher: "Mrs. White", count: 9, percent: 96, letter: "Outstanding" },
+                    { subject: "English 8", teacher: "Ms. P.", count: 4, percent: 93, letter: "Outstanding" },
+                    { subject: "Araling Panlipunan 8", teacher: "Mr. Clark", count: 7, percent: 92, letter: "Outstanding" },
+                    { subject: "Filipino 8", teacher: "G. Santos", count: 6, percent: 91, letter: "Outstanding" }
+                ],
+                missing: [],
+                notifications: [
+                     { id: 101, type: 'academic', title: 'Science 8 Project Graded', message: 'Score: 98/100 (A+)', time: '1 hour ago', read: false },
+                     { id: 102, type: 'system', title: 'School Event Reminder', message: 'Science Fair is happening this Friday.', time: '2 days ago', read: true }
+                ]
+            }
+        ];
+
+        const attendanceRecords = {
+            0: [
+                { date: '2025-10-15', day: 'Wednesday', timeIn: '07:15 AM', timeOut: '04:10 PM', status: 'Present', remarks: 'On time' },
+                { date: '2025-10-14', day: 'Tuesday', timeIn: '07:20 AM', timeOut: '04:05 PM', status: 'Present', remarks: 'On time' },
+                { date: '2025-10-13', day: 'Monday', timeIn: '08:05 AM', timeOut: '04:00 PM', status: 'Late', remarks: 'Flag ceremony missed' },
+                { date: '2025-10-10', day: 'Friday', timeIn: '07:10 AM', timeOut: '03:55 PM', status: 'Present', remarks: 'On time' },
+                { date: '2025-10-09', day: 'Thursday', timeIn: '--', timeOut: '--', status: 'Absent', remarks: 'Sick leave filed' },
+            ],
+            1: [
+                { date: '2025-10-15', day: 'Wednesday', timeIn: '07:05 AM', timeOut: '04:15 PM', status: 'Present', remarks: 'Early' },
+                { date: '2025-10-14', day: 'Tuesday', timeIn: '07:10 AM', timeOut: '04:00 PM', status: 'Present', remarks: 'On time' },
+                { date: '2025-10-13', day: 'Monday', timeIn: '07:00 AM', timeOut: '04:10 PM', status: 'Present', remarks: 'On time' },
+                { date: '2025-10-10', day: 'Friday', timeIn: '07:12 AM', timeOut: '03:50 PM', status: 'Present', remarks: 'On time' },
+                { date: '2025-10-09', day: 'Thursday', timeIn: '07:15 AM', timeOut: '04:00 PM', status: 'Present', remarks: 'On time' },
+            ]
+        };
+
+        let currentStudent = students[0];
+
+        // --- FUNCTIONS ---
+        function init() {
+            renderDashboard();
+            renderNotificationsPage('all');
+            updateNotificationDropdown(); // Initial Render
+        }
+
+        function changeStudent() {
+            const select = document.getElementById('studentSelect');
+            currentStudent = students[select.value];
+            renderDashboard();
+            renderNotificationsPage('all');
+            updateNotificationDropdown();
+            if(!document.getElementById('view-attendance').classList.contains('hidden')) {
+                loadAttendance();
+            }
+        }
+
+        // --- INTERFACE TOGGLES ---
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notification-dropdown');
+            dropdown.classList.toggle('hidden');
+            if(!dropdown.classList.contains('hidden')) {
+                updateNotificationDropdown();
+            }
+        }
+
+        function closeDropdownIfOutside(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            if (!dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        // --- RENDERERS ---
+        function updateNotificationDropdown() {
+            const list = document.getElementById('dropdown-list');
+            list.innerHTML = '';
+            
+            if(currentStudent.notifications.length === 0) {
+                list.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No new notifications.</div>';
+                return;
+            }
+
+            currentStudent.notifications.slice(0, 5).forEach(n => {
+                const bg = n.read ? 'bg-white' : 'bg-blue-50';
+                const dot = n.read ? '' : '<span class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></span>';
+                
+                let icon = 'fa-info-circle text-gray-400';
+                if(n.type === 'academic') icon = 'fa-book text-maroon-900';
+                if(n.type === 'attendance') icon = 'fa-clock text-yellow-600';
+
+                list.innerHTML += `
+                    <div class="p-3 border-b border-gray-100 flex gap-3 hover:bg-gray-50 transition cursor-pointer ${bg}">
+                        <div class="mt-1"><i class="fas ${icon}"></i></div>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-800 leading-tight">${n.title}</p>
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-1">${n.message}</p>
+                            <p class="text-[10px] text-gray-400 mt-1">${n.time}</p>
+                        </div>
+                        ${dot}
+                    </div>
+                `;
+            });
+        }
+
+        function renderDashboard() {
+            // Header
+            document.querySelectorAll('.current-student-name').forEach(el => el.innerText = currentStudent.name);
+            
+            // Cards
+            document.getElementById('card-gpa').innerText = currentStudent.gpa;
+            document.getElementById('card-attendance').innerText = currentStudent.attendance;
+            document.getElementById('card-absences').innerText = currentStudent.absences;
+            document.getElementById('card-missing').innerText = currentStudent.missing.length;
+
+            // Badges (Header & Sidebar)
+            const unreadCount = currentStudent.notifications.filter(n => !n.read).length;
+            const badges = [document.getElementById('nav-badge-notifications'), document.getElementById('header-badge-notifications')];
+            badges.forEach(b => {
+                if(unreadCount > 0) {
+                    b.innerText = unreadCount;
+                    b.classList.remove('hidden');
+                } else {
+                    b.classList.add('hidden');
+                }
+            });
+
+            // Overview Notifications Widget (Existing)
+            const overviewList = document.getElementById('overview-notifications-list');
+            overviewList.innerHTML = '';
+            currentStudent.notifications.slice(0, 3).forEach(n => {
+                let colorClass = 'bg-gray-500';
+                if(n.type === 'academic') colorClass = 'bg-maroon-900';
+                if(n.type === 'attendance') colorClass = 'bg-yellow-500';
+                if(n.type === 'system') colorClass = 'bg-blue-500';
+
+                overviewList.innerHTML += `
+                    <div class="flex items-start gap-4 hover:bg-maroon-50 p-2 rounded transition cursor-pointer">
+                        <div class="w-2 h-2 mt-2 rounded-full ${colorClass} flex-shrink-0"></div>
+                        <div>
+                            <p class="text-gray-800 font-medium ${!n.read ? 'font-bold' : ''}">${n.title}</p>
+                            <p class="text-sm text-gray-500">${n.message}</p>
+                            <p class="text-xs text-gray-400 mt-1">${n.time}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Grades
+            const tbody = document.getElementById('grades-table-body');
+            tbody.innerHTML = '';
+            currentStudent.grades.forEach(g => {
+                let colorClass = 'text-gray-800';
+                if(g.percent < 75) colorClass = 'text-red-600';
+                if(g.percent >= 90) colorClass = 'text-green-600 font-bold';
+                const row = `
+                    <tr class="border-b hover:bg-maroon-50 transition duration-200">
+                        <td class="p-4 font-medium text-maroon-900">${g.subject}</td>
+                        <td class="p-4 text-gray-500">${g.teacher}</td>
+                        <td class="p-4 text-gray-500">${g.count} Graded Items</td>
+                        <td class="p-4 font-bold ${colorClass}">${g.percent}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded bg-gray-100 ${colorClass} text-xs">${g.letter}</span></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            // Missing
+            const missingContainer = document.getElementById('missing-list-container');
+            const noMissingMsg = document.getElementById('no-missing-message');
+            missingContainer.innerHTML = '';
+
+            if (currentStudent.missing.length === 0) {
+                noMissingMsg.classList.remove('hidden');
+                missingContainer.classList.add('hidden');
+            } else {
+                noMissingMsg.classList.add('hidden');
+                missingContainer.classList.remove('hidden');
+                currentStudent.missing.forEach(m => {
+                    const isQuiz = m.type === 'Quiz';
+                    const icon = isQuiz ? 'fa-clipboard-list' : 'fa-book-open';
+                    const bg = isQuiz ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200';
+                    const text = isQuiz ? 'text-red-700' : 'text-orange-700';
+                    missingContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-4 border rounded-lg ${bg} transition hover:shadow-md hover:-translate-y-1">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center ${text} shadow-sm">
+                                    <i class="fas ${icon}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">${m.title}</h4>
+                                    <p class="text-sm text-gray-600">${m.subject} | Due: ${m.date}</p>
+                                    <span class="inline-block mt-1 text-xs font-bold uppercase px-2 py-0.5 rounded bg-white ${text} border border-opacity-20">Missing ${m.type}</span>
+                                </div>
+                            </div>
+                            <button class="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded border hover:bg-gray-50 shadow-sm active:scale-95 transition">Contact Teacher</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Full Page Notification Renderer
+        function renderNotificationsPage(filter) {
+            const container = document.getElementById('notifications-list-container');
+            container.innerHTML = '';
+            let filtered = currentStudent.notifications;
+            if(filter === 'unread') filtered = filtered.filter(n => !n.read);
+            
+            if(filtered.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-500">No notifications found.</div>`;
+                return;
+            }
+
+            filtered.forEach(n => {
+                const bgClass = n.read ? 'bg-white' : 'bg-blue-50';
+                const textClass = n.read ? 'text-gray-800' : 'text-gray-900 font-semibold';
+                let iconClass = 'fa-info-circle text-gray-500';
+                let iconBg = 'bg-gray-100';
+                if(n.type === 'academic') { iconClass = 'fa-book text-maroon-900'; iconBg = 'bg-maroon-50'; }
+                if(n.type === 'attendance') { iconClass = 'fa-clock text-yellow-600'; iconBg = 'bg-yellow-50'; }
+                if(n.type === 'system') { iconClass = 'fa-cog text-blue-600'; iconBg = 'bg-blue-50'; }
+
+                container.innerHTML += `
+                    <div class="p-4 flex gap-4 ${bgClass} hover:bg-maroon-50 border-l-4 border-transparent hover:border-maroon-900 transition-all duration-200 cursor-default">
+                        <div class="w-10 h-10 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <h4 class="${textClass} text-sm">${n.title}</h4>
+                                <span class="text-xs text-gray-400 whitespace-nowrap ml-2">${n.time}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                        </div>
+                        ${!n.read ? `<div class="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function markAllRead() {
+            currentStudent.notifications.forEach(n => n.read = true);
+            renderDashboard();
+            renderNotificationsPage('all');
+            updateNotificationDropdown();
+        }
+
+        // Attendance
+        function loadAttendance() {
+            const container = document.getElementById('attendance-container');
+            const loader = document.getElementById('attendance-loader');
+            container.style.opacity = '0.5';
+            loader.classList.remove('hidden');
+
+            setTimeout(() => {
+                const records = attendanceRecords[currentStudent.id] || [];
+                let html = `
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-gray-800">Attendance Log for ${currentStudent.name}</h3>
+                        <span class="text-xs text-gray-500">Showing last 5 days</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-50 text-gray-500 uppercase">
+                                <tr>
+                                    <th class="px-6 py-3 font-medium">Date</th>
+                                    <th class="px-6 py-3 font-medium">Day</th>
+                                    <th class="px-6 py-3 font-medium">Time In</th>
+                                    <th class="px-6 py-3 font-medium">Time Out</th>
+                                    <th class="px-6 py-3 font-medium">Status</th>
+                                    <th class="px-6 py-3 font-medium">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">`;
+
+                if(records.length > 0) {
+                    records.forEach(rec => {
+                        let statusColor = 'bg-gray-100 text-gray-800';
+                        if(rec.status === 'Present') statusColor = 'bg-green-100 text-green-700 border border-green-200';
+                        if(rec.status === 'Absent') statusColor = 'bg-red-100 text-red-700 border border-red-200';
+                        if(rec.status === 'Late') statusColor = 'bg-orange-100 text-orange-700 border border-orange-200';
+
+                        html += `
+                        <tr class="hover:bg-maroon-50 transition duration-200">
+                            <td class="px-6 py-4 font-semibold text-gray-800">${rec.date}</td>
+                            <td class="px-6 py-4 text-gray-600">${rec.day}</td>
+                            <td class="px-6 py-4 font-mono text-gray-600">${rec.timeIn}</td>
+                            <td class="px-6 py-4 font-mono text-gray-600">${rec.timeOut}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusColor}">${rec.status}</span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500 italic">${rec.remarks}</td>
+                        </tr>`;
+                    });
+                } else {
+                    html += `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No records found.</td></tr>`;
+                }
+                html += `</tbody></table></div></div>`;
+                container.innerHTML = html;
+                container.style.opacity = '1';
+                loader.classList.add('hidden');
+            }, 300);
+        }
+
+        function switchTab(tabName) {
+            ['overview', 'grades', 'missing', 'attendance', 'notifications', 'teachers'].forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if (el) el.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active', 'bg-white', 'bg-opacity-10', 'border-l-yellow-400'));
+            const selectedView = document.getElementById(`view-${tabName}`);
+            if (selectedView) {
+                selectedView.classList.remove('hidden');
+            } else {
+                alert("This section is under construction in the demo.");
+                document.getElementById('view-overview').classList.remove('hidden');
+                return;
+            }
+
+            const navItem = document.getElementById(`nav-${tabName}`);
+            if (navItem) navItem.classList.add('active');
+
+            if (tabName === 'attendance') { loadAttendance(); }
+            if (tabName === 'notifications') { renderNotificationsPage('all'); }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
