@@ -1,13 +1,14 @@
-
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
-    header('Location: ../login.php');
-    exit();
+// Check if user is logged in and is a teacher
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
+    // In a real scenario, you would redirect to a login page
+    // header('Location: ../login.php');
+    // exit();
 }
-$student_name = $_SESSION['student_name'] ?? 'Student';
-$grade_level  = $_SESSION['grade_level'] ?? '11';
-$section      = $_SESSION['section'] ?? 'STEM-A';
+
+// Mock data for display, replace with actual data from your database
+$teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
 ?>
 
 <!DOCTYPE html>
@@ -15,13 +16,13 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard | MNCHS Grade Portal</title>
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <title>Teacher Dashboard | MNCHS Grade Portal</title>
 
     <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
 
     <style>
         :root {
@@ -44,7 +45,7 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c, #c3cfe2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--text);
             min-height: 100vh;
         }
@@ -75,40 +76,8 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
             font-size: 2rem;
         }
 
-        .user-info {
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-/*Notification bell*/
-        .notification-bell {
-            position: relative;
-            color: white;
-            font-size: 1.3rem;
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        .notification-bell:hover {
-            color: var(--accent);
-        }
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -8px;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 2px solid var(--primary-dark);
-        }
-/*profile-link*/
+        .menu-icon { display: none; color: white; font-size: 1.5rem; text-decoration: none; margin-right: 1rem; }
+
         .profile-link {
             position: relative;
             color: white;
@@ -149,21 +118,53 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
         .profile-dropdown a:hover {
             background-color: var(--bg);
         }
+        .profile-link:hover { color: var(--accent); }
+        .dropdown-caret { font-size: 0.9rem; margin-left: 8px; transition: var(--transition); }
 
-        .profile-link {
-            color: white;
-            font-size: 1.6rem;
-            text-decoration: none;
-            transition: var(--transition);
+        .user-menu { position: relative; cursor: pointer; }
+        .user-menu-content { display: none; position: absolute; right: 0; background-color: white; min-width: 160px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; }
+        .user-menu-content a { color: var(--text); padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+        .user-menu-content a:hover { background-color: #f1f1f1; }
+        .user-menu-content a i { color: var(--primary); }
+        .user-menu:hover .user-menu-content { display: block; }
+        .user-name { display: flex; align-items: center; gap: 10px; }
+        .user-name i {
+            background-color: var(--accent); color: var(--primary);
+            border-radius: 50%; width: 36px; height: 36px;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+        .user-info {
+            font-size: 1rem;
             display: flex;
             align-items: center;
+            gap: 25px;
         }
-        .profile-link:hover { color: var(--accent); }
 
-        .dropdown-caret {
-            font-size: 0.9rem;
-            margin-left: 8px;
+        .notification-bell {
+            position: relative;
+            color: white;
+            font-size: 1.3rem;
+            text-decoration: none;
             transition: var(--transition);
+        }
+        .notification-bell:hover {
+            color: var(--accent);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--primary-dark);
         }
 
         .container {
@@ -183,11 +184,17 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
         }
         .sidebar-logo-container {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
-        .sidebar-logo {
-            max-width: 100px;
-            height: auto;
+        .sidebar-logo { max-width: 120px; height: auto; }
+
+        .sidebar h2 {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .sidebar ul {
@@ -277,7 +284,6 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
             color: var(--primary);
         }
 
-        .stat-card.gold i { color: var(--accent); }
         .stat-card.blue i { color: #3498db; }
         .stat-card.green i { color: #27ae60; }
 
@@ -293,45 +299,6 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
             color: var(--primary);
         }
 
-        .quick-links {
-            margin-top: 2rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .link-card {
-            background: white;
-            padding: 1.8rem;
-            border-radius: 14px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            transition: var(--transition);
-            text-decoration: none;
-            color: var(--text);
-        }
-
-        .link-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 12px 25px rgba(128, 0, 0, 0.15);
-        }
-
-        .link-card i {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .link-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .link-card p {
-            color: var(--text-light);
-            font-size: 0.95rem;
-        }
-
         @media (max-width: 768px) {
             .container { flex-direction: column; }
             .sidebar {
@@ -343,168 +310,125 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
             .main-content { padding: 1.5rem; }
             .header h1 { font-size: 1.5rem; }
         }
+        @media (max-width:768px) { .menu-icon { display: block; } }
     </style>
     <style>
         /* Logout Modal Styles */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center;
+            align-items: center; z-index: 2000; opacity: 0; visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
+        .modal-overlay.show { opacity: 1; visibility: visible; }
         .modal-content {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
-            transform: scale(0.9);
+            background: white; padding: 2.5rem; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center;
+            max-width: 400px; width: 90%; transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-
-        .modal-overlay.show .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-content h2 {
-            color: var(--primary);
-            margin-bottom: 1rem;
-            font-size: 1.6rem;
-        }
-
-        .modal-content p {
-            color: var(--text-light);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-        }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
+        .modal-overlay.show .modal-content { transform: scale(1); }
+        .modal-content h2 { color: var(--primary); margin-bottom: 1rem; font-size: 1.6rem; }
+        .modal-content p { color: var(--text-light); margin-bottom: 2rem; font-size: 1.1rem; }
+        .modal-buttons { display: flex; justify-content: center; gap: 1rem; }
         .modal-buttons button, .modal-buttons a {
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
+            padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; text-decoration: none;
         }
     </style>
 </head>
 <body>
 
-    <header class="header">
+      <header class="header">
+        <a href="#" class="menu-icon"><i class="fas fa-bars"></i></a>
         <h1></i> MNCHS Grade Portal</h1>
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
                 <span class="notification-badge">3</span>
             </a>
-           <div class="profile-link" title="View Profile">
+            <div class="profile-link" title="View Profile">
                 <i class="fas fa-user-circle"></i><i class="fas fa-caret-down dropdown-caret"></i>
                 <div class="profile-dropdown">
-                    <a href="studentprofile.html">Profile</a>
-                    <!-- Add more links as needed -->
+                    <a href="teacherprofile.html">Profile</a>
                 </div>
             </div>
-            <span><?php echo htmlspecialchars($student_name); ?> (Student)</span>
+            <span><?php echo htmlspecialchars($teacher_name); ?> (Teacher)</span>
         </div>
     </header>
-    
 
-    
     <div class="container">
-        <aside class="sidebar">
-            <div class="sidebar-logo-container">
-<img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
-            </div>
+        <aside class="sidebar">            <div class="sidebar-logo-container"><img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
-          <li><a href="studentdashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="studentgrades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
-            <li><a href="studentvalues.html"><i class="fas fa-heart"></i> Observed Values</a></li>
-            <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                 </ul>
+                <li><a href="teacherdashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="teachermyclasses.html"><i class="fas fa-users"></i> My Classes</a></li>
+                <li><a href="teachergradeentry.html"><i class="fas fa-edit"></i> Grade Entry</a></li>
+                <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
         </aside>
-
         <main class="main-content">
             <div class="welcome-card">
-                <h2>Welcome back, <?php echo htmlspecialchars(explode(' ', $student_name)[0]); ?>!</h2>
-                <p>You are currently enrolled in <strong>Grade <?php echo htmlspecialchars($grade_level); ?> - <?php echo htmlspecialchars($section); ?></strong></p>
+                <h2>Welcome to your dashboard, <?php echo htmlspecialchars(explode(' ', $teacher_name)[0]); ?>!</h2>
+                <p>Here's a summary of your activities for the School Year 2025-2026.</p>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <i class="fas fa-book-open"></i>
-                    <h3>Subjects Enrolled</h3>
-                    <div class="value">8</div>
+                    <i class="fas fa-chalkboard"></i>
+                    <h3>Classes Handled</h3>
+                    <div class="value">4</div>
                 </div>
-            </div>
-
-            <div class="quick-links">
-                <a href="grades.php" class="link-card">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>View My Grades</h3>
-                    <p>Check your latest grades and performance</p>
-                </a>
-                <a href="profile.php" class="link-card">
-                    <i class="fas fa-user-edit"></i>
-                    <h3>Update Profile</h3>
-                    <p>Manage your account and password</p>
-                </a>
+                <div class="stat-card blue">
+                    <i class="fas fa-user-graduate"></i>
+                    <h3>Total Students</h3>
+                    <div class="value">162</div>
+                </div>
             </div>
         </main>
     </div>
-</body>
-<div id="logout-modal" class="modal-overlay">
-    <div class="modal-content">
-        <h2>Confirm Logout</h2>
-        <p>Are you sure you want to log out?</p>
-        <div class="modal-buttons">
-            <button id="cancel-logout" style="background-color: #ccc; border: none;">Cancel</button>
-            <a href="../logout.php" id="confirm-logout" style="background-color: var(--primary); color: white; text-decoration: none;">Yes, Logout</a>
+
+    <div id="logout-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm Logout</h2>
+            <p>Are you sure you want to log out?</p>
+            <div class="modal-buttons">
+                <button id="cancel-logout" style="background-color: #ccc; border: none;">Cancel</button>
+                <a href="../logout.php" id="confirm-logout" style="background-color: var(--primary); color: white;">Yes, Logout</a>
+            </div>
         </div>
     </div>
-</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const profileLink = document.querySelector('.profile-link');
     const profileDropdown = document.querySelector('.profile-dropdown');
 
-    profileLink.addEventListener('click', function(e) {
-        profileDropdown.classList.toggle('show');
-    });
+    if (profileLink && profileDropdown) {
+        profileLink.addEventListener('click', function(e) {
+            profileDropdown.classList.toggle('show');
+        });
 
-    // Close the dropdown when clicking outside
-    window.addEventListener('click', function(event) {
-        if (!profileLink.contains(event.target) && !profileDropdown.contains(event.target)) {profileDropdown.classList.remove('show'); }
-    });
-});
-document.addEventListener('DOMContentLoaded', function() {
+        // Close the dropdown when clicking outside
+        window.addEventListener('click', function(event) {
+            if (!profileLink.contains(event.target) && !profileDropdown.contains(event.target)) {profileDropdown.classList.remove('show'); }
+        });
+    }
+
     const logoutLink = document.getElementById('logout-link');
     const logoutModal = document.getElementById('logout-modal');
     const cancelLogout = document.getElementById('cancel-logout');
 
-    logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
-    cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
-    logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
+    function showLogoutModal(e) {
+        e.preventDefault();
+        logoutModal.classList.add('show');
+    }
+    if (logoutModal && cancelLogout) {
+        if (logoutLink) {
+            logoutLink.addEventListener('click', showLogoutModal);
+        }
+        cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
+        logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
+    }
 });
 </script>
+</body>
 </html>

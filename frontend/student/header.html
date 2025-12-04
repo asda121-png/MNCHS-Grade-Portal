@@ -1,0 +1,61 @@
+<header class="header">
+<h1>MNCHS Grade Portal</h1>
+<div class="user-info">
+<a href="#" class="notification-bell" aria-label="Notifications">
+<i class="fas fa-bell"></i>
+<span class="notification-badge">3</span>
+</a>
+<div class="profile-link" title="View Profile" role="button" tabindex="0">
+<i class="fas fa-user-circle" aria-hidden="true"></i>
+<i class="fas fa-caret-down dropdown-caret" aria-hidden="true"></i>
+<div class="profile-dropdown" aria-label="Profile menu">
+<a href="studentprofile.html">Profile</a>
+<!-- add more links here -->
+</div>
+</div>
+<span><?php echo htmlspecialchars($student_name); ?></span>
+</div>
+</header>
+
+
+<!-- Logout modal (kept here so header include contains modal markup) -->
+<div id="logout-modal" class="modal-overlay" aria-hidden="true">
+<div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+<h2 id="logout-title">Confirm Logout</h2>
+<p>Are you sure you want to log out?</p>
+<div class="modal-buttons">
+<button id="cancel-logout" style="background-color: #ccc; border: none;">Cancel</button>
+<a href="../logout.php" id="confirm-logout" style="background-color: var(--primary); color: white; text-decoration: none;">Yes, Logout</a>
+</div>
+</div>
+</div>
+
+
+<!-- Header interactivity script -->
+<script>
+(function(){
+// Profile dropdown
+var profileLink = document.querySelector('.profile-link');
+var profileDropdown = document.querySelector('.profile-dropdown');
+if (profileLink && profileDropdown) {
+profileLink.addEventListener('click', function(e){
+e.stopPropagation();
+profileDropdown.classList.toggle('show');
+});
+window.addEventListener('click', function(){
+profileDropdown.classList.remove('show');
+});
+}
+
+
+// Logout modal
+var logoutLink = document.getElementById('logout-link');
+var logoutModal = document.getElementById('logout-modal');
+var cancelLogout = document.getElementById('cancel-logout');
+if (logoutLink && logoutModal && cancelLogout) {
+logoutLink.addEventListener('click', function(e){ e.preventDefault(); logoutModal.classList.add('show'); logoutModal.setAttribute('aria-hidden','false'); });
+cancelLogout.addEventListener('click', function(){ logoutModal.classList.remove('show'); logoutModal.setAttribute('aria-hidden','true'); });
+logoutModal.addEventListener('click', function(e){ if (e.target === logoutModal) { logoutModal.classList.remove('show'); logoutModal.setAttribute('aria-hidden','true'); } });
+}
+})();
+</script>
