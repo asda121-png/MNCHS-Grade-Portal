@@ -126,12 +126,12 @@ $email        = $_SESSION['email'] ?? '';
             <li><a href="studentgrades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
             <li><a href="studentvalues.html"><i class="fas fa-heart"></i> Observed Values</a></li>
             <li><a href="studentprofile.html" class="active"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
-            <li><a href="../logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="studentlogout.html" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </aside>
 
     <main class="main-content">
-        <h1 class="page-title"><i class="fas fa-user-edit"></i> Profile Settings</h1>
+        <h1 class="page-title"></i> Profile Settings</h1>
 
         <form action="#" method="POST" class="profile-form">
             <div class="form-section">
@@ -189,16 +189,5 @@ $email        = $_SESSION['email'] ?? '';
     </main>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuIcon = document.querySelector('.menu-icon');
-        const sidebar = document.querySelector('.sidebar');
-
-        menuIcon.addEventListener('click', function(e) {
-            e.preventDefault();
-            sidebar.classList.toggle('show');
-        });
-    });
-</script>
 </body>
 </html>
