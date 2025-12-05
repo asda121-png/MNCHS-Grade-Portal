@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MNCHS Parent Portal | Grades</title>
-    <!-- Tailwind CSS -->
+    <title>MNCHS Parent Portal | Report Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
@@ -43,19 +41,13 @@
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Smooth progress bar animation */
-        .progress-bar { transition: width 1s ease-in-out; }
-        
-        /* Toast Animation */
-        .toast-enter { transform: translateX(100%); opacity: 0; }
-        .toast-enter-active { transform: translateX(0); opacity: 1; transition: all 0.3s ease-out; }
-        .toast-exit { transform: translateX(0); opacity: 1; }
-        .toast-exit-active { transform: translateX(100%); opacity: 0; transition: all 0.3s ease-in; }
+        /* Custom Hover Animation for Table Rows */
+        .hover-pop { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-pop:hover { transform: scale(1.015); z-index: 10; position: relative; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
 
-    <!-- Sidebar -->
     <aside class="w-64 bg-maroon-900 text-white flex flex-col hidden md:flex shadow-2xl z-20">
         <div class="h-20 flex items-center justify-center border-b border-maroon-800 bg-maroon-950">
             <h1 class="text-xl font-bold tracking-wider flex items-center gap-3">
@@ -71,7 +63,7 @@
         <nav class="flex-1 py-8 space-y-2">
             <a href="#" class="sidebar-link active block px-6 py-4 flex items-center text-white bg-white/10 border-l-yellow-400">
                 <div class="w-8 flex justify-center"><i class="fas fa-chart-line text-lg"></i></div>
-                <span class="font-medium tracking-wide">Academic Records</span>
+                <span class="font-medium tracking-wide">Report Card</span>
             </a>
         </nav>
 
@@ -85,28 +77,29 @@
                     <p class="text-xs text-gray-400">Guardian</p>
                 </div>
             </div>
-            <!-- Updated Logout Button triggers modal -->
             <button onclick="showLogoutModal()" class="w-full py-2.5 bg-maroon-800 hover:bg-red-700 rounded-lg text-sm text-white font-medium transition shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative bg-gray-50">
         
-        <!-- Header -->
         <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10 border-b border-gray-100">
             <div class="md:hidden text-maroon-900 text-xl font-bold flex items-center gap-2">
                 MNCHS
             </div>
             
-            <div class="flex items-center gap-3 ml-auto bg-gray-100 p-1.5 rounded-xl border border-gray-200">
-                <span class="text-xs font-bold text-gray-500 uppercase px-3">Student:</span>
-                <select id="studentSelect" onchange="changeStudent()" class="bg-white border-0 text-maroon-900 text-sm rounded-lg focus:ring-0 block p-2 font-bold cursor-pointer shadow-sm min-w-[200px]">
-                    <option value="0">Liam Anderson (Grade 10)</option>
-                    <option value="1">Sophia Anderson (Grade 8)</option>
-                </select>
+            <div class="flex items-center gap-4 ml-auto">
+                <div class="text-right hidden md:block">
+                    <p class="text-sm font-bold text-gray-800">Liam Anderson</p>
+                    <p class="text-xs text-gray-500">Grade 10 - St. Augustine</p>
+                </div>
+                <div class="bg-gray-100 px-4 py-2 rounded-lg border border-gray-200 flex items-center gap-3">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">LRN:</span>
+                    <span class="text-maroon-900 font-mono font-bold text-lg tracking-widest">123456789012</span>
+                    <i class="fas fa-id-card text-gray-400 ml-1"></i>
+                </div>
             </div>
             
             <button class="md:hidden ml-4 text-maroon-900 focus:outline-none">
@@ -114,105 +107,92 @@
             </button>
         </header>
 
-        <!-- Scrollable Content Area -->
         <div id="content-area" class="flex-1 overflow-y-auto p-8">
             
-            <div id="view-grades" class="fade-in max-w-6xl mx-auto">
+            <div id="view-grades" class="fade-in max-w-7xl mx-auto">
                 
-                <!-- Title & Actions -->
                 <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-800">Academic Performance</h2>
-                        <p class="text-gray-500 mt-1">School Year 2025-2026 • <span class="text-maroon-900 font-semibold" id="quarter-label">1st Quarter</span></p>
+                        <h2 class="text-3xl font-bold text-gray-800">Learner's Progress Report</h2>
+                        <p class="text-gray-500 mt-1">School Year 2025-2026 • <span class="text-maroon-900 font-semibold">Final Summary</span></p>
                     </div>
                     <div class="flex gap-3">
-                        <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm transition">
-                            <i class="fas fa-print mr-2"></i> Print
+                        <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 shadow-sm transition hover:text-maroon-900">
+                            <i class="fas fa-print mr-2"></i> Print SF9
                         </button>
-                        <button class="px-4 py-2 bg-maroon-900 text-white rounded-lg text-sm font-medium hover:bg-maroon-800 shadow-md hover:shadow-lg transition flex items-center">
-                            <i class="fas fa-download mr-2"></i> Download Card
+                        <button class="px-4 py-2 bg-maroon-900 text-white rounded-lg text-sm font-medium hover:bg-maroon-800 shadow-md hover:shadow-lg transition flex items-center hover:-translate-y-0.5 transform duration-200">
+                            <i class="fas fa-download mr-2"></i> Download PDF
                         </button>
                     </div>
                 </div>
 
-                <!-- Stats Row -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- GPA Card -->
-                    <div class="bg-gradient-to-br from-maroon-900 to-maroon-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="bg-gradient-to-br from-maroon-900 to-maroon-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-transform hover:scale-[1.02] duration-300">
                         <div class="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4">
-                            <i class="fas fa-graduation-cap text-9xl"></i>
+                            <i class="fas fa-award text-9xl"></i>
                         </div>
                         <div class="relative z-10">
-                            <p class="text-maroon-100 text-sm font-medium uppercase tracking-wider mb-1">General Average</p>
+                            <p class="text-maroon-100 text-sm font-medium uppercase tracking-wider mb-1">Final General Average</p>
                             <div class="flex items-end gap-3">
                                 <h1 id="card-gpa" class="text-5xl font-bold">--</h1>
                                 <span class="text-lg text-maroon-200 mb-2 font-medium">/ 100</span>
                             </div>
                             <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-xs font-bold backdrop-blur-sm border border-white/10">
-                                <i class="fas fa-star mr-1.5 text-yellow-400"></i> Top 10% of Class
+                                <i class="fas fa-check-circle mr-1.5 text-green-400"></i> Promoted to Grade 11
                             </div>
                         </div>
                     </div>
 
-                    <!-- Status Card -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Academic Status</p>
-                                <h2 class="text-2xl font-bold text-green-600 mt-1">Honor Roll</h2>
+                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Honor Status</p>
+                                <h2 class="text-2xl font-bold text-yellow-600 mt-1">With High Honors</h2>
                             </div>
-                            <div class="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                            <div class="h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
                                 <i class="fas fa-medal"></i>
                             </div>
                         </div>
                         <div class="mt-4">
                             <div class="w-full bg-gray-100 rounded-full h-2 mb-2">
-                                <div class="bg-green-500 h-2 rounded-full" style="width: 92%"></div>
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 95%"></div>
                             </div>
-                            <p class="text-xs text-gray-400">Outstanding performance across 8 subjects</p>
+                            <p class="text-xs text-gray-400">Maintained >90% average all quarters</p>
                         </div>
                     </div>
 
-                    <!-- Subjects Card -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
                         <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Graded Subjects</p>
+                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Passed Subjects</p>
                                 <h2 class="text-2xl font-bold text-gray-800 mt-1">8 / 8</h2>
                             </div>
-                            <div class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                                <i class="fas fa-book-open"></i>
+                            <div class="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                <i class="fas fa-check"></i>
                             </div>
                         </div>
                         <div class="mt-4">
-                            <p class="text-sm text-gray-600"><span class="text-green-600 font-bold"><i class="fas fa-arrow-up"></i> 2%</span> higher than last term</p>
+                            <p class="text-sm text-gray-600">All subjects completed successfully.</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tabs (Now Functional) -->
-                <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
-                    <button onclick="setQuarter('q1')" id="tab-q1" class="tab-btn px-6 py-3 text-maroon-900 border-b-2 border-maroon-900 font-bold text-sm transition">1st Quarter</button>
-                    <button onclick="setQuarter('q2')" id="tab-q2" class="tab-btn px-6 py-3 text-gray-500 hover:text-maroon-700 font-medium text-sm transition border-b-2 border-transparent">2nd Quarter</button>
-                    <button onclick="setQuarter('q3')" id="tab-q3" class="tab-btn px-6 py-3 text-gray-500 hover:text-maroon-700 font-medium text-sm transition border-b-2 border-transparent">3rd Quarter</button>
-                    <button onclick="setQuarter('q4')" id="tab-q4" class="tab-btn px-6 py-3 text-gray-500 hover:text-maroon-700 font-medium text-sm transition border-b-2 border-transparent">4th Quarter</button>
-                </div>
-
-                <!-- Grade Table -->
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
                     <table class="w-full text-left border-collapse">
                         <thead class="bg-gray-50/50 text-gray-500 uppercase text-xs tracking-wider">
                             <tr>
-                                <th class="p-5 font-semibold pl-8">Subject</th>
-                                <th class="p-5 font-semibold">Teacher</th>
-                                <th class="p-5 font-semibold w-1/3">Performance</th>
-                                <th class="p-5 font-semibold text-center">Grade</th>
-                                <th class="p-5 font-semibold text-center">Remarks</th>
+                                <th class="p-5 font-semibold pl-8 w-1/4">Learning Areas</th>
+                                <th class="p-5 font-semibold w-1/6">Teacher</th>
+                                <th class="p-4 font-semibold text-center w-16">Q1</th>
+                                <th class="p-4 font-semibold text-center w-16">Q2</th>
+                                <th class="p-4 font-semibold text-center w-16">Q3</th>
+                                <th class="p-4 font-semibold text-center w-16">Q4</th>
+                                <th class="p-5 font-semibold text-center bg-gray-100/50 border-l border-r border-gray-100 w-24">Final Grade</th>
+                                <th class="p-5 font-semibold text-center w-32">Remarks</th>
                             </tr>
                         </thead>
                         <tbody id="grades-table-body" class="text-sm divide-y divide-gray-100">
-                            <!-- Populated by JS -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 
@@ -225,38 +205,23 @@
         </div>
     </main>
 
-    <!-- Detail Modal -->
     <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all scale-100 border border-gray-100">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-800">Subject Breakdown</h3>
+                <h3 class="text-xl font-bold text-gray-800">Summary</h3>
                 <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             
-            <div class="space-y-4">
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-600 font-medium">Written Works (30%)</span>
-                    <span class="font-bold text-gray-800">88/100</span>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-600 font-medium">Performance Tasks (50%)</span>
-                    <span class="font-bold text-gray-800">92/100</span>
-                </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-gray-600 font-medium">Quarterly Assessment (20%)</span>
-                    <span class="font-bold text-gray-800">85/100</span>
-                </div>
-            </div>
-
-            <div class="mt-8 pt-4 border-t border-gray-100 text-center">
-                <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="w-full bg-maroon-50 text-maroon-900 font-bold py-3 rounded-xl hover:bg-maroon-100 transition">Close Details</button>
+            <p class="text-gray-600 mb-4">Detailed component breakdown is available in the individual quarter tabs or upon request from the adviser.</p>
+            
+            <div class="mt-6 pt-4 border-t border-gray-100 text-center">
+                <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="w-full bg-maroon-50 text-maroon-900 font-bold py-3 rounded-xl hover:bg-maroon-100 transition">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- NEW: Logout Confirmation Modal -->
     <div id="logout-modal" class="fixed inset-0 bg-maroon-900 bg-opacity-90 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 border border-gray-100 text-center">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
@@ -276,81 +241,47 @@
         </div>
     </div>
 
-    <!-- NEW: Success Toast -->
-    <div id="success-toast" class="fixed top-6 right-6 z-[70] hidden">
-        <div class="bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 border border-green-500">
-            <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center">
-                <i class="fas fa-check"></i>
-            </div>
-            <div>
-                <h4 class="font-bold">Success</h4>
-                <p class="text-sm text-green-100">Logged out successfully</p>
-            </div>
-        </div>
-    </div>
-
     <script>
         // --- DATA ---
-        // Helper to generate different grades for different quarters to simulate functionality
-        const generateGrades = (baseMap, variance) => {
-            return baseMap.map(subject => {
-                let newPercent = Math.min(100, Math.max(70, subject.percent + Math.floor(Math.random() * variance * 2) - variance));
-                let newLetter = "Satisfactory";
-                if(newPercent >= 90) newLetter = "Outstanding";
-                else if(newPercent >= 85) newLetter = "Very Satisfactory";
-                else if(newPercent >= 80) newLetter = "Satisfactory";
-                else newLetter = "Fairly Satisfactory";
+        
+        const baseSubjects = [
+            { subject: "Mathematics 10", icon: "fa-calculator", teacher: "Mr. Smith" },
+            { subject: "Science 10", icon: "fa-flask", teacher: "Dr. Al-Fayed" },
+            { subject: "English 10", icon: "fa-book", teacher: "Ms. Johnson" },
+            { subject: "Filipino 10", icon: "fa-flag", teacher: "Bb. Reyes" },
+            { subject: "Araling Panlipunan", icon: "fa-landmark", teacher: "Mrs. Davis" },
+            { subject: "MAPEH 10", icon: "fa-basketball-ball", teacher: "Coach R." },
+            { subject: "EsP 10", icon: "fa-heart", teacher: "Mr. Cruz" },
+            { subject: "TLE (ICT)", icon: "fa-laptop-code", teacher: "Mr. Tan" }
+        ];
+
+        // Generate full year grades
+        const generateFullYear = (subjects) => {
+            let totalSum = 0;
+            const data = subjects.map(sub => {
+                // Generate random grades for 4 quarters (between 85 and 98 for a good student)
+                const q1 = Math.floor(Math.random() * (95 - 85 + 1)) + 85;
+                const q2 = Math.floor(Math.random() * (96 - 86 + 1)) + 86;
+                const q3 = Math.floor(Math.random() * (97 - 87 + 1)) + 87;
+                const q4 = Math.floor(Math.random() * (98 - 88 + 1)) + 88;
                 
-                return { ...subject, percent: newPercent, letter: newLetter };
+                // Calculate Final Average
+                const final = Math.round((q1 + q2 + q3 + q4) / 4);
+                
+                let remarks = "Passed";
+                if(final >= 90) remarks = "Outstanding";
+                else if(final >= 85) remarks = "Very Satisfactory";
+                
+                totalSum += final;
+
+                return { ...sub, q1, q2, q3, q4, final, remarks };
             });
-        }
 
-        const baseGradesLiam = [
-            { subject: "Mathematics 10", icon: "fa-calculator", teacher: "Mr. Smith", percent: 81 },
-            { subject: "Science 10", icon: "fa-flask", teacher: "Dr. Al-Fayed", percent: 88 },
-            { subject: "English 10", icon: "fa-book", teacher: "Ms. Johnson", percent: 85 },
-            { subject: "Filipino 10", icon: "fa-flag", teacher: "Bb. Reyes", percent: 90 },
-            { subject: "Araling Panlipunan", icon: "fa-landmark", teacher: "Mrs. Davis", percent: 92 },
-            { subject: "MAPEH 10", icon: "fa-basketball-ball", teacher: "Coach R.", percent: 94 },
-            { subject: "EsP 10", icon: "fa-heart", teacher: "Mr. Cruz", percent: 88 },
-            { subject: "TLE (ICT)", icon: "fa-laptop-code", teacher: "Mr. Tan", percent: 85 }
-        ];
+            const generalAverage = Math.round(totalSum / subjects.length);
+            return { grades: data, gpa: generalAverage };
+        };
 
-        const baseGradesSophia = [
-            { subject: "Mathematics 8", icon: "fa-calculator", teacher: "Mr. Jones", percent: 95 },
-            { subject: "Science 8", icon: "fa-atom", teacher: "Mrs. White", percent: 96 },
-            { subject: "English 8", icon: "fa-pen-nib", teacher: "Ms. P.", percent: 93 },
-            { subject: "Araling Panlipunan", icon: "fa-globe-asia", teacher: "Mr. Clark", percent: 92 },
-            { subject: "Filipino 8", icon: "fa-flag", teacher: "G. Santos", percent: 91 }
-        ];
-
-        const students = [
-            {
-                id: 0,
-                name: "Liam Anderson",
-                grade: 10,
-                quarters: {
-                    q1: { gpa: "88", grades: generateGrades(baseGradesLiam, 0) },
-                    q2: { gpa: "89", grades: generateGrades(baseGradesLiam, 3) },
-                    q3: { gpa: "90", grades: generateGrades(baseGradesLiam, 4) },
-                    q4: { gpa: "91", grades: generateGrades(baseGradesLiam, 2) },
-                }
-            },
-            {
-                id: 1,
-                name: "Sophia Anderson",
-                grade: 8,
-                quarters: {
-                    q1: { gpa: "94", grades: generateGrades(baseGradesSophia, 0) },
-                    q2: { gpa: "95", grades: generateGrades(baseGradesSophia, 2) },
-                    q3: { gpa: "93", grades: generateGrades(baseGradesSophia, 3) },
-                    q4: { gpa: "96", grades: generateGrades(baseGradesSophia, 1) },
-                }
-            }
-        ];
-
-        let currentStudent = students[0];
-        let currentQuarter = 'q1';
+        const studentData = generateFullYear(baseSubjects);
 
         // --- FUNCTIONS ---
 
@@ -358,98 +289,58 @@
             renderDashboard();
         }
 
-        function changeStudent() {
-            const select = document.getElementById('studentSelect');
-            currentStudent = students[select.value];
-            // Reset to Q1 on student change or keep current? Let's keep current.
-            renderDashboard();
-        }
-
-        function setQuarter(q) {
-            currentQuarter = q;
-            renderDashboard();
-        }
-
         function renderDashboard() {
-            // Get Data for current Quarter
-            const data = currentStudent.quarters[currentQuarter];
-            
-            // Update Text Labels
-            const qLabels = { 'q1': '1st Quarter', 'q2': '2nd Quarter', 'q3': '3rd Quarter', 'q4': '4th Quarter' };
-            document.getElementById('quarter-label').innerText = qLabels[currentQuarter];
-
-            // Update Tab Styling
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                // Reset styling
-                btn.className = "tab-btn px-6 py-3 text-gray-500 hover:text-maroon-700 font-medium text-sm transition border-b-2 border-transparent";
-            });
-            // Set Active
-            const activeBtn = document.getElementById(`tab-${currentQuarter}`);
-            activeBtn.className = "tab-btn px-6 py-3 text-maroon-900 border-b-2 border-maroon-900 font-bold text-sm transition";
-
             // Update GPA Card
-            document.getElementById('card-gpa').innerText = data.gpa;
+            document.getElementById('card-gpa').innerText = studentData.gpa;
 
             // Render Grades Table
             const tbody = document.getElementById('grades-table-body');
             tbody.innerHTML = '';
             
-            data.grades.forEach(g => {
-                // Color Logic
-                let colorClass = 'text-gray-800';
-                let barColor = 'bg-gray-400';
-                let badgeClass = 'bg-gray-100 text-gray-600';
+            studentData.grades.forEach(g => {
+                // Color Logic for Remarks
+                let remarkClass = 'bg-gray-100 text-gray-600';
+                if(g.final >= 90) remarkClass = 'bg-green-100 text-green-700 border border-green-200';
+                else if(g.final >= 85) remarkClass = 'bg-blue-100 text-blue-700 border border-blue-200';
 
-                if(g.percent >= 90) {
-                    colorClass = 'text-green-700';
-                    barColor = 'bg-green-500';
-                    badgeClass = 'bg-green-100 text-green-700 border border-green-200';
-                } else if(g.percent >= 85) {
-                    colorClass = 'text-blue-700';
-                    barColor = 'bg-blue-500';
-                    badgeClass = 'bg-blue-100 text-blue-700 border border-blue-200';
-                } else if(g.percent >= 80) {
-                    colorClass = 'text-yellow-700';
-                    barColor = 'bg-yellow-500';
-                    badgeClass = 'bg-yellow-100 text-yellow-700 border border-yellow-200';
-                } else {
-                    colorClass = 'text-red-700';
-                    barColor = 'bg-red-500';
-                    badgeClass = 'bg-red-100 text-red-700 border border-red-200';
+                // Helper to color individual grades slightly if they are low/high
+                const getColor = (grade) => {
+                    if(grade < 75) return 'text-red-600 font-bold';
+                    return 'text-gray-700';
                 }
 
                 const row = `
-                    <tr class="hover:bg-gray-50 transition duration-200 cursor-pointer group" onclick="document.getElementById('detail-modal').classList.remove('hidden')">
+                    <tr class="hover-pop hover:bg-maroon-50 cursor-pointer group border-b border-gray-50 last:border-0" onclick="document.getElementById('detail-modal').classList.remove('hidden')">
                         <td class="p-5 pl-8">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-maroon-100 group-hover:text-maroon-900 transition">
+                                <div class="w-10 h-10 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-maroon-200 group-hover:text-maroon-900 transition duration-300">
                                     <i class="fas ${g.icon}"></i>
                                 </div>
                                 <div>
                                     <p class="font-bold text-gray-800 text-sm group-hover:text-maroon-900 transition">${g.subject}</p>
-                                    <p class="text-xs text-gray-400">Core Subject</p>
+                                    <p class="text-xs text-gray-400 group-hover:text-maroon-400">Core Subject</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="p-5 text-gray-600 font-medium">${g.teacher}</td>
-                        <td class="p-5 align-middle">
-                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                                <div class="${barColor} h-2.5 rounded-full progress-bar shadow-sm" style="width: ${g.percent}%"></div>
-                            </div>
+                        <td class="p-5 text-gray-600 font-medium group-hover:text-gray-800 text-sm">${g.teacher}</td>
+                        
+                        <td class="p-4 text-center ${getColor(g.q1)} group-hover:font-bold transition">${g.q1}</td>
+                        <td class="p-4 text-center ${getColor(g.q2)} group-hover:font-bold transition">${g.q2}</td>
+                        <td class="p-4 text-center ${getColor(g.q3)} group-hover:font-bold transition">${g.q3}</td>
+                        <td class="p-4 text-center ${getColor(g.q4)} group-hover:font-bold transition">${g.q4}</td>
+
+                        <td class="p-5 text-center bg-gray-50/50 border-l border-r border-gray-100 group-hover:bg-maroon-100/30">
+                            <span class="font-bold text-lg text-maroon-900">${g.final}</span>
                         </td>
+
                         <td class="p-5 text-center">
-                            <span class="font-bold text-lg ${colorClass}">${g.percent}</span>
-                        </td>
-                        <td class="p-5 text-center">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${badgeClass}">${g.letter}</span>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${remarkClass} group-hover:shadow-sm">${g.remarks}</span>
                         </td>
                     </tr>
                 `;
                 tbody.innerHTML += row;
             });
         }
-
-        // --- LOGOUT LOGIC ---
 
         function showLogoutModal() {
             const modal = document.getElementById('logout-modal');
@@ -463,22 +354,7 @@
 
         function confirmLogout() {
             closeLogoutModal();
-            
-            // Show Success Toast
-            const toast = document.getElementById('success-toast');
-            toast.classList.remove('hidden');
-            toast.classList.add('toast-enter');
-            
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.remove('toast-enter');
-                toast.classList.add('toast-enter-active');
-            }, 10);
-
-            // Reload page after delay to simulate logout
-            setTimeout(() => {
-                location.reload(); 
-            }, 1500);
+            setTimeout(() => { location.reload(); }, 500);
         }
 
         window.onload = init;
