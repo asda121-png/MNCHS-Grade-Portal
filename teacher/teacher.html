@@ -113,7 +113,7 @@
                     <p class="text-xs text-gray-300">Faculty ID: T-2023</p>
                 </div>
             </div>
-            <button onclick="confirmLogout()" class="mt-4 w-full py-2 bg-maroon-800 hover:bg-maroon-700 active:scale-95 transition-all rounded text-sm text-white">Logout</button>
+            <button onclick="showLogoutModal()" class="mt-4 w-full py-2 bg-maroon-800 hover:bg-maroon-700 active:scale-95 transition-all rounded text-sm text-white">Logout</button>
         </div>
     </aside>
 
@@ -737,6 +737,26 @@
         </div>
     </div>
 
+    <!-- Logout Confirmation Modal -->
+    <div id="logout-modal" class="fixed inset-0 bg-maroon-900 bg-opacity-90 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 border border-gray-100 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+                <i class="fas fa-sign-out-alt text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Confirm Logout</h3>
+            <p class="text-gray-500 mb-6">Are you sure you want to end your session?</p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeLogoutModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition">
+                    No, Stay
+                </button>
+                <button onclick="confirmLogout()" class="flex-1 py-3 bg-maroon-900 text-white font-bold rounded-xl hover:bg-maroon-800 transition shadow-lg">
+                    Yes, Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- DATA (TEACHER NOTIFICATIONS) ---
         const teacherNotifications = [
@@ -868,10 +888,20 @@
             if(status === 'L') btn.className = "w-8 h-8 rounded-full border border-yellow-500 bg-yellow-500 text-white flex items-center justify-center text-xs font-bold shadow-sm";
         }
 
+        function showLogoutModal() {
+            const modal = document.getElementById('logout-modal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeLogoutModal() {
+            const modal = document.getElementById('logout-modal');
+            modal.classList.add('hidden');
+        }
+
         function confirmLogout() {
-            if(confirm("Are you sure you want to log out of the Faculty Portal?")) {
-                alert("Logging out...");
-            }
+            closeLogoutModal();
+            // redirect to frontend index after a short delay to allow modal to close
+            setTimeout(() => { window.location.href = '../index.html'; }, 400);
         }
 
         // --- NEW FUNCTIONALITY ---

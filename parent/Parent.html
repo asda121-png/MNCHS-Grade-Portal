@@ -354,7 +354,8 @@
 
         function confirmLogout() {
             closeLogoutModal();
-            setTimeout(() => { location.reload(); }, 500);
+            // navigate back to the main index after confirming logout
+            setTimeout(() => { window.location.href = '../index.html'; }, 500);
         }
 
         window.onload = init;

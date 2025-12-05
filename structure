@@ -1,0 +1,77 @@
+MNCHS-Grade-Portal/
+│
+├── .git/
+├── .vscode/
+│
+├── index.html
+├── generate.php
+├── logout.php
+├── parent_register.html
+├── register.html
+├── student_register.html
+│
+├── admin/
+│   ├── classes.php
+│   ├── dashboard.php
+│   └── users.php
+│
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   │
+│   └── images/
+│       ├── background.avif
+│       ├── download.jpeg
+│       ├── logo.ico
+│       └── logo.png
+│
+├── components/
+│   ├── footer.php
+│   └── header.php
+│
+├── data/
+│   └── asd.php
+│
+├── feartures/
+│   └── asd.php
+│
+├── includes/
+│   └── config.php
+│
+├── modules/
+│   └── sd.php
+│
+├── parent/
+│   ├── attendance.php
+│   ├── dashboard.php
+│   └── Parent.html
+│
+├── routes/
+│   └── asd.php
+│
+├── server/
+│   ├── asd
+│   │
+│   ├── api/
+│   │   └── login.html
+│   │
+│   └── auth/
+│       └── logout.html
+│
+├── student/
+│   ├── header.html
+│   ├── logout.html
+│   ├── studentdashboard.html
+│   ├── studentgrades.html
+│   ├── studentprofile.html
+│   └── studentvalues.html
+│
+├── teacher/
+│   ├── teacher.html
+│   ├── teacherdashboard.html
+│   ├── teachergradeentry.html
+│   ├── teachermyclasses.html
+│   └── teacherprofile.html
+│
+└── utils/
+    └── sd.php
