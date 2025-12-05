@@ -9,6 +9,26 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
 
 // Mock data for display, replace with actual data from your database
 $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
+
+// --- Securely load API Key from .env file ---
+$google_api_key = '';
+$dotenv_path = __DIR__ . '/../../.env';
+
+if (file_exists($dotenv_path)) {
+    $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+        list($name, $value) = explode('=', $line, 2);
+        if (trim($name) === 'GOOGLE_CALENDAR_API_KEY') {
+            $value = trim($value);
+            // Remove quotes if they exist
+            if (substr($value, 0, 1) == '"' && substr($value, -1) == '"') {
+                $google_api_key = substr($value, 1, -1);
+            } else { $google_api_key = $value; }
+            break;
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -22,6 +42,8 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
 
     <style>
@@ -313,6 +335,22 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
         @media (max-width:768px) { .menu-icon { display: block; } }
     </style>
     <style>
+        /* Calendar Styles */
+        #calendar-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+        .fc .fc-button-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
+        .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
+    </style>
+    <style>
         /* Logout Modal Styles */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -383,6 +421,11 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
                     <div class="value">162</div>
                 </div>
             </div>
+
+            <!-- Calendar Section -->
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
         </main>
     </div>
 
@@ -396,6 +439,10 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
             </div>
         </div>
     </div>
+
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@5.11.3/main.global.min.js'></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -427,6 +474,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
         logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
+    }
+
+    // Calendar logic
+    var calendarEl = document.getElementById('calendar');
+    if (calendarEl) {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            googleCalendarApiKey: '<?php echo htmlspecialchars($google_api_key); ?>',
+            events: {
+                googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
+                className: 'gcal-event' // optional, for styling
+            },
+            editable: true // Allows events to be moved, etc.
+        });
+        calendar.render();
     }
 });
 </script>

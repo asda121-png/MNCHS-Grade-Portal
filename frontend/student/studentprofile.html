@@ -9,6 +9,7 @@ $grade_level  = $_SESSION['grade_level'] ?? '11';
 $section      = $_SESSION['section'] ?? 'STEM-A';
 $lrn          = $_SESSION['lrn'] ?? 'N/A';
 $email        = $_SESSION['email'] ?? '';
+$username     = $_SESSION['username'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -291,8 +292,12 @@ $email        = $_SESSION['email'] ?? '';
             </div>
 
             <div class="form-section">
-                <h3><i class="fas fa-lock"></i> Change Password</h3>
+                <h3><i class="fas fa-lock"></i> Student Account</h3>
                 <div class="form-grid">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" value="" readonly>
+                    </div>
                     <div class="form-group">
                         <label for="current_password">Current Password</label>
                         <input type="password" id="current_password" name="current_password">

@@ -8,6 +8,27 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
 $student_name = $_SESSION['student_name'] ?? 'Student';
 $grade_level  = $_SESSION['grade_level'] ?? '11';
 $section      = $_SESSION['section'] ?? 'STEM-A';
+
+// --- Securely load API Key from .env file ---
+$google_api_key = '';
+$dotenv_path = __DIR__ . '/../../.env';
+
+if (file_exists($dotenv_path)) {
+    $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+        list($name, $value) = explode('=', $line, 2);
+        if (trim($name) === 'GOOGLE_CALENDAR_API_KEY') {
+            $value = trim($value);
+            // Remove quotes if they exist
+            if (substr($value, 0, 1) == '"' && substr($value, -1) == '"') {
+                $google_api_key = substr($value, 1, -1);
+            } else { $google_api_key = $value; }
+            break;
+        }
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -22,6 +43,9 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+
 
     <style>
         :root {
@@ -44,7 +68,7 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c, #c3cfe2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--text);
             min-height: 100vh;
         }
@@ -149,16 +173,6 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
         .profile-dropdown a:hover {
             background-color: var(--bg);
         }
-
-        .profile-link {
-            color: white;
-            font-size: 1.6rem;
-            text-decoration: none;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-        }
-        .profile-link:hover { color: var(--accent); }
 
         .dropdown-caret {
             font-size: 0.9rem;
@@ -345,6 +359,21 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
         }
     </style>
     <style>
+        /* Calendar Styles */
+        #calendar-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+        .fc .fc-button-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
+        .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
+    </style>
+    <style>
         /* Logout Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -412,7 +441,7 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
 <body>
 
     <header class="header">
-        <h1></i> MNCHS Grade Portal</h1>
+        <h1>MNCHS Grade Portal</h1>
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
@@ -450,29 +479,13 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
                 <p>You are currently enrolled in <strong>Grade <?php echo htmlspecialchars($grade_level); ?> - <?php echo htmlspecialchars($section); ?></strong></p>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <i class="fas fa-book-open"></i>
-                    <h3>Subjects Enrolled</h3>
-                    <div class="value">8</div>
-                </div>
+            <div id="calendar-container">
+                <div id="calendar"></div>
             </div>
 
-            <div class="quick-links">
-                <a href="grades.php" class="link-card">
-                    <i class="fas fa-chart-line"></i>
-                    <h3>View My Grades</h3>
-                    <p>Check your latest grades and performance</p>
-                </a>
-                <a href="profile.php" class="link-card">
-                    <i class="fas fa-user-edit"></i>
-                    <h3>Update Profile</h3>
-                    <p>Manage your account and password</p>
-                </a>
-            </div>
         </main>
     </div>
-</body>
+
 <div id="logout-modal" class="modal-overlay">
     <div class="modal-content">
         <h2>Confirm Logout</h2>
@@ -483,21 +496,27 @@ $section      = $_SESSION['section'] ?? 'STEM-A';
         </div>
     </div>
 </div>
+
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@5.11.3/main.global.min.js'></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Profile dropdown logic
     const profileLink = document.querySelector('.profile-link');
     const profileDropdown = document.querySelector('.profile-dropdown');
 
-    profileLink.addEventListener('click', function(e) {
-        profileDropdown.classList.toggle('show');
-    });
-
-    // Close the dropdown when clicking outside
-    window.addEventListener('click', function(event) {
-        if (!profileLink.contains(event.target) && !profileDropdown.contains(event.target)) {profileDropdown.classList.remove('show'); }
-    });
-});
-document.addEventListener('DOMContentLoaded', function() {
+    if (profileLink && profileDropdown) {
+        profileLink.addEventListener('click', function(e) {
+            profileDropdown.classList.toggle('show');
+        });
+        // Close the dropdown when clicking outside
+        window.addEventListener('click', function(event) {
+            if (!profileLink.contains(event.target) && !profileDropdown.contains(event.target)) {profileDropdown.classList.remove('show'); }
+        });
+    }
+    // Logout modal logic
     const logoutLink = document.getElementById('logout-link');
     const logoutModal = document.getElementById('logout-modal');
     const cancelLogout = document.getElementById('cancel-logout');
@@ -505,6 +524,25 @@ document.addEventListener('DOMContentLoaded', function() {
     logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
     cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
     logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
+
+    // Calendar logic
+    var calendarEl = document.getElementById('calendar');
+    if (calendarEl) {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            googleCalendarApiKey: '<?php echo htmlspecialchars($google_api_key); ?>',
+            events: {
+                googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
+                className: 'gcal-event' // optional, for styling
+            }
+        });
+        calendar.render();
+    }
 });
 </script>
 </html>
