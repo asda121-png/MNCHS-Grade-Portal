@@ -17,6 +17,7 @@ $email        = $_SESSION['email'] ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Settings | MNCHS Grade Portal</title>
+    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -49,13 +50,87 @@ $email        = $_SESSION['email'] ?? '';
             justify-content: center; align-items: center;
             border: 2px solid var(--primary-dark);
         }
+        .profile-link {
+            position: relative;
+            color: white;
+            font-size: 1.6rem;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            cursor: pointer; /* Add cursor style to indicate it's clickable */
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden by default */
+            min-width: 160px;
+            z-index: 100;
+        }
+
+        .profile-dropdown.show {
+            display: block; /* Show when the class 'show' is added */
+        }
+
+        .profile-dropdown a {
+            display: block;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: var(--text);
+            transition: background-color 0.3s ease;
+            text-align: left;
+        }
+
+        .profile-dropdown a:hover {
+            background-color: #f5f6fa; /* --bg color */
+        }
+
+        .profile-link {
+            color: white;
+            font-size: 1.6rem;
+            text-decoration: none;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+        }
+        .profile-link:hover { color: var(--accent); }
+
+        .dropdown-caret {
+            font-size: 0.9rem;
+            margin-left: 8px;
+            transition: var(--transition);
+        }
 
         /* Layout */
-        .container { display:flex; min-height:calc(100vh - 80px); }
-        .sidebar { width:260px; background:white; padding:2rem 1.5rem; box-shadow:5px 0 15px rgba(0,0,0,0.05); position:sticky; top:80px; height:calc(100vh - 80px); overflow-y:auto; }
-        
-        /* Sidebar Links */
-        .sidebar h2 { color:var(--primary); font-size:1.4rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:10px; }
+        .sidebar-logo-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .sidebar-logo {
+            max-width: 100px;
+            height: auto;
+        }
+
+        .container { 
+            display:flex; 
+            min-height:calc(100vh - 80px); 
+        }
+        .sidebar { 
+            width:260px; 
+            background:white; 
+            padding:2rem 1.5rem; 
+            box-shadow:5px 0 15px rgba(0,0,0,0.05); 
+            position:sticky; 
+            top:80px; 
+            height:calc(100vh - 80px); 
+            overflow-y:auto; 
+        }
         .sidebar ul { list-style-type: none; }
         .sidebar ul li { margin-bottom: 8px; }
         .sidebar ul li a { display:flex; align-items:center; gap:12px; padding:14px 18px; color:var(--text); text-decoration:none; border-radius:12px; font-weight:500; transition:var(--transition); }
@@ -63,12 +138,17 @@ $email        = $_SESSION['email'] ?? '';
         .sidebar ul li a i { width:20px; text-align:center; font-size:1.1rem; }
 
         /* Main Content */
-        .main-content { flex:1; padding:2.5rem; }
-        .page-title { color:var(--primary); font-size:2rem; display:flex; align-items:center; gap:12px; margin-bottom:2rem; }
+        .main-content { 
+            flex:1; 
+            padding:2.5rem; 
+            padding:2.5rem;
+            background: transparent; 
+        }
+        .page-title { color:var(--primary); font-size:2rem; display:flex; align-items:center; gap:12px; margin-bottom:2rem; max-width: 1000px; }
 
         /* Form Styling */
         .profile-form {
-            background: white; padding: 2rem; border-radius: 16px; box-shadow: var(--shadow);
+            background: white; padding: 2rem; border-radius: 16px; box-shadow: var(--shadow); max-width: 1000px;
             border-left: 5px solid var(--accent);
         }
         .form-section { margin-bottom: 2.5rem; }
@@ -94,39 +174,77 @@ $email        = $_SESSION['email'] ?? '';
 
         @media (max-width:768px) { 
             .container { flex-direction:column; } 
-            .sidebar { width:100%; height:auto; position:relative; top:0; display: none; }
-            .sidebar.show { display: block; }
+            .sidebar { width:100%; height:auto; position:relative; top:0; }
             .menu-icon { display: block; }
             .header h1 { font-size: 1.5rem; }
             .header h1 i { font-size: 1.7rem; }
-            .main-content { padding: 1.5rem; }
             .page-title { font-size: 1.7rem; }
+            .main-content {
+                padding: 1.5rem;
+            }
         }
     </style>
+    <style>
+        /* Logout Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center;
+            align-items: center; z-index: 2000; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: white; padding: 2.5rem; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center;
+            max-width: 400px; width: 90%; transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content { transform: scale(1); }
+        .modal-content h2 {
+            color: var(--primary); margin-bottom: 1rem; font-size: 1.6rem;
+        }
+        .modal-content p {
+            color: var(--text-light); margin-bottom: 2rem; font-size: 1.1rem;
+        }
+        .modal-buttons {
+            display: flex; justify-content: center; gap: 1rem;
+        }
+        .modal-buttons button, .modal-buttons a {
+            padding: 12px 24px; border-radius: 8px;
+            font-weight: 600; cursor: pointer;
+        }
+    </style>
+
 </head>
 <body>
 
-<header class="header">
-    <a href="#" class="menu-icon"><i class="fas fa-bars"></i></a>
-    <h1><i class="fas fa-graduation-cap"></i> MNCHS Grade Portal</h1>
+<header class="header"> 
+    <h1></i> MNCHS Grade Portal</h1>
     <div class="user-info">
         <a href="#" class="notification-bell">
             <i class="fas fa-bell"></i>
             <span class="notification-badge">3</span>
         </a>
-        <span><?php echo htmlspecialchars($student_name); ?></span>
+        <div class="profile-link" title="View Profile">
+            <i class="fas fa-user-circle"></i><i class="fas fa-caret-down dropdown-caret"></i>
+            <div class="profile-dropdown">
+                <a href="studentprofile.html">Profile</a>
+            </div>
+        </div>
+        <span><?php echo htmlspecialchars($student_name); ?> (Student)</span>
     </div>
 </header>
 
 <div class="container">
     <aside class="sidebar">
-        <h2><i class="fas fa-tachometer-alt"></i> Menu</h2>
+        <div class="sidebar-logo-container">
+            <img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
+        </div>
         <ul>
             <li><a href="studentdashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="studentgrades.html"><i class="fas fa-clipboard-list"></i> My Grades</a></li>
             <li><a href="studentvalues.html"><i class="fas fa-heart"></i> Observed Values</a></li>
-            <li><a href="studentprofile.html" class="active"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
-            <li><a href="studentlogout.html" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
     </aside>
 
@@ -135,37 +253,45 @@ $email        = $_SESSION['email'] ?? '';
 
         <form action="#" method="POST" class="profile-form">
             <div class="form-section">
-                <h3><i class="fas fa-id-card"></i> Personal Information</h3>
+                <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="student_name">Full Name</label>
-                        <input type="text" id="student_name" name="student_name" value="<?php echo htmlspecialchars($student_name); ?>" readonly>
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name" value="" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="suffix">Suffix (e.g., Jr., III)</label>
+                        <input type="text" id="suffix" name="suffix" value="" readonly>
                     </div>
                     <div class="form-group">
                         <label for="lrn">Learner Reference Number (LRN)</label>
-                        <input type="text" id="lrn" name="lrn" value="<?php echo htmlspecialchars($lrn); ?>" readonly>
+                        <input type="text" id="lrn" name="lrn" value="" readonly>
                     </div>
                     <div class="form-group">
                         <label for="grade_level">Grade Level</label>
-                        <input type="text" id="grade_level" name="grade_level" value="<?php echo htmlspecialchars($grade_level); ?>" readonly>
+                        <input type="text" id="grade_level" name="grade_level" value="" readonly>
                     </div>
                     <div class="form-group">
                         <label for="section">Section</label>
-                        <input type="text" id="section" name="section" value="<?php echo htmlspecialchars($section); ?>" readonly>
+                        <input type="text" id="section" name="section" value="" readonly>
                     </div>
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="contact_number">Contact Number</label>
-                        <input type="tel" id="contact_number" name="contact_number" placeholder="e.g., 09123456789">
+                        <input type="email" id="email" name="email" value="">
                     </div>
                 </div>
             </div>
 
             <div class="form-section">
-                <h3><i class="fas fa-key"></i> Change Password</h3>
+                <h3><i class="fas fa-lock"></i> Change Password</h3>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="current_password">Current Password</label>
@@ -187,7 +313,47 @@ $email        = $_SESSION['email'] ?? '';
             </div>
         </form>
     </main>
-</div>
+</div> <!-- End of .container -->
 
+<div id="logout-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Confirm Logout</h2>
+        <p>Are you sure you want to log out?</p>
+        <div class="modal-buttons">
+            <button id="cancel-logout" style="background-color: #ccc; border: none;">Cancel</button>
+            <a href="../logout.php" id="confirm-logout" style="background-color: var(--primary); color: white; text-decoration: none;">Yes, Logout</a>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const profileLink = document.querySelector('.profile-link');
+    const profileDropdown = document.querySelector('.profile-dropdown');
+
+    if (profileLink && profileDropdown) {
+        profileLink.addEventListener('click', function(e) {
+            profileDropdown.classList.toggle('show');
+        });
+
+        // Close the dropdown when clicking outside
+        window.addEventListener('click', function(event) {
+            if (!profileLink.contains(event.target) && !profileDropdown.contains(event.target)) { profileDropdown.classList.remove('show'); }
+        });
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutLink = document.getElementById('logout-link');
+    const logoutModal = document.getElementById('logout-modal');
+    const cancelLogout = document.getElementById('cancel-logout');
+
+    // Check if elements exist before adding event listeners
+    if (logoutLink && logoutModal && cancelLogout) {
+        logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
+        cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
+        // Close modal if clicking outside the modal content
+        logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
+    }
+});
+</script>
 </body>
 </html>
