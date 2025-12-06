@@ -1,17 +1,9 @@
-<?php
-session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
-    // header('Location: ../login.php');
-    // exit();
-}
-$teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grade Entry | MNCHS Grade Portal</title>
+    <title>Profile Settings | MNCHS Grade Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
@@ -96,23 +88,17 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
         .sidebar ul li a:hover, .sidebar ul li a.active { background:var(--primary); color:white; transform:translateX(5px); box-shadow:0 5px 15px rgba(128,0,0,0.2); }
         .sidebar ul li a i { font-size:1.1rem; width:20px; text-align:center; }
         .main-content { flex:1; padding:2.5rem; background:transparent; }
-        .page-title { color:var(--primary); font-size:2rem; display:flex; align-items:center; gap:12px; margin-bottom:2rem; }
-        .filter-section { background:white; padding:1.5rem 2rem; border-radius:16px; box-shadow:var(--shadow); margin-bottom:2rem; display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap; }
-        .filter-group { display:flex; flex-direction:column; }
-        .filter-group label { font-weight:600; margin-bottom:8px; color:var(--text-light); font-size:0.9rem; }
-        .filter-group select { padding:10px 15px; border:1px solid #ddd; border-radius:8px; font-family:'Poppins',sans-serif; font-size:1rem; background-color:#f9fafb; min-width:200px; }
-        .btn { background:var(--primary); color:white; padding:10px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:var(--transition); }
-        .btn:hover { background:var(--primary-dark); }
-        .grades-table { width:100%; background:white; border-radius:16px; box-shadow:var(--shadow); border-collapse:collapse; overflow:hidden; }
-        .grades-table th, .grades-table td { padding:15px; text-align:left; border-bottom:1px solid #f0f0f0; }
-        .grades-table thead { background:var(--primary); color:white; font-weight:600; }
-        .grades-table tbody tr:last-child td { border-bottom:none; }
-        .grades-table tbody tr:hover { background-color:#f5f6fa; }
-        .grades-table input[type="number"] { width:70px; padding:8px; border:1px solid #ddd; border-radius:6px; text-align:center; font-family:'Poppins',sans-serif; }
-        .grades-table input[type="number"]:focus { border-color:var(--primary); outline:none; box-shadow:0 0 0 2px rgba(128,0,0,0.1); }
-        .final-grade { font-weight:600; }
-        .remarks.passed { color:#27ae60; font-weight:600; }
-        .remarks.failed { color:#e74c3c; font-weight:600; }
+        .page-title { color:var(--primary); font-size:2rem; display:flex; align-items:center; gap:12px; margin-bottom:2rem; max-width:1000px; }
+        .profile-form { background:white; padding:2rem; border-radius:16px; box-shadow:var(--shadow); max-width:1000px; border-left:5px solid var(--accent); }
+        .form-section { margin-bottom:2.5rem; }
+        .form-section:last-child { margin-bottom:0; }
+        .form-section h3 { color:var(--primary); margin-bottom:1.5rem; border-bottom:2px solid #eee; padding-bottom:0.75rem; font-size:1.25rem; }
+        .form-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:1.5rem; }
+        .form-group { display:flex; flex-direction:column; }
+        .form-group label { font-weight:600; margin-bottom:8px; color:var(--text-light); font-size:0.9rem; }
+        .form-group input { padding:12px 15px; border:1px solid #ddd; border-radius:8px; font-family:'Poppins',sans-serif; font-size:1rem; transition:var(--transition); background-color:#f9fafb; }
+        .form-group input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(128,0,0,0.1); outline:none; }
+        .form-group input[readonly] { background-color:#eee; cursor:not-allowed; }
         .form-actions { text-align:right; margin-top:2rem; }
         .btn-save { background:var(--primary); color:white; padding:12px 25px; border:none; border-radius:8px; font-weight:600; font-size:1rem; cursor:pointer; transition:var(--transition); box-shadow:0 4px 15px rgba(128,0,0,0.2); }
         .btn-save:hover { background:var(--primary-dark); transform:translateY(-2px); }
@@ -129,7 +115,6 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
             .sidebar { width:100%; height:auto; position:relative; top:0; padding:1.5rem; }
             .main-content { padding:1.5rem; }
             .header h1 { font-size:1.5rem; }
-            .grades-table { display:block; overflow-x:auto; }
             .menu-icon { display: block; }
         }
     </style>
@@ -150,7 +135,7 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
                     <a href="teacherprofile.html">Profile</a>
                 </div>
             </div>
-            <span><?php echo htmlspecialchars($teacher_name); ?> (Teacher)</span>
+            <span>Teacher Name (Teacher)</span>
         </div>
     </header>
 
@@ -160,114 +145,71 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
             <ul>
                 <li><a href="teacherdashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
                 <li><a href="teachermyclasses.html"><i class="fas fa-users"></i> My Classes</a></li>
-                <li><a href="teachergradeentry.html" class="active"><i class="fas fa-edit"></i> Grade Entry</a></li>
+                <li><a href="teachergradeentry.html"><i class="fas fa-edit"></i> Grade Entry</a></li>
+                <li><a href="teachervaluesentry.html"><i class="fas fa-tasks"></i> Values Entry</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
+
         <main class="main-content">
-            <h1 class="page-title">Grade Entry</h1>
-            <div class="filter-section">
-                <div class="filter-group">
-                    <label for="class-select">Select Class</label>
-                    <select id="class-select" name="class">
-                        <option value="11-STEM-A">Grade 11 - STEM A (Pre-Calculus)</option>
-                        <option value="11-STEM-B">Grade 11 - STEM B (Pre-Calculus)</option>
-                        <option value="12-HUMSS-A">Grade 12 - HUMSS A (Practical Research 2)</option>
-                        <option value="12-ABM-C">Grade 12 - ABM C (Applied Economics)</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="quarter-select">Select Quarter</label>
-                    <select id="quarter-select" name="quarter">
-                        <option value="1">1st Quarter</option>
-                        <option value="2">2nd Quarter</option>
-                        <option value="3">3rd Quarter</option>
-                        <option value="4">4th Quarter</option>
-                    </select>
-                </div>
-                <button class="btn" style="align-self: flex-end;"><i class="fas fa-filter"></i> Load Students</button>
-            </div>
+            <h1 class="page-title">Profile Settings</h1>
 
-            <form action="#" method="POST">
-                <table class="grades-table">
-                    <thead>
-                        <tr>
-                            <th>LRN</th>
-                            <th>Student Name</th>
-                            <th>Q1</th>
-                            <th>Q2</th>
-                            <th>Q3</th>
-                            <th>Q4</th>
-                            <th>Final Grade</th>
-                            <th>Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Sample Student Rows -->
-                        <tr>
-                            <td>123456789012</td>
-                            <td>Aguilar, Juan D.</td>
-                            <td><input type="number" name="q1[]" value="88" min="60" max="100"></td>
-                            <td><input type="number" name="q2[]" value="90" min="60" max="100"></td>
-                            <td><input type="number" name="q3[]" min="60" max="100"></td>
-                            <td><input type="number" name="q4[]" min="60" max="100"></td>
-                            <td class="final-grade">89</td>
-                            <td class="remarks passed">Passed</td>
-                        </tr>
-                        <tr>
-                            <td>123456789013</td>
-                            <td>Bautista, Maria C.</td>
-                            <td><input type="number" name="q1[]" value="92" min="60" max="100"></td>
-                            <td><input type="number" name="q2[]" value="94" min="60" max="100"></td>
-                            <td><input type="number" name="q3[]" min="60" max="100"></td>
-                            <td><input type="number" name="q4[]" min="60" max="100"></td>
-                            <td class="final-grade">93</td>
-                            <td class="remarks passed">Passed</td>
-                        </tr>
-                        <tr>
-                            <td>123456789014</td>
-                            <td>Cruz, Pedro S.</td>
-                            <td><input type="number" name="q1[]" value="74" min="60" max="100"></td>
-                            <td><input type="number" name="q2[]" value="72" min="60" max="100"></td>
-                            <td><input type="number" name="q3[]" min="60" max="100"></td>
-                            <td><input type="number" name="q4[]" min="60" max="100"></td>
-                            <td class="final-grade">73</td>
-                            <td class="remarks failed">Failed</td>
-                        </tr>
-                         <!-- Add more student rows as needed -->
-                    </tbody>
-                </table>
-
+            <form action="#" method="POST" class="profile-form">
+                <div class="form-section">
+                    <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="first_name">First Name</label>
+                            <input type="text" id="first_name" name="first_name" value="" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" value="" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="employee_id">Employee ID</label>
+                            <input type="text" id="employee_id" name="employee_id" value="" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="department">Department</label>
+                            <input type="text" id="department" name="department" value="Senior High School" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" value="">
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="form-section">
+                    <h3><i class="fas fa-lock"></i> Change Password</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="current_password">Current Password</label>
+                            <input type="password" id="current_password" name="current_password">
+                        </div>
+                        <div class="form-group">
+                            <label for="new_password">New Password</label>
+                            <input type="password" id="new_password" name="new_password">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm New Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password">
+                        </div>
+                    </div>
+                </div>
+    
                 <div class="form-actions">
-                    <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Grades</button>
+                    <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Changes</button>
                 </div>
             </form>
         </main>
     </div>
 
-    <div id="logout-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Confirm Logout</h2>
-            <p>Are you sure you want to log out?</p>
-            <div class="modal-buttons">
-                <button id="cancel-logout" style="background-color: #ccc; border: none;">Cancel</button>
-                <a href="../logout.php" id="confirm-logout" style="background-color: var(--primary); color: white;">Yes, Logout</a>
-            </div>
-        </div>
-    </div>
-
+    <!-- Container for the logout modal -->
+    <div id="logout-modal-container"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Pre-select class if passed in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const classParam = urlParams.get('class');
-    if (classParam) {
-        const classSelect = document.getElementById('class-select');
-        if(classSelect) {
-            classSelect.value = classParam;
-        }
-    }
-
     const profileLink = document.querySelector('.profile-link');
     const profileDropdown = document.querySelector('.profile-dropdown');
 
@@ -282,21 +224,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- Reusable Logout Modal Logic ---
     const logoutLink = document.getElementById('logout-link');
-    const logoutModal = document.getElementById('logout-modal');
-    const cancelLogout = document.getElementById('cancel-logout');
+    const modalContainer = document.getElementById('logout-modal-container');
 
-    function showLogoutModal(e) {
-        e.preventDefault();
-        logoutModal.classList.add('show');
-    }
-    if (logoutModal && cancelLogout) {
-        if (logoutLink) {
-            logoutLink.addEventListener('click', showLogoutModal);
-        }
-        cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
-        logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
-    }
+    // Fetch and inject the modal
+    fetch('../components/logout_modal.html')
+        .then(response => response.text())
+        .then(html => {
+            modalContainer.innerHTML = html;
+
+            // Now that the modal is in the DOM, add event listeners
+            const logoutModal = document.getElementById('logout-modal');
+            const cancelLogout = document.getElementById('cancel-logout');
+            const confirmLogout = document.getElementById('confirm-logout');
+            const confirmationView = document.getElementById('logout-confirmation-view');
+            const inProgressView = document.getElementById('logout-in-progress-view');
+
+            logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
+            cancelLogout.addEventListener('click', () => logoutModal.classList.remove('show'));
+            logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) logoutModal.classList.remove('show'); });
+
+            confirmLogout.addEventListener('click', () => {
+                confirmationView.style.display = 'none';
+                inProgressView.style.display = 'flex';
+                setTimeout(() => { window.location.href = '../index.html'; }, 2000);
+            });
+        })
+        .catch(error => console.error('Error loading logout modal:', error));
 });
 </script>
 

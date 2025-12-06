@@ -1,0 +1,61 @@
+<!-- 
+    Reusable Logout Confirmation Modal
+    This file is intended to be fetched and injected into a page via JavaScript.
+-->
+<style>
+    #logout-modal-container .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+    }
+
+    #logout-modal-container .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease;
+    }
+
+    #logout-modal-container .modal-content {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    #logout-modal-container .modal-overlay.show .modal-content {
+        transform: scale(1);
+    }
+
+    #logout-modal-container .modal-content h2 { color: #800000; margin-bottom: 1rem; font-size: 1.6rem; }
+    #logout-modal-container .modal-content p { color: #636e72; margin-bottom: 2rem; font-size: 1.1rem; }
+    #logout-modal-container .modal-buttons { display: flex; justify-content: center; gap: 1rem; }
+    #logout-modal-container .modal-buttons button, #logout-modal-container .modal-buttons a { padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; }
+    #logout-modal-container #confirm-logout { background-color: #800000; color: white; }
+    #logout-modal-container #cancel-logout { background-color: #ccc; }
+</style>
+
+<div id="logout-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Confirm Logout</h2>
+        <p>Are you sure you want to log out?</p>
+        <div class="modal-buttons">
+            <button id="cancel-logout">Cancel</button>
+            <a href="../index.html" id="confirm-logout">Yes, Logout</a>
+        </div>
+    </div>
+</div>

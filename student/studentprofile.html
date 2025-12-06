@@ -185,36 +185,6 @@ $username     = $_SESSION['username'] ?? '';
             }
         }
     </style>
-    <style>
-        /* Logout Modal Styles */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center;
-            align-items: center; z-index: 2000; opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal-overlay.show { opacity: 1; visibility: visible; }
-        .modal-content {
-            background: white; padding: 2.5rem; border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); text-align: center;
-            max-width: 400px; width: 90%; transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.show .modal-content { transform: scale(1); }
-        .modal-content h2 {
-            color: var(--primary); margin-bottom: 1rem; font-size: 1.6rem;
-        }
-        .modal-content p {
-            color: var(--text-light); margin-bottom: 2rem; font-size: 1.1rem;
-        }
-        .modal-buttons {
-            display: flex; justify-content: center; gap: 1rem;
-        }
-        .modal-buttons button, .modal-buttons a {
-            padding: 12px 24px; border-radius: 8px;
-            font-weight: 600; cursor: pointer;
-        }
-    </style>
 
 </head>
 <body>
@@ -320,16 +290,8 @@ $username     = $_SESSION['username'] ?? '';
     </main>
 </div> <!-- End of .container -->
 
-<div id="logout-modal" class="modal-overlay">
-    <div class="modal-content">
-        <h2>Confirm Logout</h2>
-        <p>Are you sure you want to log out?</p>
-        <div class="modal-buttons">
-            <button id="cancel-logout" style="background-color: #ccc; border: none;">Cancel</button>
-            <a href="../logout.php" id="confirm-logout" style="background-color: var(--primary); color: white; text-decoration: none;">Yes, Logout</a>
-        </div>
-    </div>
-</div>
+<!-- Container for the logout modal -->
+<div id="logout-modal-container"></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const profileLink = document.querySelector('.profile-link');
@@ -346,18 +308,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-document.addEventListener('DOMContentLoaded', function() {
-    const logoutLink = document.getElementById('logout-link');
-    const logoutModal = document.getElementById('logout-modal');
-    const cancelLogout = document.getElementById('cancel-logout');
 
-    // Check if elements exist before adding event listeners
-    if (logoutLink && logoutModal && cancelLogout) {
-        logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
-        cancelLogout.addEventListener('click', () => { logoutModal.classList.remove('show'); });
-        // Close modal if clicking outside the modal content
-        logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) { logoutModal.classList.remove('show'); } });
-    }
+// --- Reusable Logout Modal Logic ---
+document.addEventListener('DOMContentLoaded', function () {
+    const logoutLink = document.getElementById('logout-link');
+    const modalContainer = document.getElementById('logout-modal-container');
+
+    // Fetch and inject the modal
+    fetch('../components/logout_modal.html')
+        .then(response => response.text())
+        .then(html => {
+            modalContainer.innerHTML = html;
+            const logoutModal = document.getElementById('logout-modal');
+            const cancelLogout = document.getElementById('cancel-logout');
+            logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
+            cancelLogout.addEventListener('click', () => logoutModal.classList.remove('show'));
+            logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) logoutModal.classList.remove('show'); });
+        })
+        .catch(error => console.error('Error loading logout modal:', error));
 });
 </script>
 </body>
