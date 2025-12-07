@@ -1,31 +1,37 @@
 <?php
 session_start();
+require_once "includes/supabase.php";  // Ensure the path is correct
 
-// If a user is already logged in, redirect them to their respective dashboard
-if (isset($_SESSION['user_id'])) {
-    if ($_SESSION['user_type'] === 'student') {
-        header('Location: student/studentdashboard.html');
-        exit();
-    } elseif ($_SESSION['user_type'] === 'teacher') {
-        header('Location: teacher/teacherdashboard.html');
-        exit();
-    } elseif ($_SESSION['user_type'] === 'admin') {
-        header('Location: admin/admindashboard.html');
-        exit();
-    }
-}
-
-// Placeholder for login logic
 $login_error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // In a real application, you would validate credentials against a database here.
-    // For this example, we'll just set a generic error.
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
 
-    // Example: if ($username === 'admin' && $password === 'password') { ... }
-    
-    $login_error = 'Invalid username or password.';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
+
+    $supabase = new Supabase();
+    $user = $supabase->fetchUser($username);
+
+    if ($user && count($user) > 0) {
+        $row = $user[0];
+
+        if (password_verify($password, $row['password_hash'])) {
+
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['user_type'] = $row['user_type'];
+
+            if ($row['user_type'] === 'student') {
+                header("Location: student/studentdashboard.html");
+            } elseif ($row['user_type'] === 'teacher') {
+                header("Location: teacher/teacherdashboard.html");
+            } elseif ($row['user_type'] === 'admin') {
+                header("Location: admin/admindashboard.html");
+            }
+            exit();
+        }
+    }
+
+    $login_error = "Invalid username or password.";
 }
 ?>
 <!DOCTYPE html>

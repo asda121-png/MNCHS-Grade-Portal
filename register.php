@@ -1,18 +1,38 @@
 <?php
-session_start();
 
-// If a user is already logged in, redirect them to their respective dashboard.
-if (isset($_SESSION['user_id'])) {
-    $user_type = $_SESSION['user_type'] ?? '';
-    if ($user_type === 'admin') {
-        header('Location: routes/admin/admindashboard.php');
-    } elseif ($user_type === 'teacher') {
-        header('Location: routes/teacher/teacherdashboard.html');
-    } elseif ($user_type === 'student') {
-        header('Location: routes/student/studentdashboard.html');
+require 'includes/supabase.php';
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    $username = $_POST["username"];
+    $email = $_POST["email"];
+    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+    $confirm_password = $_POST["confirm_password"];
+
+    if ($_POST["password"] !== $confirm_password) {
+        die("Password does not match");
     }
-    exit();
+
+    $db = new Supabase();
+
+    $data = [
+        "username" => $username,
+        "email" => $email,
+        "password" => $password,
+        "user_type" => "student"
+    ];
+
+    $result = $db->insert("users", $data);
+
+    if ($result) {
+        header("Location: index.html?success=1");
+        exit();
+    } else {
+        echo "Failed to create account.";
+    }
 }
+?>
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -44,7 +64,8 @@ if (isset($_SESSION['user_id'])) {
 
             <h2 class="text-3xl font-semibold text-[#0D1117] mb-6">Create your account</h2>
 
-            <form class="space-y-6">
+           <form class="space-y-6" action="register-process.php" method="POST">
+
 
                 <input 
                     type="text" 
