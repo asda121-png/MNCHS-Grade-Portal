@@ -1,0 +1,325 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+    header('Location: ../../index.php'); // Redirect to login page
+    exit();
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Students | MNCHS Grade Portal</title>
+    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #800000; --primary-dark: #660000; --accent: #FFD700;
+            --text: #2d3436; --text-light: #636e72; --shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: var(--text); }
+        .header { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: white; padding: 1.2rem 2rem; box-shadow: 0 4px 15px rgba(128, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.8rem; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 25px; }
+        .container { display: flex; min-height: calc(100vh - 77px); }
+        .sidebar { width: 260px; background: white; padding: 2rem 1.5rem; box-shadow: 5px 0 15px rgba(0,0,0,0.05); position: sticky; top: 77px; height: calc(100vh - 77px); overflow-y: auto; }
+        .sidebar-logo-container { text-align: center; margin-bottom: 2rem; }
+        .sidebar-logo { max-width: 120px; height: auto; }
+        .sidebar ul { list-style: none; }
+        .sidebar ul li { margin-bottom: 8px; }
+        .sidebar ul li a { display: flex; align-items: center; gap: 12px; padding: 14px 18px; color: var(--text); text-decoration: none; border-radius: 12px; font-weight: 500; transition: all 0.3s ease; }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background: var(--primary); color: white; transform: translateX(5px); box-shadow: 0 5px 15px rgba(128, 0, 0, 0.2); }
+        .sidebar ul li a i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .main-content { flex: 1; padding: 2.5rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .page-header h2 { font-size: 2rem; color: var(--primary); }
+        .btn-primary { background: var(--primary); color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; transition: all 0.3s ease; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .content-box { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 2rem; }
+        .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .filters input, .filters select { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.95rem; background-color: #f9fafb; }
+        .search-box { position: relative; }
+        .search-box input { padding-left: 40px; width: 300px; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        thead th { background-color: #f9fafb; color: var(--text-light); text-transform: uppercase; font-size: 0.8rem; }
+        tbody tr:hover { background-color: #f5f6fa; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+        .status-badge.enrolled { background-color: #e8f8f0; color: #27ae60; }
+        .status-badge.not-enrolled { background-color: #feeaed; color: #e74c3c; }
+        .action-links a { margin-right: 1rem; color: var(--primary); font-weight: 600; text-decoration: none; }
+        .action-links a:hover { text-decoration: underline; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeIn 0.3s ease; }
+        .modal-content { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; transform: scale(0.95); animation: scaleUp 0.3s ease forwards; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-header h3 { font-size: 1.5rem; color: var(--primary); }
+        .close-button { font-size: 2rem; color: var(--text-light); cursor: pointer; background: none; border: none; line-height: 1; }
+        .modal-body .form-group { margin-bottom: 1rem; }
+        .modal-body .form-row { display: flex; gap: 1rem; }
+        .modal-body .form-row .form-group { flex: 1; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text); }
+        .modal-body { min-height: 380px; } /* Set a consistent height for the form area */
+        .modal-body input, .modal-body select { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1rem; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+        .btn-secondary { background: #f1f1f1; color: var(--text); border: 1px solid #ddd; }
+        .btn-secondary:hover { background: #e7e7e7; }
+        .modal-overlay.show { display: flex; }
+
+        /* Multi-step form styles */
+        .step-indicator { display: flex; justify-content: space-around; margin-bottom: 1.5rem; }
+        .step { text-align: center; color: var(--text-light); }
+        .step-number { background: #eee; color: var(--text-light); border-radius: 50%; width: 30px; height: 30px; line-height: 30px; display: inline-block; font-weight: 600; margin-bottom: 0.25rem; }
+        .step-title { font-size: 0.8rem; }
+        .step.active .step-number { background: var(--primary); color: white; }
+        .step.active .step-title { color: var(--primary); font-weight: 600; }
+        .form-step { display: none; }
+        .form-step.active { display: block; animation: fadeIn 0.5s; }
+
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Reusable Header -->
+    <?php include '../../includes/header.php'; ?>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo-container"><img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
+            <ul>
+                <li><a href="admindashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="adminstudents.php" class="active"><i class="fas fa-user-graduate"></i> Students</a></li>
+                <li><a href="adminteachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
+                <li><a href="adminreports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2>Manage Students</h2>
+                </div>
+                <button class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add Student
+                </button>
+            </div>
+
+            <!-- Student Table -->
+            <div class="content-box">
+                <div class="filters">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search by name or LRN...">
+                    </div>
+                    <select id="gradeFilter">
+                        <option value="">Filter by Grade</option>
+                        <option>Grade 7</option>
+                        <option>Grade 8</option>
+                        <option>Grade 9</option>
+                        <option>Grade 10</option>
+                        <option>Grade 11</option>
+                        <option>Grade 12</option>
+                    </select>
+                    <select id="statusFilter">
+                        <option value="">Filter by Status</option>
+                        <option value="Enrolled">Enrolled</option>
+                        <option value="Not Enrolled">Not Enrolled</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>LRN</th>
+                                <th>Name</th>
+                                <th>Grade & Section</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTableBody">
+                            <tr>
+                                <td>123456789012</td>
+                                <td>John Doe</td>
+                                <td>Grade 10 - Rizal</td>
+                                <td><span class="status-badge enrolled">Enrolled</span></td>
+                                <td class="action-links">
+                                    <a href="#">View</a>
+                                    <a href="#">Edit</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>123456789013</td>
+                                <td>Jane Smith</td>
+                                <td>Grade 11 - STEM A</td>
+                                <td><span class="status-badge enrolled">Enrolled</span></td>
+                                <td class="action-links">
+                                    <a href="#">View</a>
+                                    <a href="#">Edit</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>123456789014</td>
+                                <td>Peter Jones</td>
+                                <td>Grade 9 - Bonifacio</td>
+                                <td><span class="status-badge not-enrolled">Not Enrolled</span></td>
+                                <td class="action-links">
+                                    <a href="#">View</a>
+                                    <a href="#">Edit</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Student</h3>
+                <button class="close-button">&times;</button>
+            </div>
+            <form id="addStudentForm">
+                <div class="step-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Personal</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Address</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Parents</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Others</div>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <!-- Step 1: Personal Information -->
+                    <div class="form-step active" data-step="1">
+                        <h4>Step 1: Personal Information</h4>
+                        <div class="form-group">
+                            <label for="studentLRN">LRN (Learner Reference Number)</label>
+                            <input type="text" id="studentLRN" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="studentFirstName">First Name</label>
+                                <input type="text" id="studentFirstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="studentLastName">Last Name</label>
+                                <input type="text" id="studentLastName" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="studentMiddleName">Middle Name</label>
+                                <input type="text" id="studentMiddleName" placeholder="Optional">
+                            </div>
+                            <div class="form-group">
+                                <label for="studentSuffix">Suffix</label>
+                                <input type="text" id="studentSuffix" placeholder="e.g. Jr.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Address -->
+                    <div class="form-step" data-step="2">
+                        <h4>Step 2: Address</h4>
+                        <div class="form-group">
+                            <label for="streetAddress">Street Address</label>
+                            <input type="text" id="streetAddress" placeholder="House No., Street Name, Brgy.">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="city">City/Municipality</label>
+                                <input type="text" id="city">
+                            </div>
+                            <div class="form-group">
+                                <label for="province">Province</label>
+                                <input type="text" id="province">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Parents Information -->
+                    <div class="form-step" data-step="3">
+                        <h4>Step 3: Parents/Guardian Information</h4>
+                         <div class="form-group">
+                            <label for="fatherName">Father's Full Name</label>
+                            <input type="text" id="fatherName">
+                        </div>
+                        <div class="form-group">
+                            <label for="motherName">Mother's Full Name</label>
+                            <input type="text" id="motherName">
+                        </div>
+                        <div class="form-group">
+                            <label for="guardianName">Guardian's Full Name</label>
+                            <input type="text" id="guardianName" placeholder="Optional, if not parent">
+                        </div>
+                        <div class="form-group">
+                            <label for="emergencyContactPerson">Person to Contact in Case of Emergency</label>
+                            <input type="text" id="emergencyContactPerson" placeholder="Full Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="emergencyContactNumber">Emergency Contact Number</label>
+                            <input type="tel" id="emergencyContactNumber" placeholder="e.g. 09123456789">
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Others -->
+                    <div class="form-step" data-step="4">
+                        <h4>Step 4: Other Information</h4>
+                        <div class="form-group">
+                            <label for="studentGradeSection">Grade & Section</label>
+                            <input type="text" id="studentGradeSection" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentStatus">Status</label>
+                            <input type="text" id="studentStatus" value="Enrolled" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-primary btn-secondary" id="cancelButton">Cancel</button>
+                    <button type="button" class="btn-primary btn-secondary" id="prevButton" style="display: none;">Previous</button>
+                    <button type="button" class="btn-primary" id="nextButton">Next</button>
+                    <button type="submit" class="btn-primary" id="saveButton" style="display: none;">Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Container for the logout modal -->
+    <div id="logout-modal-container"></div>
+
+    <!-- Link to the external JavaScript file -->
+    <script src="../../assets/js/adminstudents.js"></script>
+</body>
+</html>

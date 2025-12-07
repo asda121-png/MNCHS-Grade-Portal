@@ -1,77 +1,84 @@
-MNCHS-Grade-Portal/
-│
-├── .git/
-├── .vscode/
+project-root/
 │
 ├── index.html
-├── generate.php
-├── logout.php
-├── parent_register.html
-├── register.html
-├── student_register.html
-│
-├── admin/
-│   ├── classes.php
-│   ├── dashboard.php
-│   └── users.php
+├── .env
 │
 ├── assets/
 │   ├── css/
-│   │   └── style.css
-│   │
-│   └── images/
-│       ├── background.avif
-│       ├── download.jpeg
-│       ├── logo.ico
-│       └── logo.png
+│   ├── js/
+│   │   ├── main.js
+│   │   └── calendar.js
+│   ├── images/
+│   └── vendor/
 │
 ├── components/
-│   ├── footer.php
-│   └── header.php
-│
-├── data/
-│   └── asd.php
-│
-├── feartures/
-│   └── asd.php
+│   └── logout_modal.html
 │
 ├── includes/
-│   └── config.php
+│   ├── config.php
+│   └── autoload.php
 │
-├── modules/
-│   └── sd.php
+├── core/              ← **OOP Core Classes**
+│   ├── Database.php
+│   ├── Controller.php
+│   ├── Model.php
+│   ├── Response.php
+│   └── Session.php
 │
-├── parent/
-│   ├── attendance.php
-│   ├── dashboard.php
-│   └── Parent.html
-│
-├── routes/
-│   └── asd.php
+├── modules/           ← **Business logic modules**
+│   ├── Calendar/
+│   │   ├── CalendarService.php
+│   │   └── CalendarController.php
+│   ├── Auth/
+│   │   ├── AuthService.php
+│   │   └── AuthController.php
+│   ├── Students/
+│   │   ├── StudentModel.php
+│   │   ├── StudentService.php
+│   │   └── StudentController.php
+│   ├── Teachers/
+│   ├── Admin/
+│   └── Parent/
 │
 ├── server/
-│   ├── asd
-│   │
 │   ├── api/
-│   │   └── login.html
-│   │
-│   └── auth/
-│       └── logout.html
+│   │   ├── login.php
+│   │   ├── events.php
+│   │   └── getStudents.php
+│   ├── auth/
+│   │   └── logout.php
+│   └── router.php
 │
-├── student/
-│   ├── header.html
-│   ├── logout.html
-│   ├── studentdashboard.html
-│   ├── studentgrades.html
-│   ├── studentprofile.html
-│   └── studentvalues.html
+├── routes/
+│   ├── admin/
+│   │   ├── admindashboard.html
+│   │   ├── adminreports.html
+│   │   ├── adminstudents.html
+│   │   └── admitteachers.html
+│   ├── student/
+│   │   ├── studentdashboard.html
+│   │   ├── studentgrades.html
+│   │   ├── studentprofile.html
+│   │   └── studentvalues.html
+│   ├── teacher/
+│   │   ├── teacherdashboard.html
+│   │   ├── teachergradeentry.html
+│   │   ├── teachermyclasses.html
+│   │   ├── teacherprofile.html
+│   │   └── teachervaluesentry.html
+│   └── parent/
+│       └── Parent.html
 │
-├── teacher/
-│   ├── teacher.html
-│   ├── teacherdashboard.html
-│   ├── teachergradeentry.html
-│   ├── teachermyclasses.html
-│   └── teacherprofile.html
+├── utils/
+│   ├── Helpers.php
+│   └── Validator.php
 │
-└── utils/
-    └── sd.php
+└── generate.php
+
+
+
+
+
+
+    server/api/login.php — server-side login handler (PDO, prepared statements, password_verify)
+    server/auth/logout.php — logout script

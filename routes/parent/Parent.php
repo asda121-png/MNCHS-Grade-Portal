@@ -1,0 +1,279 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'parent') {
+    header('Location: ../../index.php'); // Redirect to main login page
+    exit();
+}
+$parent_name = $_SESSION['parent_name'] ?? 'Mrs. Anderson';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Portal | MNCHS Grade Portal</title>    
+    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        maroon: {
+                            50: '#fdf2f2',
+                            100: '#fde8e8',
+                            200: '#fbd5d5',
+                            300: '#f8b4b4',
+                            400: '#f98080',
+                            500: '#f05252',
+                            600: '#e02424',
+                            700: '#c81e1e',
+                            800: '#9b1c1c',
+                            900: '#800000', // Primary Brand Color
+                            950: '#550b0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .sidebar-link { transition: all 0.3s ease; border-left: 4px solid transparent; }
+        .sidebar-link:hover, .sidebar-link.active { 
+            background-color: rgba(255,255,255,0.1); 
+            border-left-color: #fbbf24; 
+            padding-left: 2rem; 
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Hover Animation for Table Rows */
+        .hover-pop { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-pop:hover { transform: scale(1.015); z-index: 10; position: relative; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-maroon-900 text-white flex flex-col hidden md:flex shadow-2xl z-20">
+        <div class="h-20 flex items-center justify-center border-b border-maroon-800 bg-maroon-950 p-4">
+            <h1 class="text-xl font-bold tracking-wider text-center">    
+                <img src="../../assets/images/logo.png" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" 
+                     alt="Logo" 
+                     class="w-10 h-10 rounded-full border-2 border-yellow-400 bg-white object-cover shadow-lg mx-auto mb-2">
+                <span class="text-yellow-400 block text-sm leading-tight">MNCHS Grade Portal</span>    
+            </h1>
+        </div>
+
+        <nav class="flex-1 pt-8 space-y-2">
+            <div class="px-6 pb-6 text-center">
+                <img src="../assets/images/logo.png" 
+                     alt="MNCHS Logo" 
+                     class="w-30 h-24 mx-auto">
+            </div>
+            <a href="#" class="sidebar-link active block px-6 py-4 flex items-center text-white bg-white/10 border-l-yellow-400">
+                <div class="w-8 flex justify-center"><i class="fas fa-chart-line text-lg"></i></div>
+                <span class="font-medium tracking-wide">Report Card</span>
+            </a>
+        </nav>
+
+        <div class="p-6 border-t border-maroon-800 bg-maroon-950">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-yellow-400 border border-white/20">    
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-white"><?php echo htmlspecialchars($parent_name); ?></p>
+                    <p class="text-xs text-gray-400">Guardian</p>    
+                </div>
+            </div>
+            <button onclick="showLogoutModal()" class="w-full py-2.5 bg-maroon-800 hover:bg-red-700 rounded-lg text-sm text-white font-medium transition shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative bg-gray-50">
+        
+        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10 border-b border-gray-100">
+            <div class="md:hidden text-maroon-900 text-xl font-bold flex items-center gap-2">
+                MNCHS Grade Portal
+            </div>
+            
+            <div class="flex items-center gap-6 ml-auto">
+                <div class="flex items-center gap-3 bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+                    <span class="text-xs font-bold text-gray-500 uppercase px-3">Academic Year:</span>
+                    <select id="yearSelect" onchange="changeYear()" class="bg-white border-0 text-maroon-900 text-sm rounded-lg focus:ring-0 block p-2 font-bold cursor-pointer shadow-sm min-w-[150px]">
+                        <option value="2025-2026">2025-2026</option>
+                        <option value="2024-2025">2024-2025</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-3 bg-gray-100 p-1.5 rounded-xl border border-gray-200">
+                    <span class="text-xs font-bold text-gray-500 uppercase px-3">Student:</span>
+                    <select id="studentSelect" onchange="changeStudent()" class="bg-white border-0 text-maroon-900 text-sm rounded-lg focus:ring-0 block p-2 font-bold cursor-pointer shadow-sm min-w-[200px]">
+                        <option value="0">Liam Anderson (Grade 10)</option>
+                        <option value="1">Sophia Anderson (Grade 8)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="md:hidden ml-4 text-maroon-900 focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </header>
+
+        <div id="content-area" class="flex-1 overflow-y-auto p-8">
+            
+            <div id="view-grades" class="fade-in max-w-7xl mx-auto">
+                
+                <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">Academic Performance</h2>
+                        <p class="text-gray-500 mt-1">School Year <span id="sy-label" class="font-semibold">2025-2026</span></p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="download-card-btn" onclick="downloadReportCard()" class="px-4 py-2 bg-maroon-900 text-white rounded-lg text-sm font-medium hover:bg-maroon-800 shadow-md hover:shadow-lg transition flex items-center">
+                            <i class="fas fa-download mr-2"></i> Download Card
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-maroon-900 to-maroon-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-transform hover:scale-[1.02] duration-300">
+                        <div class="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4">
+                            <i class="fas fa-award text-9xl"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <p class="text-maroon-100 text-sm font-medium uppercase tracking-wider mb-1">Final General Average</p>
+                            <div class="flex items-end gap-3">
+                                <h1 id="card-gpa" class="text-5xl font-bold">--</h1>
+                                <span class="text-lg text-maroon-200 mb-2 font-medium">/ 100</span>
+                            </div>
+                            <div class="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-xs font-bold backdrop-blur-sm border border-white/10">
+                                <i class="fas fa-check-circle mr-1.5 text-green-400"></i> Promoted to Grade 11
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Honor Status</p>
+                                <h2 class="text-2xl font-bold text-yellow-600 mt-1">With High Honors</h2>
+                            </div>
+                            <div class="h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-gray-100 rounded-full h-2 mb-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 95%"></div>
+                            </div>
+                            <p class="text-xs text-gray-400">Maintained >90% average all quarters</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium uppercase tracking-wider">Passed Subjects</p>
+                                <h2 class="text-2xl font-bold text-gray-800 mt-1">8 / 8</h2>
+                            </div>
+                            <div class="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-600">All subjects completed successfully.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grade Table -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50/50 text-gray-500 uppercase text-xs tracking-wider">
+                            <tr>
+                                <th class="p-5 font-semibold pl-8 w-1/4">Learning Areas</th>
+                                <th class="p-5 font-semibold w-1/6">Teacher</th>
+                                <th class="p-4 font-semibold text-center w-16">Q1</th>
+                                <th class="p-4 font-semibold text-center w-16">Q2</th>
+                                <th class="p-4 font-semibold text-center w-16">Q3</th>
+                                <th class="p-4 font-semibold text-center w-16">Q4</th>
+                                <th class="p-5 font-semibold text-center bg-gray-100/50 border-l border-r border-gray-100 w-24">Final Grade</th>
+                                <th class="p-5 font-semibold text-center w-32">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grades-table-body" class="text-sm divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 text-center text-xs text-gray-400">
+                    <p>Grading System: K-12 Basic Education Curriculum • Passing Grade: 75</p>
+                </div>
+
+                <!-- Observed Values Section -->
+                <div class="mt-12">
+                    <h3 class="text-2xl font-bold text-maroon-900 mb-4">Learner's Observed Values</h3>
+
+                    <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">AO</span> Always Observed</p>
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">SO</span> Sometimes Observed</p>
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">RO</span> Rarely Observed</p>
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">NO</span> Not Observed</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gradient-to-r from-maroon-900 to-maroon-800 text-white uppercase text-xs tracking-wider">
+                                <tr>
+                                    <th class="p-5 font-semibold pl-8 w-1/4">Core Values</th>
+                                    <th class="p-5 font-semibold w-1/2">Behavior Statements</th>
+                                    <th class="p-4 font-semibold text-center">Q1</th>
+                                    <th class="p-4 font-semibold text-center">Q2</th>
+                                    <th class="p-4 font-semibold text-center">Q3</th>
+                                    <th class="p-4 font-semibold text-center">Q4</th>
+                                </tr>
+                            </thead>
+                            <tbody id="values-table-body" class="text-sm divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all scale-100 border border-gray-100">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Summary</h3>
+                <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <p class="text-gray-600 mb-4">Detailed component breakdown is available in the individual quarter tabs or upon request from the adviser.</p>
+            
+            <div class="mt-6 pt-4 border-t border-gray-100 text-center">
+                <button onclick="document.getElementById('detail-modal').classList.add('hidden')" class="w-full bg-maroon-50 text-maroon-900 font-bold py-3 rounded-xl hover:bg-maroon-100 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logout-modal-container"></div>
+
+    <script src="../../assets/js/parent.js"></script>
+</body>
+</html>
