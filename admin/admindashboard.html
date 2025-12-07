@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - MNCHS Grade Portal</title>
+    <title>Admin Dashboard | MNCHS Grade Portal</title>
     <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
     <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- FullCalendar CSS -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <style>
         :root {
             --primary: #800000;      /* Maroon */
@@ -91,6 +93,18 @@
         thead th { background-color: #f9fafb; color: var(--text-light); text-transform: uppercase; font-size: 0.8rem; }
         tbody tr:hover { background-color: #f5f6fa; }
         .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+        /* Calendar Styles */
+        #calendar-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 2.5rem;
+        }
+        .fc .fc-button-primary { background-color: var(--primary); border-color: var(--primary); }
+        .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
+        .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
+        .fc-event { cursor: pointer; }
         .status-badge.active { background-color: #e8f8f0; color: #27ae60; }
         .status-badge.pending { background-color: #fff8e1; color: #f39c12; }
         .action-link { color: var(--primary); text-decoration: none; font-weight: 600; }
@@ -148,6 +162,11 @@
                 </div>
             </div>
 
+            <!-- Calendar Section -->
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
+
             <!-- Recent Users Table -->
             <div class="recent-users-table">
                 <h2>Recent Portal Activity</h2>
@@ -191,5 +210,65 @@
         </main>
     </div>
 
+    <!-- Container for the logout modal -->
+    <div id="logout-modal-container"></div>
+
+    <!-- FullCalendar JS -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@5.11.3/main.global.min.js'></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Reusable Logout Modal Logic ---
+            const logoutLink = document.getElementById('logout-link');
+            const modalContainer = document.getElementById('logout-modal-container');
+
+            if (logoutLink && modalContainer) {
+                fetch('../components/logout_modal.html')
+                    .then(response => response.text())
+                    .then(html => {
+                        modalContainer.innerHTML = html;
+                        const logoutModal = document.getElementById('logout-modal');
+                        const cancelLogout = document.getElementById('cancel-logout');
+
+                        if (logoutModal && cancelLogout) {
+                            logoutLink.addEventListener('click', (e) => { e.preventDefault(); logoutModal.classList.add('show'); });
+                            cancelLogout.addEventListener('click', () => logoutModal.classList.remove('show'));
+                            logoutModal.addEventListener('click', (e) => { if (e.target === logoutModal) logoutModal.classList.remove('show'); });
+                        }
+                    })
+                    .catch(error => console.error('Error loading logout modal:', error));
+            }
+
+            // --- Calendar Logic ---
+            var calendarEl = document.getElementById('calendar');
+            if (calendarEl) {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    },
+                    editable: true, // Allows events to be moved
+                    selectable: true, // Allows date clicking
+                    eventSources: [
+                        // Public holidays from Google Calendar
+                        {
+                            googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
+                            className: 'gcal-event'
+                        }
+                    ],
+                    dateClick: function(info) {
+                        var title = prompt('Enter Event Title:');
+                        if (title) {
+                            calendar.addEvent({ title: title, start: info.dateStr, allDay: true });
+                        }
+                    }
+                });
+                calendar.render();
+            }
+        });
+    </script>
 </body>
 </html>

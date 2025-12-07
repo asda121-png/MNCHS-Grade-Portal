@@ -105,12 +105,12 @@ $school_year  = "2025–2026";
 
         .container { display:flex; min-height:calc(100vh - 80px); }
         .sidebar { width:260px; background:white; padding:2rem 1.5rem; box-shadow:5px 0 15px rgba(0,0,0,0.05); position:sticky; top:80px; height:calc(100vh - 80px); overflow-y:auto; }
-        .sidebar-logo-container {
+         .sidebar-logo-container {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
         .sidebar-logo {
-            max-width: 100px;
+            max-width: 120px;
             height: auto;
         }
 
@@ -144,6 +144,8 @@ $school_year  = "2025–2026";
         .grade.good      { color:#2980b9; font-weight:600; }
         .grade.fair      { color:#f39c12; font-weight:600; }
         .grade.poor      { color:#c0392b; font-weight:600; }
+        .final-grade     { color:var(--primary); font-weight:700; }
+        .grade-col       { text-align: center; }
         .remarks { padding:6px 12px; border-radius:30px; background:#e8f5e8; color:#27ae60; font-weight:600; font-size:.9rem; text-transform:uppercase; }
         .remarks.failed { background:#fdeaea; color:#c0392b; }
         @media (max-width:768px) { .container{flex-direction:column;} .sidebar{width:100%;height:auto;position:relative;} }
@@ -206,18 +208,18 @@ $school_year  = "2025–2026";
 
         <table>
             <thead>
-                <tr><th>Subject</th><th>1st Quarter</th><th>2nd Quarter</th><th>3rd Quarter</th><th>4th Quarter</th><th>Final Grade</th><th>Remarks</th></tr>
+                <tr><th>Subject</th><th class="grade-col">1st Quarter</th><th class="grade-col">2nd Quarter</th><th class="grade-col">3rd Quarter</th><th class="grade-col">4th Quarter</th><th class="grade-col">Final Grade</th><th class="grade-col">Remarks</th></tr>
             </thead>
             <tbody>
-                <tr><td><strong>English</strong></td><td class="grade excellent">93</td><td class="grade excellent">94</td><td class="grade excellent">95</td><td class="grade excellent">94</td><td class="grade excellent">94</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Mathematics</strong></td><td class="grade excellent">95</td><td class="grade excellent">96</td><td class="grade excellent">95</td><td class="grade excellent">97</td><td class="grade excellent">96</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Science</strong></td><td class="grade good">88</td><td class="grade excellent">91</td><td class="grade excellent">90</td><td class="grade excellent">91</td><td class="grade excellent">90</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Filipino</strong></td><td class="grade excellent">92</td><td class="grade excellent">93</td><td class="grade excellent">92</td><td class="grade excellent">94</td><td class="grade excellent">93</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Araling Panlipunan</strong></td><td class="grade good">87</td><td class="grade good">89</td><td class="grade good">88</td><td class="grade good">89</td><td class="grade good">88</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Research</strong></td><td class="grade excellent">94</td><td class="grade excellent">95</td><td class="grade excellent">96</td><td class="grade excellent">95</td><td class="grade excellent">95</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Physical Education</strong></td><td class="grade excellent">91</td><td class="grade excellent">92</td><td class="grade excellent">93</td><td class="grade excellent">92</td><td class="grade excellent">92</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>TLE - Computer</strong></td><td class="grade excellent">96</td><td class="grade excellent">97</td><td class="grade excellent">96</td><td class="grade excellent">98</td><td class="grade excellent">97</td><td><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Pre-Calculus</strong></td><td class="grade poor">72</td><td class="grade poor">74</td><td class="grade poor">70</td><td class="grade poor">71</td><td class="grade poor">72</td><td><span class="remarks failed">failed</span></td></tr>
+                <tr><td><strong>English</strong></td><td class="grade-col">93</td><td class="grade-col">94</td><td class="grade-col">95</td><td class="grade-col">94</td><td class="final-grade grade-col">94</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Mathematics</strong></td><td class="grade-col">95</td><td class="grade-col">96</td><td class="grade-col">95</td><td class="grade-col">97</td><td class="final-grade grade-col">96</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Science</strong></td><td class="grade-col">88</td><td class="grade-col">91</td><td class="grade-col">90</td><td class="grade-col">91</td><td class="final-grade grade-col">90</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Filipino</strong></td><td class="grade-col">92</td><td class="grade-col">93</td><td class="grade-col">92</td><td class="grade-col">94</td><td class="final-grade grade-col">93</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Araling Panlipunan</strong></td><td class="grade-col">87</td><td class="grade-col">89</td><td class="grade-col">88</td><td class="grade-col">89</td><td class="final-grade grade-col">88</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Research</strong></td><td class="grade-col">94</td><td class="grade-col">95</td><td class="grade-col">96</td><td class="grade-col">95</td><td class="final-grade grade-col">95</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Physical Education</strong></td><td class="grade-col">91</td><td class="grade-col">92</td><td class="grade-col">93</td><td class="grade-col">92</td><td class="final-grade grade-col">92</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>TLE - Computer</strong></td><td class="grade-col">96</td><td class="grade-col">97</td><td class="grade-col">96</td><td class="grade-col">98</td><td class="final-grade grade-col">97</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
+                <tr><td><strong>Pre-Calculus</strong></td><td class="grade-col">72</td><td class="grade-col">74</td><td class="grade-col">70</td><td class="grade-col">71</td><td class="final-grade grade-col">72</td><td class="grade-col"><span class="remarks failed">failed</span></td></tr>
             </tbody>
         </table>
     </main>

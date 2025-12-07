@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MNCHS Parent Portal | Grades</title>
+    <title>Parent Portal | MNCHS Grade Portal</title>
     <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
 
     <!-- Tailwind CSS -->
@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- jsPDF and html2canvas for PDF generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js"></script>
     
@@ -63,7 +62,7 @@
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" 
                      alt="Logo" 
                      class="w-10 h-10 rounded-full border-2 border-yellow-400 bg-white object-cover shadow-lg mx-auto mb-2">
-                <span class="text-yellow-400 block text-sm leading-tight">MNCHS Parent Portal</span>
+                <span class="text-yellow-400 block text-sm leading-tight">MNCHS Grade Portal</span>
             </h1>
         </div>
 
@@ -99,7 +98,7 @@
         
         <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10 border-b border-gray-100">
             <div class="md:hidden text-maroon-900 text-xl font-bold flex items-center gap-2">
-                MNCHS Parent Portal
+                MNCHS Grade Portal
             </div>
             
             <div class="flex items-center gap-6 ml-auto">
@@ -134,7 +133,7 @@
                         <p class="text-gray-500 mt-1">School Year <span id="sy-label" class="font-semibold">2025-2026</span></p>
                     </div>
                     <div class="flex gap-3">
-                        <button class="px-4 py-2 bg-maroon-900 text-white rounded-lg text-sm font-medium hover:bg-maroon-800 shadow-md hover:shadow-lg transition flex items-center">
+                        <button id="download-card-btn" onclick="downloadReportCard()" class="px-4 py-2 bg-maroon-900 text-white rounded-lg text-sm font-medium hover:bg-maroon-800 shadow-md hover:shadow-lg transition flex items-center">
                             <i class="fas fa-download mr-2"></i> Download Card
                         </button>
                     </div>
@@ -215,6 +214,34 @@
                     <p>Grading System: K-12 Basic Education Curriculum • Passing Grade: 75</p>
                 </div>
 
+                <!-- Observed Values Section -->
+                <div class="mt-12">
+                    <h3 class="text-2xl font-bold text-maroon-900 mb-4">Learner's Observed Values</h3>
+
+                    <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">AO</span> Always Observed</p>
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">SO</span> Sometimes Observed</p>
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">RO</span> Rarely Observed</p>
+                        <p class="font-medium text-gray-600"><span class="font-bold text-maroon-900 mr-1.5">NO</span> Not Observed</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gradient-to-r from-maroon-900 to-maroon-800 text-white uppercase text-xs tracking-wider">
+                                <tr>
+                                    <th class="p-5 font-semibold pl-8 w-1/4">Core Values</th>
+                                    <th class="p-5 font-semibold w-1/2">Behavior Statements</th>
+                                    <th class="p-4 font-semibold text-center">Q1</th>
+                                    <th class="p-4 font-semibold text-center">Q2</th>
+                                    <th class="p-4 font-semibold text-center">Q3</th>
+                                    <th class="p-4 font-semibold text-center">Q4</th>
+                                </tr>
+                            </thead>
+                            <tbody id="values-table-body" class="text-sm divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -273,6 +300,18 @@
                         { subject: "Edukasyon sa Pagpapakatao 10", icon: "fa-hands-helping", teacher: "Gng. Santos", grades: { q1: 90, q2: 91, q3: 90, q4: 92 } },
                         { subject: "MAPEH 10", icon: "fa-palette", teacher: "Mr. Davis", grades: { q1: 86, q2: 88, q3: 87, q4: 89 } },
                         { subject: "TLE 10 (Computer)", icon: "fa-laptop-code", teacher: "Ms. Garcia", grades: { q1: 91, q2: 90, q3: 92, q4: 93 } },
+                    ],
+                    observedValues: [
+                        { 
+                            value: "1. Maka-Diyos", 
+                            behaviors: [
+                                { statement: "Expresses one's spiritual beliefs while respecting the spiritual beliefs of others.", q1: "AO", q2: "AO", q3: "SO", q4: "AO" },
+                                { statement: "Shows adherence to ethical acts.", q1: "AO", q2: "SO", q3: "AO", q4: "AO" }
+                            ] 
+                        },
+                        { value: "2. Makatao", behaviors: [ { statement: "Is sensitive to individual, social, and cultural differences.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates contributions toward solidarity.", q1: "SO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "3. Makakalikasan", behaviors: [ { statement: "Cares for the environment and utilizes resources wisely, judiciously, and economically.", q1: "SO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "4. Makabansa", behaviors: [ { statement: "Demonstrates pride in being a Filipino; exercises the rights and responsibilities of a Filipino citizen.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates appropriate behavior in carrying out activities in the school, community, and country.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] }
                     ]
                 },
                 {
@@ -288,6 +327,12 @@
                         { subject: "Edukasyon sa Pagpapakatao 8", icon: "fa-hands-helping", teacher: "Gng. Santos", grades: { q1: 96, q2: 95, q3: 97, q4: 96 } },
                         { subject: "MAPEH 8", icon: "fa-palette", teacher: "Mr. Davis", grades: { q1: 93, q2: 94, q3: 92, q4: 95 } },
                         { subject: "TLE 8 (Home Economics)", icon: "fa-utensils", teacher: "Ms. Garcia", grades: { q1: 95, q2: 94, q3: 96, q4: 97 } },
+                    ],
+                    observedValues: [
+                        { value: "1. Maka-Diyos", behaviors: [ { statement: "Expresses one's spiritual beliefs while respecting the spiritual beliefs of others.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Shows adherence to ethical acts.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "2. Makatao", behaviors: [ { statement: "Is sensitive to individual, social, and cultural differences.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates contributions toward solidarity.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "3. Makakalikasan", behaviors: [ { statement: "Cares for the environment and utilizes resources wisely, judiciously, and economically.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "4. Makabansa", behaviors: [ { statement: "Demonstrates pride in being a Filipino; exercises the rights and responsibilities of a Filipino citizen.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates appropriate behavior in carrying out activities in the school, community, and country.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] }
                     ]
                 }
             ],
@@ -305,6 +350,12 @@
                         { subject: "Edukasyon sa Pagpapakatao 9", icon: "fa-hands-helping", teacher: "Gng. Santos", grades: { q1: 91, q2: 90, q3: 92, q4: 91 } },
                         { subject: "MAPEH 9", icon: "fa-palette", teacher: "Mr. Davis", grades: { q1: 87, q2: 89, q3: 88, q4: 90 } },
                         { subject: "TLE 9 (Electronics)", icon: "fa-microchip", teacher: "Ms. Garcia", grades: { q1: 92, q2: 91, q3: 93, q4: 94 } },
+                    ],
+                    observedValues: [
+                        { value: "1. Maka-Diyos", behaviors: [ { statement: "Expresses one's spiritual beliefs while respecting the spiritual beliefs of others.", q1: "SO", q2: "AO", q3: "SO", q4: "AO" }, { statement: "Shows adherence to ethical acts.", q1: "AO", q2: "SO", q3: "AO", q4: "AO" } ] },
+                        { value: "2. Makatao", behaviors: [ { statement: "Is sensitive to individual, social, and cultural differences.", q1: "SO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates contributions toward solidarity.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "3. Makakalikasan", behaviors: [ { statement: "Cares for the environment and utilizes resources wisely, judiciously, and economically.", q1: "SO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "4. Makabansa", behaviors: [ { statement: "Demonstrates pride in being a Filipino; exercises the rights and responsibilities of a Filipino citizen.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates appropriate behavior in carrying out activities in the school, community, and country.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] }
                     ]
                 },
                 {
@@ -320,6 +371,12 @@
                         { subject: "Edukasyon sa Pagpapakatao 7", icon: "fa-hands-helping", teacher: "Gng. Santos", grades: { q1: 95, q2: 94, q3: 96, q4: 95 } },
                         { subject: "MAPEH 7", icon: "fa-palette", teacher: "Mr. Davis", grades: { q1: 91, q2: 93, q3: 92, q4: 94 } },
                         { subject: "TLE 7 (Cookery)", icon: "fa-utensils", teacher: "Ms. Garcia", grades: { q1: 94, q2: 93, q3: 95, q4: 96 } },
+                    ],
+                    observedValues: [
+                        { value: "1. Maka-Diyos", behaviors: [ { statement: "Expresses one's spiritual beliefs while respecting the spiritual beliefs of others.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Shows adherence to ethical acts.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "2. Makatao", behaviors: [ { statement: "Is sensitive to individual, social, and cultural differences.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates contributions toward solidarity.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "3. Makakalikasan", behaviors: [ { statement: "Cares for the environment and utilizes resources wisely, judiciously, and economically.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] },
+                        { value: "4. Makabansa", behaviors: [ { statement: "Demonstrates pride in being a Filipino; exercises the rights and responsibilities of a Filipino citizen.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" }, { statement: "Demonstrates appropriate behavior in carrying out activities in the school, community, and country.", q1: "AO", q2: "AO", q3: "AO", q4: "AO" } ] }
                     ]
                 }
             ]
@@ -410,6 +467,27 @@
                 `;
                 tbody.innerHTML += row;
             });
+
+            // Render Observed Values Table
+            const valuesTbody = document.getElementById('values-table-body');
+            valuesTbody.innerHTML = '';
+            if (student.observedValues) {
+                student.observedValues.forEach(coreValue => {
+                    coreValue.behaviors.forEach((behavior, index) => {
+                        const row = `
+                            <tr class="hover:bg-gray-50">
+                                ${index === 0 ? `<td rowspan="${coreValue.behaviors.length}" class="p-5 pl-8 align-top font-bold text-maroon-900 bg-red-50/50 border-r border-gray-100">${coreValue.value}</td>` : ''}
+                                <td class="p-5 text-gray-600">${behavior.statement}</td>
+                                <td class="p-4 text-center font-semibold text-gray-700">${behavior.q1 || ''}</td>
+                                <td class="p-4 text-center font-semibold text-gray-700">${behavior.q2 || ''}</td>
+                                <td class="p-4 text-center font-semibold text-gray-700">${behavior.q3 || ''}</td>
+                                <td class="p-4 text-center font-semibold text-gray-700">${behavior.q4 || ''}</td>
+                            </tr>
+                        `;
+                        valuesTbody.innerHTML += row;
+                    });
+                });
+            }
         }
 
         function showLogoutModal() {
@@ -429,71 +507,104 @@
         }
 
         function downloadReportCard() {
-            const downloadBtn = document.getElementById('download-card-btn');
+            const downloadBtn = document.getElementById('download-card-btn'); // Ensure your button has this ID
             const originalContent = downloadBtn.innerHTML;
             downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
             downloadBtn.disabled = true;
 
-            // Simulate generation time for better UX
-            setTimeout(() => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const quarterData = currentStudent.quarters[currentQuarter];
-                const quarterLabel = document.getElementById('quarter-label').innerText;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-                // --- PDF Header ---
-                doc.setFontSize(18);
-                doc.setFont("helvetica", "bold");
-                doc.text("Muntinlupa National High School", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "normal");
-                doc.text("Student Report Card", doc.internal.pageSize.getWidth() / 2, 28, { align: "center" });
+            const student = studentData[currentYear].find(s => s.id === currentStudentId);
+            const finalGpa = document.getElementById('card-gpa').innerText;
 
-                // --- Student Information ---
-                doc.setFontSize(11);
-                doc.text(`Student Name: ${currentStudent.name}`, 14, 45);
-                doc.text(`Grade Level: ${currentStudent.grade}`, 14, 52);
-                doc.text(`Academic Year: ${currentYear}`, doc.internal.pageSize.getWidth() - 14, 45, { align: "right" });
-                doc.text(`Period: ${quarterLabel}`, doc.internal.pageSize.getWidth() - 14, 52, { align: "right" });
+            // --- PDF Header ---
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("Muntinlupa National High School", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text("Report on Learning Progress and Achievement", doc.internal.pageSize.getWidth() / 2, 27, { align: "center" });
 
-                // --- Grades Table ---
-                const tableColumn = ["Subject", "Teacher", "Grade", "Remarks"];
-                const tableRows = [];
+            // --- Student Information ---
+            doc.setFontSize(10);
+            doc.text(`Student Name: ${student.name}`, 14, 40);
+            doc.text(`Grade Level: ${student.grade}`, 14, 46);
+            doc.text(`School Year: ${currentYear}`, doc.internal.pageSize.getWidth() - 14, 40, { align: "right" });
 
-                quarterData.grades.forEach(grade => {
-                    const gradeData = [
-                        grade.subject,
-                        grade.teacher,
-                        grade.percent,
-                        grade.percent >= 75 ? "Passed" : "Failed"
-                    ];
-                    tableRows.push(gradeData);
-                });
+            // --- Grades Table ---
+            const gradesHead = [['Learning Area', 'Q1', 'Q2', 'Q3', 'Q4', 'Final', 'Remarks']];
+            const gradesBody = [];
+            student.subjects.forEach(s => {
+                const final = Math.round((s.grades.q1 + s.grades.q2 + s.grades.q3 + s.grades.q4) / 4);
+                gradesBody.push([
+                    s.subject, s.grades.q1, s.grades.q2, s.grades.q3, s.grades.q4,
+                    { content: final, styles: { fontStyle: 'bold' } },
+                    final >= 75 ? "Passed" : "Failed"
+                ]);
+            });
+            gradesBody.push([
+                { content: 'Final General Average', colSpan: 5, styles: { fontStyle: 'bold', halign: 'right' } },
+                { content: finalGpa, styles: { fontStyle: 'bold' } }, ''
+            ]);
 
-                // Add a row for the General Average
-                tableRows.push(['', '', { content: 'General Average:', styles: { fontStyle: 'bold', halign: 'right' } }, { content: quarterData.gpa, styles: { fontStyle: 'bold' } }]);
+            doc.autoTable({
+                head: gradesHead,
+                body: gradesBody,
+                startY: 52,
+                theme: 'grid',
+                headStyles: { fillColor: [128, 0, 0], halign: 'center' },
+                columnStyles: {
+                    0: { cellWidth: 'auto' },
+                    1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' },
+                    5: { halign: 'center' }, 6: { halign: 'center' }
+                }
+            });
 
-                doc.autoTable({
-                    head: [tableColumn],
-                    body: tableRows,
-                    startY: 65,
-                    theme: 'grid',
-                    headStyles: { fillColor: [128, 0, 0] }, // Maroon color for header
-                    didDrawPage: function (data) {
-                        // Footer
-                        doc.setFontSize(9);
-                        doc.setTextColor(150);
-                        doc.text("This is a system-generated report. For inquiries, please contact the school registrar.", 14, doc.internal.pageSize.getHeight() - 10);
+            // --- Values Table ---
+            let lastY = doc.lastAutoTable.finalY;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("Learner's Observed Values", 14, lastY + 12);
+
+            const valuesHead = [['Core Value', 'Behavior Statement', 'Q1', 'Q2', 'Q3', 'Q4']];
+            const valuesBody = [];
+            student.observedValues.forEach(coreValue => {
+                coreValue.behaviors.forEach((behavior, index) => {
+                    if (index === 0) {
+                        valuesBody.push([
+                            { content: coreValue.value, rowSpan: coreValue.behaviors.length, styles: { valign: 'middle', fontStyle: 'bold' } },
+                            behavior.statement, behavior.q1, behavior.q2, behavior.q3, behavior.q4
+                        ]);
+                    } else {
+                        valuesBody.push([behavior.statement, behavior.q1, behavior.q2, behavior.q3, behavior.q4]);
                     }
                 });
+            });
 
-                // --- Save the PDF ---
-                const filename = `${currentStudent.name}-ReportCard-${currentYear}-${quarterLabel.replace(' ', '-')}.pdf`;
-                doc.save(filename);
+            doc.autoTable({
+                head: valuesHead,
+                body: valuesBody,
+                startY: lastY + 15,
+                theme: 'grid',
+                headStyles: { fillColor: [128, 0, 0], halign: 'center' },
+                columnStyles: {
+                    2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' }, 5: { halign: 'center' }
+                }
+            });
 
-                downloadBtn.innerHTML = originalContent;
-                downloadBtn.disabled = false;
-            }, 200); // Adjusted delay for faster perceived generation
+            // --- Footer ---
+            lastY = doc.internal.pageSize.getHeight() - 15;
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text("This is a system-generated report. For inquiries, please contact the school registrar.", 14, lastY);
+
+            // --- Save the PDF ---
+            const filename = `ReportCard_${student.name.replace(/ /g, '_')}_${currentYear}.pdf`;
+            doc.save(filename);
+
+            downloadBtn.innerHTML = originalContent;
+            downloadBtn.disabled = false;
         }
 
         window.onload = init;

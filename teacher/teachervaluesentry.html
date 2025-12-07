@@ -138,10 +138,10 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
                 <div class="filter-group">
                     <label for="class-select">Select Class</label>
                     <select id="class-select" name="class">
-                        <option value="11-STEM-A">Grade 11 - STEM A</option>
-                        <option value="11-STEM-B">Grade 11 - STEM B</option>
-                        <option value="12-HUMSS-A">Grade 12 - HUMSS A</option>
-                        <option value="12-ABM-C">Grade 12 - ABM C</option>
+                        <option value="11-STEM-A">Grade 11 - STEM A (Pre-Calculus)</option>
+                        <option value="11-STEM-B">Grade 11 - STEM B (Pre-Calculus)</option>
+                        <option value="12-HUMSS-A">Grade 12 - HUMSS A (Practical Research 2)</option>
+                        <option value="12-ABM-C">Grade 12 - ABM C (Applied Economics)</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -262,6 +262,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const valuesTbody = document.getElementById('values-tbody');
     const backToListBtn = document.getElementById('back-to-list-btn');
     const searchInput = document.getElementById('student-search-input');
+    const classSelect = document.getElementById('class-select');
+    const quarterSelect = document.getElementById('quarter-select');
 
     const mockStudents = [
         { id: 1, name: 'Aguilar, Juan D.' },
@@ -397,6 +399,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 valueIndex++;
             });
         });
+    }
+
+    // --- Pre-select filters from URL and auto-load ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const classParam = urlParams.get('class');
+    const quarterParam = urlParams.get('quarter');
+
+    if (classParam && quarterParam) {
+        if (classSelect) {
+            classSelect.value = classParam;
+        }
+        if (quarterSelect) {
+            quarterSelect.value = quarterParam;
+        }
+        // Automatically trigger the "Load Students" button
+        loadStudentsBtn.click();
     }
 });
 </script>
