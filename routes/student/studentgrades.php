@@ -4,10 +4,38 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
     header('Location: ../../index.php'); // Redirect to main login page
     exit();
 }
-$student_name = $_SESSION['student_name'] ?? 'Student';
+$student_name = $_SESSION['student_name'] ?? 'Juan Dela Cruz';
 $grade_level  = $_SESSION['grade_level'] ?? '11';
 $section      = $_SESSION['section'] ?? 'STEM-A';
+$student_id   = $_SESSION['user_id'];
 $school_year  = "2025–2026";
+
+// Include database config
+require_once '../../includes/config.php';
+
+// Fetch student's grades from database
+$grades = [];
+$stmt = $conn->prepare("
+    SELECT 
+        s.id as subject_id,
+        s.subject_name,
+        g.quarter_1,
+        g.quarter_2,
+        g.quarter_3,
+        g.quarter_4
+    FROM grades g
+    JOIN subjects s ON g.class_subject_id = s.id
+    WHERE g.student_id = ?
+    ORDER BY s.id ASC
+");
+$stmt->bind_param('i', $student_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $grades[] = $row;
+}
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -16,7 +44,7 @@ $school_year  = "2025–2026";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Grades | MNCHS Grade Portal</title>    
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -42,7 +70,7 @@ $school_year  = "2025–2026";
         .notification-badge {
             position: absolute; top: -5px; right: -8px; background-color: #e74c3c;
             color: white; border-radius: 50%; width: 18px; height: 18px;
-            font-size: 0.7rem; font-weight: 700; display: flex;
+            font-size: 0.7rem; font-weight: 700; display: none;
             justify-content: center; align-items: center;
             border: 2px solid var(--primary-dark);
         }
@@ -132,10 +160,14 @@ $school_year  = "2025–2026";
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23636e72' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 12px center; padding-right: 30px;
         }
-        .grades-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1.5rem; margin-bottom:2.5rem; }
-        .summary-card { background:white; padding:1.2rem; border-radius:16px; text-align:center; box-shadow:var(--shadow); }
-        .summary-card h3 { font-size:0.9rem; color:var(--text-light); margin-bottom:.5rem; }
-        .summary-card .value { font-size:2rem; font-weight:700; color:var(--primary); }
+        .grades-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1.8rem; margin-bottom:2.5rem; }
+        .summary-card { background:white; padding:1.8rem; border-radius:16px; text-align:center; box-shadow:var(--shadow); border-left:5px solid var(--primary); transition:var(--transition); position:relative; overflow:hidden; }
+        .summary-card::before { content:''; position:absolute; top:-50%; right:-50%; width:200px; height:200px; background:rgba(128,0,0,0.03); border-radius:50%; transition:var(--transition); }
+        .summary-card:hover { transform:translateY(-8px); box-shadow:0 12px 35px rgba(128,0,0,0.15); }
+        .summary-card:hover::before { top:-20%; right:-20%; }
+        .summary-card .icon { font-size:2rem; color:var(--primary); margin-bottom:0.8rem; display:block; }
+        .summary-card h3 { font-size:0.85rem; color:var(--text-light); margin-bottom:0.8rem; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; }
+        .summary-card .value { font-size:2.8rem; font-weight:700; color:var(--primary); line-height:1; }
         table { width:100%; border-collapse:collapse; background:white; border-radius:16px; overflow:hidden; box-shadow:var(--shadow); }
         th { background:linear-gradient(90deg,var(--primary),var(--primary-dark)); color:white; padding:1.2rem; text-align:left; }
         td { padding:1.1rem 1.2rem; border-bottom:1px solid #eee; }
@@ -166,14 +198,14 @@ $school_year  = "2025–2026";
                 <a href="studentprofile.php">Profile</a>
             </div>
         </div>
-        <span><?php echo htmlspecialchars($student_name); ?> (Student)</span>
+        <span><?php echo htmlspecialchars($student_name); ?></span>
     </div>
 </header>
 
 <div class="container">
     <aside class="sidebar">
         <div class="sidebar-logo-container">
-<img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
+<img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
         </div>
         <ul>
             <li><a href="studentdashboard.php"><i class="fas fa-home"></i> Dashboard</a></li>
@@ -199,11 +231,20 @@ $school_year  = "2025–2026";
         </div>
 
         <div class="grades-summary">
-            <div class="summary-card"><h3>General Weighted Average</h3><div class="value">90.1</div></div>
-            <div class="summary-card"><h3>Total Subjects</h3><div class="value">9</div></div>
-            <div class="summary-card"><h3>Subjects Passed</h3><div class="value">8</div></div>
-            <div class="summary-card"><h3>Subjects Failed</h3><div class="value">1</div></div>
-            <div class="summary-card"><h3>Academic Status</h3><div class="value">With Honors</div></div>
+            <div class="summary-card"><h3>Total Subjects</h3><div class="value"><?php echo count($grades); ?></div></div>
+            <div class="summary-card"><h3>Subjects Passed</h3><div class="value"><?php echo count(array_filter($grades, function($g) { $avg = (($g['quarter_1'] ?? 0) + ($g['quarter_2'] ?? 0) + ($g['quarter_3'] ?? 0) + ($g['quarter_4'] ?? 0)) / 4; return $avg >= 75; })); ?></div></div>
+            <div class="summary-card"><h3>Subjects Failed</h3><div class="value"><?php echo count(array_filter($grades, function($g) { $avg = (($g['quarter_1'] ?? 0) + ($g['quarter_2'] ?? 0) + ($g['quarter_3'] ?? 0) + ($g['quarter_4'] ?? 0)) / 4; return $avg < 75; })); ?></div></div>
+            <div class="summary-card"><h3>General Weighted Average</h3><div class="value"><?php echo count($grades) > 0 ? number_format(array_sum(array_map(function($g) { return (($g['quarter_1'] ?? 0) + ($g['quarter_2'] ?? 0) + ($g['quarter_3'] ?? 0) + ($g['quarter_4'] ?? 0)) / 4; }, $grades)) / count($grades), 1) : '—'; ?></div></div>
+            <div class="summary-card"><h3>Academic Status</h3><div class="value"><?php 
+                if (count($grades) === 0) echo '—';
+                else {
+                    $gwa = array_sum(array_map(function($g) { return (($g['quarter_1'] ?? 0) + ($g['quarter_2'] ?? 0) + ($g['quarter_3'] ?? 0) + ($g['quarter_4'] ?? 0)) / 4; }, $grades)) / count($grades);
+                    $failed = count(array_filter($grades, function($g) { $avg = (($g['quarter_1'] ?? 0) + ($g['quarter_2'] ?? 0) + ($g['quarter_3'] ?? 0) + ($g['quarter_4'] ?? 0)) / 4; return $avg < 75; }));
+                    if ($failed > 0) echo 'Failed';
+                    elseif ($gwa >= 90) echo 'With Honors';
+                    else echo 'Regular';
+                }
+            ?></div></div>
         </div>
 
         <table>
@@ -211,15 +252,34 @@ $school_year  = "2025–2026";
                 <tr><th>Subject</th><th class="grade-col">1st Quarter</th><th class="grade-col">2nd Quarter</th><th class="grade-col">3rd Quarter</th><th class="grade-col">4th Quarter</th><th class="grade-col">Final Grade</th><th class="grade-col">Remarks</th></tr>
             </thead>
             <tbody>
-                <tr><td><strong>English</strong></td><td class="grade-col">93</td><td class="grade-col">94</td><td class="grade-col">95</td><td class="grade-col">94</td><td class="final-grade grade-col">94</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Mathematics</strong></td><td class="grade-col">95</td><td class="grade-col">96</td><td class="grade-col">95</td><td class="grade-col">97</td><td class="final-grade grade-col">96</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Science</strong></td><td class="grade-col">88</td><td class="grade-col">91</td><td class="grade-col">90</td><td class="grade-col">91</td><td class="final-grade grade-col">90</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Filipino</strong></td><td class="grade-col">92</td><td class="grade-col">93</td><td class="grade-col">92</td><td class="grade-col">94</td><td class="final-grade grade-col">93</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Araling Panlipunan</strong></td><td class="grade-col">87</td><td class="grade-col">89</td><td class="grade-col">88</td><td class="grade-col">89</td><td class="final-grade grade-col">88</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Research</strong></td><td class="grade-col">94</td><td class="grade-col">95</td><td class="grade-col">96</td><td class="grade-col">95</td><td class="final-grade grade-col">95</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Physical Education</strong></td><td class="grade-col">91</td><td class="grade-col">92</td><td class="grade-col">93</td><td class="grade-col">92</td><td class="final-grade grade-col">92</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>TLE - Computer</strong></td><td class="grade-col">96</td><td class="grade-col">97</td><td class="grade-col">96</td><td class="grade-col">98</td><td class="final-grade grade-col">97</td><td class="grade-col"><span class="remarks">passed</span></td></tr>
-                <tr><td><strong>Pre-Calculus</strong></td><td class="grade-col">72</td><td class="grade-col">74</td><td class="grade-col">70</td><td class="grade-col">71</td><td class="final-grade grade-col">72</td><td class="grade-col"><span class="remarks failed">failed</span></td></tr>
+                <?php if (count($grades) > 0): ?>
+                    <?php foreach ($grades as $grade): 
+                        $q1 = $grade['quarter_1'] ?? '—';
+                        $q2 = $grade['quarter_2'] ?? '—';
+                        $q3 = $grade['quarter_3'] ?? '—';
+                        $q4 = $grade['quarter_4'] ?? '—';
+                        
+                        // Calculate final grade (average of quarters)
+                        $finalGrade = '—';
+                        $passed = false;
+                        if ($q1 !== '—' && $q2 !== '—' && $q3 !== '—' && $q4 !== '—') {
+                            $finalGrade = round(($q1 + $q2 + $q3 + $q4) / 4, 0);
+                            $passed = $finalGrade >= 75;
+                        }
+                    ?>
+                    <tr>
+                        <td><strong><?php echo htmlspecialchars($grade['subject_name']); ?></strong></td>
+                        <td class="grade-col"><?php echo $q1; ?></td>
+                        <td class="grade-col"><?php echo $q2; ?></td>
+                        <td class="grade-col"><?php echo $q3; ?></td>
+                        <td class="grade-col"><?php echo $q4; ?></td>
+                        <td class="final-grade grade-col"><?php echo $finalGrade; ?></td>
+                        <td class="grade-col"><span class="remarks<?php echo !$passed && $finalGrade !== '—' ? ' failed' : ''; ?>"><?php echo $finalGrade === '—' ? '—' : ($passed ? 'passed' : 'failed'); ?></span></td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr><td colspan="7" style="text-align: center; color: #636e72; padding: 2rem;">No grades available yet. Check back later!</td></tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </main>
@@ -227,6 +287,10 @@ $school_year  = "2025–2026";
 
 <!-- Container for the logout modal -->
 <div id="logout-modal-container"></div>
+
+<!-- Notification System -->
+<script src="../../assets/js/NotificationManager.js"></script>
+
 <!-- Link to the shared JavaScript file -->
 <script src="../../assets/js/student_shared.js"></script>
 </body>

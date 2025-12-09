@@ -4,7 +4,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
     header('Location: ../../index.php'); // Redirect to main login page
     exit();
 }
-$student_name = $_SESSION['student_name'] ?? 'Student';
+$student_name = $_SESSION['student_name'] ?? 'Juan Dela Cruz';
 $grade_level  = $_SESSION['grade_level'] ?? '11';
 $section      = $_SESSION['section'] ?? 'STEM-A';
 $lrn          = $_SESSION['lrn'] ?? 'N/A';
@@ -18,7 +18,7 @@ $username     = $_SESSION['username'] ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Settings | MNCHS Grade Portal</title>
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
@@ -47,7 +47,7 @@ $username     = $_SESSION['username'] ?? '';
         .notification-badge {
             position: absolute; top: -5px; right: -8px; background-color: #e74c3c;
             color: white; border-radius: 50%; width: 18px; height: 18px;
-            font-size: 0.7rem; font-weight: 700; display: flex;
+            font-size: 0.7rem; font-weight: 700; display: none;
             justify-content: center; align-items: center;
             border: 2px solid var(--primary-dark);
         }
@@ -202,14 +202,14 @@ $username     = $_SESSION['username'] ?? '';
                 <a href="studentprofile.php">Profile</a>
             </div>
         </div>
-        <span><?php echo htmlspecialchars($student_name); ?> (Student)</span>
+        <span><?php echo htmlspecialchars($student_name); ?></span>
     </div>
 </header>
 
 <div class="container">
     <aside class="sidebar">
         <div class="sidebar-logo-container">
-            <img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
+            <img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
         </div>
         <ul>
             <li><a href="studentdashboard.php"><i class="fas fa-home"></i> Dashboard</a></li>
@@ -292,6 +292,10 @@ $username     = $_SESSION['username'] ?? '';
 
 <!-- Container for the logout modal -->
 <div id="logout-modal-container"></div>
+
+<!-- Notification System -->
+<script src="../../assets/js/NotificationManager.js"></script>
+
 <!-- Link to the shared JavaScript file -->
 <script src="../../assets/js/student_shared.js"></script>
 </body>

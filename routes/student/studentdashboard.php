@@ -5,7 +5,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
     header('Location: ../../index.php'); // Redirect to main login page
     exit();
 }
-$student_name = $_SESSION['student_name'] ?? 'Student';
+$student_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Student');
 $grade_level  = $_SESSION['grade_level'] ?? '11';
 $section      = $_SESSION['section'] ?? 'STEM-A';
 
@@ -37,7 +37,7 @@ if (file_exists($dotenv_path)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard | MNCHS Grade Portal</title>
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
 
     <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -45,7 +45,6 @@ if (file_exists($dotenv_path)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-
 
     <style>
         :root {
@@ -127,7 +126,7 @@ if (file_exists($dotenv_path)) {
             height: 18px;
             font-size: 0.7rem;
             font-weight: 700;
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             border: 2px solid var(--primary-dark);
@@ -346,6 +345,43 @@ if (file_exists($dotenv_path)) {
             font-size: 0.95rem;
         }
 
+        /* Calendar Styles */
+        #calendar-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-top: 2.5rem;
+        }
+        .fc .fc-button-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
+        .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
+        
+        /* Event Display Improvements */
+        .fc-daygrid-day-frame { min-height: 120px; }
+        .fc-daygrid-day-events { margin-top: 0; }
+        .fc-daygrid-event { white-space: normal; word-wrap: break-word; overflow: visible; }
+        .fc-event-title { padding: 4px; font-size: 12px; font-weight: 600; }
+        .fc-event { padding: 2px; margin-bottom: 2px; }
+        
+        /* Event Colors */
+        .fc-event-deadline {
+            background-color: #ff6b6b !important;
+            border-color: #ff5252 !important;
+        }
+        .fc-event-holiday {
+            background-color: #4ecdc4 !important;
+            border-color: #45b7aa !important;
+        }
+        .fc-event-other {
+            background-color: #ffd93d !important;
+            border-color: #ffb800 !important;
+            color: #2d3436 !important;
+        }
+
         @media (max-width: 768px) {
             .container { flex-direction: column; }
             .sidebar {
@@ -358,21 +394,6 @@ if (file_exists($dotenv_path)) {
             .header h1 { font-size: 1.5rem; }
         }
     </style>
-    <style>
-        /* Calendar Styles */
-        #calendar-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-        }
-        .fc .fc-button-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-        .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
-        .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
-    </style>
 </head>
 <body>
 
@@ -381,7 +402,7 @@ if (file_exists($dotenv_path)) {
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
+                <span class="notification-badge"></span>
             </a>
            <div class="profile-link" title="View Profile">
                 <i class="fas fa-user-circle"></i><i class="fas fa-caret-down dropdown-caret"></i>
@@ -390,7 +411,7 @@ if (file_exists($dotenv_path)) {
                     <!-- Add more links as needed -->
                 </div>
             </div>
-            <span><?php echo htmlspecialchars($student_name); ?> (Student)</span>
+            <span><?php echo htmlspecialchars($student_name); ?></span>
         </div>
     </header>
     
@@ -399,7 +420,7 @@ if (file_exists($dotenv_path)) {
     <div class="container">
         <aside class="sidebar">
             <div class="sidebar-logo-container">
-<img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
+<img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo">
             </div>
             <ul>
           <li><a href="studentdashboard.php" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
@@ -415,10 +436,10 @@ if (file_exists($dotenv_path)) {
                 <p>You are currently enrolled in <strong>Grade <?php echo htmlspecialchars($grade_level); ?> - <?php echo htmlspecialchars($section); ?></strong></p>
             </div>
 
+            <!-- Calendar Section -->
             <div id="calendar-container">
                 <div id="calendar"></div>
             </div>
-
         </main>
     </div>
 
@@ -433,6 +454,9 @@ if (file_exists($dotenv_path)) {
 <script>
     window.GOOGLE_API_KEY = '<?php echo htmlspecialchars($google_api_key); ?>';
 </script>
+
+<!-- Notification System -->
+<script src="../../assets/js/NotificationManager.js"></script>
 
 <!-- Link to the external JavaScript file -->
 <script src="../../assets/js/studentdashboard.js"></script>

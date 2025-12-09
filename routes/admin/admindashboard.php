@@ -4,6 +4,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
+
+// Get admin name from session
+$admin_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Admin');
+
+// --- Securely load API Key from .env file ---
+$google_api_key = '';
+$dotenv_path = __DIR__ . '/../../.env';
+
+if (file_exists($dotenv_path)) {
+    $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+        list($name, $value) = explode('=', $line, 2);
+        if (trim($name) === 'GOOGLE_CALENDAR_API_KEY') {
+            $value = trim($value);
+            // Remove quotes if they exist
+            if (substr($value, 0, 1) == '"' && substr($value, -1) == '"') {
+                $google_api_key = substr($value, 1, -1);
+            } else { $google_api_key = $value; }
+            break;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +34,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | MNCHS Grade Portal</title>
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
@@ -47,7 +70,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .header h1 { font-size: 1.8rem; font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 25px; }
         .notification-bell { position: relative; color: white; font-size: 1.3rem; text-decoration: none; }
-        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: flex; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
+        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: none; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
         .container { display: flex; min-height: calc(100vh - 77px); }
         .sidebar {
             width: 260px; background: white; padding: 2rem 1.5rem;
@@ -100,6 +123,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         thead th { background-color: #f9fafb; color: var(--text-light); text-transform: uppercase; font-size: 0.8rem; }
         tbody tr:hover { background-color: #f5f6fa; }
         .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
+        .status-badge.active { background-color: #e8f8f0; color: #27ae60; }
+        .status-badge.pending { background-color: #fff8e1; color: #f39c12; }
+        .action-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .action-link:hover { text-decoration: underline; }
         /* Calendar Styles */
         #calendar-container {
             background: white;
@@ -108,25 +135,54 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
             box-shadow: var(--shadow);
             margin-top: 2.5rem;
         }
-        .fc .fc-button-primary { background-color: var(--primary); border-color: var(--primary); }
+        .fc .fc-button-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
         .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
         .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
-        .fc-event { cursor: pointer; }
-        .status-badge.active { background-color: #e8f8f0; color: #27ae60; }
-        .status-badge.pending { background-color: #fff8e1; color: #f39c12; }
-        .action-link { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .action-link:hover { text-decoration: underline; }
+        
+        /* Event Display Improvements */
+        .fc-daygrid-day-frame { min-height: 120px; }
+        .fc-daygrid-day-events { margin-top: 0; }
+        .fc-daygrid-event { white-space: normal; word-wrap: break-word; overflow: visible; }
+        .fc-event-title { padding: 4px; font-size: 12px; font-weight: 600; }
+        .fc-event { padding: 2px; margin-bottom: 2px; }
+        
+        /* Event Colors */
+        .fc-event-deadline {
+            background-color: #ff6b6b !important;
+            border-color: #ff5252 !important;
+        }
+        .fc-event-holiday {
+            background-color: #4ecdc4 !important;
+            border-color: #45b7aa !important;
+        }
+        .fc-event-other {
+            background-color: #ffd93d !important;
+            border-color: #ffb800 !important;
+            color: #2d3436 !important;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Reusable Header -->
-    <?php include '../../includes/header.php'; ?>
+    <!-- Header -->
+    <header class="header">
+        <h1>MNCHS Grade Portal</h1>
+        <div class="user-info">
+            <a href="#" class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge"></span>
+            </a>
+            <span>Welcome, <?php echo htmlspecialchars(explode(' ', $admin_name)[0]); ?></span>
+        </div>
+    </header>
 
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-logo-container"><img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
+            <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
                 <li><a href="admindashboard.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="adminstudents.php"><i class="fas fa-user-graduate"></i> Students</a></li>
@@ -161,8 +217,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
                 </div>
             </div>
 
-            <!-- Calendar Section -->
-            <div id="calendar-container">
+            <!-- Calendar Container -->
+            <div id="calendar-container" style="position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="color: #800000; margin: 0;">School Calendar</h2>
+                    <button id="add-grading-period-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-plus"></i> Add Grading Period
+                    </button>
+                </div>
                 <div id="calendar"></div>
             </div>
 
@@ -209,12 +271,53 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         </main>
     </div>
 
+    <!-- Grading Period Modal -->
+    <div id="grading-period-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h2 style="color: #800000; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-calendar-check"></i> Add Grading Period
+            </h2>
+            <form id="grading-period-form">
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="gp-quarter" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Quarter</label>
+                    <select id="gp-quarter" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                        <option value="">Select Quarter</option>
+                        <option value="1">1st Quarter</option>
+                        <option value="2">2nd Quarter</option>
+                        <option value="3">3rd Quarter</option>
+                        <option value="4">4th Quarter</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="gp-start-date" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Start Date</label>
+                    <input type="date" id="gp-start-date" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="gp-end-date" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">End Date</label>
+                    <input type="date" id="gp-end-date" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" id="gp-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
+                    <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Period</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
 
     <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@5.11.3/main.global.min.js'></script>
+
+    <!-- Pass PHP variables to JavaScript -->
+    <script>
+        window.GOOGLE_API_KEY = '<?php echo htmlspecialchars($google_api_key); ?>';
+    </script>
+
+    <!-- Notification System -->
+    <script src="../../assets/js/NotificationManager.js"></script>
 
     <!-- Link to the external JavaScript file -->
     <script src="../../assets/js/admindashboard.js"></script>

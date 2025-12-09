@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
-    header('Location: ../../index.php'); // Redirect to login page
+    header('Location:index.php'); // Redirect to login page
     exit();
 }
 ?>
@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Teachers | MNCHS Grade Portal</title>
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -25,6 +25,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .header { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: white; padding: 1.2rem 2rem; box-shadow: 0 4px 15px rgba(128, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { font-size: 1.8rem; font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 25px; }
+        .notification-bell { position: relative; color: white; font-size: 1.3rem; text-decoration: none; }
+        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: flex; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
         .container { display: flex; min-height: calc(100vh - 77px); }
         .sidebar { width: 260px; background: white; padding: 2rem 1.5rem; box-shadow: 5px 0 15px rgba(0,0,0,0.05); position: sticky; top: 77px; height: calc(100vh - 77px); overflow-y: auto; }
         .sidebar-logo-container { text-align: center; margin-bottom: 2rem; }
@@ -92,13 +94,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
 </head>
 <body>
 
-    <!-- Reusable Header -->
-    <?php include '../../includes/header.php'; ?>
+    <!-- Header -->
+    <header class="header">
+        <h1>MNCHS Grade Portal</h1>
+        <div class="user-info">
+            <a href="#" class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </a>
+            <span>Welcome, Admin</span>
+        </div>
+    </header>
 
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-logo-container"><img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
+            <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
                 <li><a href="admindashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
                 <li><a href="adminstudents.php"><i class="fas fa-user-graduate"></i> Students</a></li>
@@ -266,4 +277,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
 
     <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
-    <
+
+    <!-- Link to the external JavaScript file -->
+    <script src="../../assets/js/adminteachers.js"></script>
+</body>
+</html>

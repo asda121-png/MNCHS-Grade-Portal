@@ -1,31 +1,16 @@
-function togglePassword(fieldId, eyeOpenId, eyeClosedId) {
-    const pw = document.getElementById(fieldId);
+/**
+ * Toggles the visibility of a password field and its corresponding eye icons.
+ * @param {string} inputId The ID of the password input field.
+ * @param {string} eyeOpenId The ID of the "eye open" SVG icon.
+ * @param {string} eyeClosedId The ID of the "eye closed" SVG icon.
+ */
+function togglePassword(inputId, eyeOpenId, eyeClosedId) {
+    const passwordInput = document.getElementById(inputId);
     const eyeOpen = document.getElementById(eyeOpenId);
     const eyeClosed = document.getElementById(eyeClosedId);
 
-    if (pw.type === "password") {
-        pw.type = "text";
-        eyeOpen.classList.add("hidden");
-        eyeClosed.classList.remove("hidden");
-    } else {
-        pw.type = "password";
-        eyeOpen.classList.remove("hidden");
-        eyeClosed.classList.add("hidden");
-    }
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    eyeOpen.classList.toggle('hidden', isPassword);
+    eyeClosed.classList.toggle('hidden', !isPassword);
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            const password = document.getElementById('password');
-            const confirmPassword = document.getElementById('confirm_password');
-
-            if (password && confirmPassword && password.value !== confirmPassword.value) {
-                e.preventDefault(); // Prevent form submission
-                alert("Passwords do not match. Please try again.");
-                confirmPassword.focus();
-            }
-        });
-    }
-});

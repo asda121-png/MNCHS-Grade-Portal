@@ -6,11 +6,41 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
     exit();
 }
 
-// Mock Data for display purposes (since we don't have the database connection)
 $student_name = $_SESSION['student_name'] ?? 'Juan Dela Cruz';
 $grade_level  = $_SESSION['grade_level'] ?? '11';
 $section      = $_SESSION['section'] ?? 'STEM-A';
+$student_id   = $_SESSION['user_id'];
 $school_year  = "2025–2026";
+
+// Include database config
+require_once '../../includes/config.php';
+
+// Fetch student's observed values from database
+$values = [];
+
+$stmt = $conn->prepare("
+    SELECT 
+        sv.id,
+        sv.aspect_name AS value_category,
+        sv.rating AS behavior_statement,
+        sv.comments AS quarter_1,   -- or you can keep as 'comments'
+        sv.recorded_date AS quarter_2, -- example mapping if needed
+        sv.created_at AS quarter_3,     -- just placeholders if you need quarters
+        sv.updated_at AS quarter_4      -- remove if not needed
+    FROM student_values sv
+    WHERE sv.student_id = ?
+    ORDER BY sv.aspect_name ASC, sv.id ASC
+");
+
+$stmt->bind_param("i", $student_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while($row = $result->fetch_assoc()){
+    $values[] = $row;
+}
+
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -47,7 +77,7 @@ $school_year  = "2025–2026";
         .notification-badge {
             position: absolute; top: -5px; right: -8px; background-color: #e74c3c;
             color: white; border-radius: 50%; width: 18px; height: 18px;
-            font-size: 0.7rem; font-weight: 700; display: flex;
+            font-size: 0.7rem; font-weight: 700; display: none;
             justify-content: center; align-items: center;
             border: 2px solid var(--primary-dark);
         }
@@ -178,7 +208,7 @@ $school_year  = "2025–2026";
                 <a href="studentprofile.php">Profile</a>
             </div>
         </div>
-        <span><?php echo htmlspecialchars($student_name); ?> (Student)</span>
+        <span><?php echo htmlspecialchars($student_name); ?></span>
     </div>
 </header>
 
@@ -218,68 +248,49 @@ $school_year  = "2025–2026";
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td rowspan="2" class="core-value">1. Maka-Diyos</td>
-                    <td class="behavior">Expresses one's spiritual beliefs while respecting the spiritual beliefs of others.</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
-                <tr>
-                    <td class="behavior">Shows adherence to ethical acts.</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col">SO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
-
-                <tr>
-                    <td rowspan="2" class="core-value">2. Makatao</td>
-                    <td class="behavior">Is sensitive to individual, social, and cultural differences.</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
-                <tr>
-                    <td class="behavior">Demonstrates contributions toward solidarity.</td>
-                    <td class="grade-col">SO</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
-
-                <tr>
-                    <td class="core-value">3. Makakalikasan</td>
-                    <td class="behavior">Cares for the environment and utilizes resources wisely, judiciously, and economically.</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
-
-                <tr>
-                    <td rowspan="2" class="core-value">4. Makabansa</td>
-                    <td class="behavior">Demonstrates pride in being a Filipino; exercises the rights and responsibilities of a Filipino citizen.</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
-                <tr>
-                    <td class="behavior">Demonstrates appropriate behavior in carrying out activities in the school, community, and country.</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col">AO</td>
-                    <td class="grade-col"></td>
-                    <td class="grade-col"></td>
-                </tr>
+                <?php if (count($values) > 0): ?>
+                    <?php 
+                    $lastCategory = null;
+                    $categoryCount = [];
+                    
+                    // Count occurrences of each category
+                    foreach ($values as $value) {
+                        $cat = $value['value_category'];
+                        $categoryCount[$cat] = ($categoryCount[$cat] ?? 0) + 1;
+                    }
+                    
+                    foreach ($values as $idx => $value): 
+                        $category = $value['value_category'];
+                        $showRowspan = ($lastCategory !== $category);
+                        $rowspanValue = $categoryCount[$category] ?? 1;
+                    ?>
+                    <tr>
+                        <?php if ($showRowspan): ?>
+                            <td rowspan="<?php echo $rowspanValue; ?>" class="core-value"><?php echo htmlspecialchars($category); ?></td>
+                        <?php endif; ?>
+                        <td class="behavior"><?php echo htmlspecialchars($value['behavior_statement']); ?></td>
+                        <td class="grade-col"><?php echo $value['quarter_1'] ?? '—'; ?></td>
+                        <td class="grade-col"><?php echo $value['quarter_2'] ?? '—'; ?></td>
+                        <td class="grade-col"><?php echo $value['quarter_3'] ?? '—'; ?></td>
+                        <td class="grade-col"><?php echo $value['quarter_4'] ?? '—'; ?></td>
+                    </tr>
+                    <?php 
+                        $lastCategory = $category;
+                    endforeach; 
+                    ?>
+                <?php else: ?>
+                    <tr><td colspan="6" style="text-align: center; color: #636e72; padding: 2rem;">No observed values recorded yet. Check back later!</td></tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </main>
 </div>
 <!-- Container for the logout modal -->
 <div id="logout-modal-container"></div>
+
+<!-- Notification System -->
+<script src="../../assets/js/NotificationManager.js"></script>
+
 <!-- Link to the shared JavaScript file -->
 <script src="../../assets/js/student_shared.js"></script>
 </body>

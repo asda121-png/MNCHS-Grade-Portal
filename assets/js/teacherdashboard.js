@@ -46,11 +46,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 right: 'dayGridMonth,timeGridWeek,listWeek'
             },
             googleCalendarApiKey: window.GOOGLE_API_KEY || '', // Use the key from the global scope
-            events: {
-                googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
-                className: 'gcal-event' // optional, for styling
-            },
-            editable: true // Allows events to be moved, etc.
+            eventSources: [
+                {
+                    googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
+                    className: 'gcal-event'
+                },
+                {
+                    url: '../../server/api/events.php?action=get',
+                    failure: function() {
+                        console.error('Error fetching custom events');
+                    }
+                }
+            ],
+            editable: true,
+            selectable: true,
+            dateClick: function(info) {
+                const title = prompt('Enter Event Title:');
+                if (title) {
+                    // Save event to database
+                    fetch('../../server/api/events.php?action=add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            start: info.dateStr,
+                            end: info.dateStr
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload calendar to show new event
+                            calendar.refetchEvents();
+                        } else {
+                            alert('Error: ' + (data.error || 'Could not add event'));
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+            }
         });
         calendar.render();
     }

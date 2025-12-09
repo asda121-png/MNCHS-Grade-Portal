@@ -9,6 +9,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- Fetch and Update Grading Periods ---
+    const quarterSelect = document.getElementById('quarter-select');
+    
+    fetch('../../server/api/grading_periods.php?action=get_active_periods')
+        .then(response => response.json())
+        .then(periods => {
+            if (periods && periods.length > 0) {
+                return fetch('../../server/api/grading_periods.php?action=get_current_quarter')
+                    .then(response => response.json())
+                    .then(data => {
+                        const currentQuarter = data.current_quarter;
+                        
+                        // Disable quarters that don't have grading periods
+                        const enabledQuarters = periods.map(p => p.quarter);
+                        const options = quarterSelect.querySelectorAll('option');
+                        
+                        options.forEach(option => {
+                            const value = parseInt(option.value);
+                            if (value > 0) {
+                                if (enabledQuarters.includes(value)) {
+                                    option.disabled = false;
+                                    option.textContent = `${value}${value === 1 ? 'st' : value === 2 ? 'nd' : value === 3 ? 'rd' : 'th'} Quarter`;
+                                } else {
+                                    option.disabled = true;
+                                    option.textContent = `${value}${value === 1 ? 'st' : value === 2 ? 'nd' : value === 3 ? 'rd' : 'th'} Quarter`;
+                                }
+                            }
+                        });
+
+                        // Set current quarter as default if available
+                        if (currentQuarter && enabledQuarters.includes(currentQuarter)) {
+                            quarterSelect.value = currentQuarter;
+                        } else if (enabledQuarters.length > 0) {
+                            quarterSelect.value = enabledQuarters[0];
+                        }
+                    });
+            }
+        })
+        .catch(error => console.error('Error fetching grading periods:', error));
+
     // --- Load Students Logic ---
     const loadStudentsBtn = document.getElementById('load-students-btn');
     const studentsTbody = document.getElementById('students-tbody');

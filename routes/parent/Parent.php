@@ -12,15 +12,22 @@ $parent_name = $_SESSION['parent_name'] ?? 'Mrs. Anderson';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parent Portal | MNCHS Grade Portal</title>    
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- jsPDF and html2canvas for PDF generation -->
+    <!-- jsPDF and jspdf-autotable for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.autotable.min.js"></script>
+    
+    <script>
+        // Ensure jspdf-autotable is properly loaded
+        if (typeof window.jspdf !== 'undefined' && typeof jspdfAutotable !== 'undefined') {
+            jspdfAutotable(window.jspdf.jsPDF);
+        }
+    </script>
     
     <script>
         tailwind.config = {
@@ -65,18 +72,12 @@ $parent_name = $_SESSION['parent_name'] ?? 'Mrs. Anderson';
 
     <aside class="w-64 bg-maroon-900 text-white flex flex-col hidden md:flex shadow-2xl z-20">
         <div class="h-20 flex items-center justify-center border-b border-maroon-800 bg-maroon-950 p-4">
-            <h1 class="text-xl font-bold tracking-wider text-center">    
-                <img src="../../assets/images/logo.png" 
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block'" 
-                     alt="Logo" 
-                     class="w-10 h-10 rounded-full border-2 border-yellow-400 bg-white object-cover shadow-lg mx-auto mb-2">
-                <span class="text-yellow-400 block text-sm leading-tight">MNCHS Grade Portal</span>    
-            </h1>
+            <h1 class="text-xl font-bold tracking-wider text-center text-yellow-400">MNCHS Grade Portal</h1>
         </div>
 
         <nav class="flex-1 pt-8 space-y-2">
             <div class="px-6 pb-6 text-center">
-                <img src="../assets/images/logo.png" 
+                <img src="../../assets/images/logo.png" 
                      alt="MNCHS Logo" 
                      class="w-30 h-24 mx-auto">
             </div>

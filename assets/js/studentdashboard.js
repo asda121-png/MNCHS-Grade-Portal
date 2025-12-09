@@ -44,10 +44,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 right: 'dayGridMonth,timeGridWeek,listWeek'
             },
             googleCalendarApiKey: window.GOOGLE_API_KEY || '', // Use the key from the global scope
-            events: {
-                googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
-                className: 'gcal-event' // optional, for styling
-            }
+            eventSources: [
+                {
+                    googleCalendarId: 'en.philippines#holiday@group.v.calendar.google.com',
+                    className: 'gcal-event'
+                },
+                {
+                    url: '../../server/api/events.php?action=get',
+                    failure: function() {
+                        console.error('Error fetching custom events');
+                    }
+                }
+            ],
+            editable: false,
+            selectable: false
         });
         calendar.render();
     }

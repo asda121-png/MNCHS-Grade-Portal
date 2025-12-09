@@ -4,7 +4,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
-$teacher_name = $_SESSION['teacher_name'] ?? 'Teacher';
+// Get teacher name from session
+$teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Teacher');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +15,7 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Teacher';
     <title>Grade Entry | MNCHS Grade Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <style>
         :root {
             --primary: #800000; --primary-dark: #660000; --accent: #FFD700;
@@ -84,7 +85,7 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Teacher';
         }
         .notification-bell { position:relative; color:white; font-size:1.3rem; text-decoration:none; transition:var(--transition); }
         .notification-bell:hover { color:var(--accent); }
-        .notification-badge { position:absolute; top:-5px; right:-8px; background-color:#e74c3c; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; font-weight:700; display:flex; justify-content:center; align-items:center; border:2px solid var(--primary-dark); }
+        .notification-badge { position:absolute; top:-5px; right:-8px; background-color:#e74c3c; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; font-weight:700; display:none; justify-content:center; align-items:center; border:2px solid var(--primary-dark); }
         .container { display:flex; min-height:calc(100vh - 80px); }
         .sidebar { width:260px; background:white; padding:2rem 1.5rem; box-shadow:5px 0 15px rgba(0,0,0,0.05); position:sticky; top:80px; height:calc(100vh - 80px); overflow-y:auto; }
         .sidebar-logo-container { text-align: center; margin-bottom: 2rem; }
@@ -142,31 +143,31 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Teacher';
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
+                <span class="notification-badge"></span>
             </a>
             <div class="profile-link" title="View Profile">
                 <i class="fas fa-user-circle"></i><i class="fas fa-caret-down dropdown-caret"></i>
                 <div class="profile-dropdown">
-                    <a href="teacherprofile.html">Profile</a>
+                    <a href="teacherprofile.php">Profile</a>
                 </div>
             </div>
-            <span><?php echo htmlspecialchars($teacher_name); ?> (Teacher)</span>
+            <span><?php echo htmlspecialchars($teacher_name); ?></span>
         </div>
     </header>
 
     <div class="container">
         <aside class="sidebar">
-            <div class="sidebar-logo-container"><img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
+            <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
-                <li><a href="teacherdashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="teachermyclasses.html"><i class="fas fa-users"></i> My Classes</a></li>
-                <li><a href="teachergradeentry.html" class="active"><i class="fas fa-edit"></i> Grade Entry</a></li>
-                <li><a href="teachervaluesentry.html"><i class="fas fa-tasks"></i> Values Entry</a></li>
+                <li><a href="teacherdashboard.php"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="teachermyclasses.php"><i class="fas fa-users"></i> My Classes</a></li>
+                <li><a href="teachergradeentry.php" class="active"><i class="fas fa-edit"></i> Grade Entry</a></li>
+                <li><a href="teachervaluesentry.php"><i class="fas fa-tasks"></i> Values Entry</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
         <main class="main-content">
-            <h1 class="page-title">Grade Entry</h1>
+            <h1 class="page-title">Students Grades</h1>
             <div class="filter-section">
                 <div class="filter-group">
                     <label for="class-select">Select Class</label>
@@ -249,6 +250,8 @@ $teacher_name = $_SESSION['teacher_name'] ?? 'Teacher';
     <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
 <!-- Link to shared and page-specific scripts -->
+<script src="../../assets/js/NotificationManager.js"></script>
+<script src="../../assets/js/GradeEntryLock.js"></script>
 <script src="../../assets/js/teacher_shared.js"></script>
 <script src="../../assets/js/teachergradeentry.js"></script>
 

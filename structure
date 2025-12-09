@@ -82,3 +82,9 @@ project-root/
 
     server/api/login.php — server-side login handler (PDO, prepared statements, password_verify)
     server/auth/logout.php — logout script
+
+
+admin_user/password123
+student001 / password123
+teacher_smith / password123
+parent001 / password123

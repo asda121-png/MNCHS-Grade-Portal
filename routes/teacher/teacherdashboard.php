@@ -7,8 +7,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
     // exit();
 }
 
-// Mock data for display, replace with actual data from your database
-$teacher_name = $_SESSION['teacher_name'] ?? 'Mr. Dela Cruz';
+// Get teacher name from session
+$teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Teacher');
 
 // --- Securely load API Key from .env file ---
 $google_api_key = '';
@@ -44,7 +44,7 @@ if (file_exists($dotenv_path)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
-    <link rel="icon" href="../assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
 
     <style>
         :root {
@@ -183,7 +183,7 @@ if (file_exists($dotenv_path)) {
             height: 18px;
             font-size: 0.7rem;
             font-weight: 700;
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             border: 2px solid var(--primary-dark);
@@ -359,25 +359,25 @@ if (file_exists($dotenv_path)) {
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
+                <span class="notification-badge"></span>
             </a>
             <div class="profile-link" title="View Profile">
                 <i class="fas fa-user-circle"></i><i class="fas fa-caret-down dropdown-caret"></i>
                 <div class="profile-dropdown">
-                    <a href="teacherprofile.html">Profile</a>
+                    <a href="teacherprofile.php">Profile</a>
                 </div>
             </div>
-            <span><?php echo htmlspecialchars($teacher_name); ?> (Teacher)</span>
+            <span><?php echo htmlspecialchars($teacher_name); ?></span>
         </div>
     </header>
 
     <div class="container">
-        <aside class="sidebar"><div class="sidebar-logo-container"><img src="../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
+        <aside class="sidebar"><div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
-                <li><a href="teacherdashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="teachermyclasses.html"><i class="fas fa-users"></i> My Classes</a></li>
-                <li><a href="teachergradeentry.html"><i class="fas fa-edit"></i> Grade Entry</a></li>
-                <li><a href="teachervaluesentry.html"><i class="fas fa-tasks"></i> Values Entry</a></li>
+                <li><a href="teacherdashboard.php" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="teachermyclasses.php"><i class="fas fa-users"></i> My Classes</a></li>
+                <li><a href="teachergradeentry.php"><i class="fas fa-edit"></i> Grade Entry</a></li>
+                <li><a href="teachervaluesentry.php"><i class="fas fa-tasks"></i> Values Entry</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
@@ -418,6 +418,9 @@ if (file_exists($dotenv_path)) {
 <script>
     window.GOOGLE_API_KEY = '<?php echo htmlspecialchars($google_api_key); ?>';
 </script>
+
+<!-- Notification System -->
+<script src="../../assets/js/NotificationManager.js"></script>
 
 <!-- Link to the external JavaScript file -->
 <script src="../../assets/js/teacherdashboard.js"></script>

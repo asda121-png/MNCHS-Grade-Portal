@@ -232,104 +232,280 @@ function closeLogoutModal() {
 }
 
 function downloadReportCard() {
-    const downloadBtn = document.getElementById('download-card-btn'); // Ensure your button has this ID
+    const downloadBtn = document.getElementById('download-card-btn');
     const originalContent = downloadBtn.innerHTML;
     downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
     downloadBtn.disabled = true;
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-
-    const student = studentData[currentYear].find(s => s.id === currentStudentId);
-    const finalGpa = document.getElementById('card-gpa').innerText;
-
-    // --- PDF Header ---
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Muntinlupa National High School", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text("Report on Learning Progress and Achievement", doc.internal.pageSize.getWidth() / 2, 27, { align: "center" });
-
-    // --- Student Information ---
-    doc.setFontSize(10);
-    doc.text(`Student Name: ${student.name}`, 14, 40);
-    doc.text(`Grade Level: ${student.grade}`, 14, 46);
-    doc.text(`School Year: ${currentYear}`, doc.internal.pageSize.getWidth() - 14, 40, { align: "right" });
-
-    // --- Grades Table ---
-    const gradesHead = [['Learning Area', 'Q1', 'Q2', 'Q3', 'Q4', 'Final', 'Remarks']];
-    const gradesBody = [];
-    student.subjects.forEach(s => {
-        const final = Math.round((s.grades.q1 + s.grades.q2 + s.grades.q3 + s.grades.q4) / 4);
-        gradesBody.push([
-            s.subject, s.grades.q1, s.grades.q2, s.grades.q3, s.grades.q4,
-            { content: final, styles: { fontStyle: 'bold' } },
-            final >= 75 ? "Passed" : "Failed"
-        ]);
-    });
-    gradesBody.push([
-        { content: 'Final General Average', colSpan: 5, styles: { fontStyle: 'bold', halign: 'right' } },
-        { content: finalGpa, styles: { fontStyle: 'bold' } }, ''
-    ]);
-
-    doc.autoTable({
-        head: gradesHead,
-        body: gradesBody,
-        startY: 52,
-        theme: 'grid',
-        headStyles: { fillColor: [128, 0, 0], halign: 'center' },
-        columnStyles: {
-            0: { cellWidth: 'auto' },
-            1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' },
-            5: { halign: 'center' }, 6: { halign: 'center' }
-        }
-    });
-
-    // --- Values Table ---
-    let lastY = doc.lastAutoTable.finalY;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Learner's Observed Values", 14, lastY + 12);
-
-    const valuesHead = [['Core Value', 'Behavior Statement', 'Q1', 'Q2', 'Q3', 'Q4']];
-    const valuesBody = [];
-    student.observedValues.forEach(coreValue => {
-        coreValue.behaviors.forEach((behavior, index) => {
-            if (index === 0) {
-                valuesBody.push([
-                    { content: coreValue.value, rowSpan: coreValue.behaviors.length, styles: { valign: 'middle', fontStyle: 'bold' } },
-                    behavior.statement, behavior.q1, behavior.q2, behavior.q3, behavior.q4
-                ]);
-            } else {
-                valuesBody.push([behavior.statement, behavior.q1, behavior.q2, behavior.q3, behavior.q4]);
+    setTimeout(() => {
+        try {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('jsPDF library not loaded');
             }
-        });
-    });
 
-    doc.autoTable({
-        head: valuesHead,
-        body: valuesBody,
-        startY: lastY + 15,
-        theme: 'grid',
-        headStyles: { fillColor: [128, 0, 0], halign: 'center' },
-        columnStyles: {
-            2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' }, 5: { halign: 'center' }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const student = studentData[currentYear].find(s => s.id === currentStudentId);
+            const finalGpa = document.getElementById('card-gpa').innerText;
+
+            let yPosition = 15;
+
+            // --- Header with School Name ---
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(128, 0, 0);
+            doc.text("Mati National Comprehensive High School", pageWidth / 2, yPosition, { align: "center" });
+            
+            yPosition += 8;
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(80, 80, 80);
+            doc.text("Report on Learning Progress and Achievement", pageWidth / 2, yPosition, { align: "center" });
+            
+            // --- Divider Line ---
+            yPosition += 8;
+            doc.setDrawColor(128, 0, 0);
+            doc.setLineWidth(0.5);
+            doc.line(14, yPosition, pageWidth - 14, yPosition);
+            
+            // --- Student Information Section ---
+            yPosition += 10;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(128, 0, 0);
+            doc.text("STUDENT INFORMATION", 14, yPosition);
+            
+            yPosition += 8;
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(9);
+            
+            const infoData = [
+                { label: "Student Name:", value: student.name },
+                { label: "Grade Level:", value: `Grade ${student.grade}` },
+                { label: "School Year:", value: currentYear }
+            ];
+            
+            infoData.forEach(info => {
+                doc.setFont("helvetica", "bold");
+                doc.text(info.label, 14, yPosition);
+                doc.setFont("helvetica", "normal");
+                doc.text(info.value, 50, yPosition);
+                yPosition += 6;
+            });
+
+            // --- Grades Section ---
+            yPosition += 8;
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(128, 0, 0);
+            doc.text("ACADEMIC GRADES", 14, yPosition);
+            
+            yPosition += 8;
+            
+            // Table dimensions
+            const colWidths = [35, 18, 12, 12, 12, 12, 12, 15];
+            const rowHeight = 6;
+            const startX = 14;
+            
+            // Table header
+            doc.setFillColor(128, 0, 0);
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            
+            const headers = ['Learning Area', 'Teacher', 'Q1', 'Q2', 'Q3', 'Q4', 'Final', 'Remarks'];
+            let xPos = startX;
+            headers.forEach((header, idx) => {
+                doc.rect(xPos, yPosition - 4, colWidths[idx], rowHeight, 'F');
+                const align = idx > 1 ? 'center' : 'left';
+                const textX = align === 'center' ? xPos + colWidths[idx] / 2 : xPos + 1;
+                doc.text(header, textX, yPosition, { maxWidth: colWidths[idx] - 2, align: align });
+                xPos += colWidths[idx];
+            });
+            
+            yPosition += rowHeight;
+            
+            // Table body - Grades rows
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            
+            student.subjects.forEach(s => {
+                const final = Math.round((s.grades.q1 + s.grades.q2 + s.grades.q3 + s.grades.q4) / 4);
+                const rowData = [
+                    s.subject.substring(0, 18),
+                    s.teacher.substring(0, 10),
+                    String(s.grades.q1),
+                    String(s.grades.q2),
+                    String(s.grades.q3),
+                    String(s.grades.q4),
+                    String(final),
+                    final >= 75 ? "Passed" : "Failed"
+                ];
+                
+                xPos = startX;
+                rowData.forEach((cell, idx) => {
+                    doc.rect(xPos, yPosition - 4, colWidths[idx], rowHeight);
+                    const align = idx > 1 ? 'center' : 'left';
+                    const textX = align === 'center' ? xPos + colWidths[idx] / 2 : xPos + 1;
+                    doc.text(cell, textX, yPosition, { maxWidth: colWidths[idx] - 2, align: align });
+                    xPos += colWidths[idx];
+                });
+                
+                yPosition += rowHeight;
+            });
+            
+            // Final Average Row - Separate row
+            doc.setFont("helvetica", "bold");
+            doc.setFillColor(200, 200, 200);
+            doc.setTextColor(0, 0, 0);
+            
+            xPos = startX;
+            // "FINAL GENERAL AVERAGE" spans columns 0-5
+            const spanWidth = colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5];
+            doc.rect(xPos, yPosition - 4, spanWidth, rowHeight, 'F');
+            doc.text("FINAL GENERAL AVERAGE", xPos + 2, yPosition, { maxWidth: spanWidth - 4 });
+            xPos += spanWidth;
+            
+            // Final column
+            doc.setFillColor(128, 0, 0);
+            doc.setTextColor(255, 255, 255);
+            doc.rect(xPos, yPosition - 4, colWidths[6], rowHeight, 'F');
+            doc.text(finalGpa, xPos + colWidths[6] / 2, yPosition, { align: 'center' });
+            xPos += colWidths[6];
+            
+            // Remarks column empty
+            doc.setTextColor(0, 0, 0);
+            doc.setFillColor(255, 255, 255);
+            doc.rect(xPos, yPosition - 4, colWidths[7], rowHeight);
+            xPos += colWidths[7];
+            
+            yPosition += rowHeight + 8;
+
+            // --- Observed Values Section ---
+            if (yPosition > pageHeight - 50) {
+                doc.addPage();
+                yPosition = 15;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(128, 0, 0);
+            doc.text("LEARNER'S OBSERVED VALUES", 14, yPosition);
+            
+            yPosition += 8;
+
+            // Values table header
+            doc.setFillColor(128, 0, 0);
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            
+            const valuesHeaders = ['Core Value', 'Behavior Statement', 'Q1', 'Q2', 'Q3', 'Q4'];
+            const valuesColWidths = [25, 65, 15, 15, 15, 15];
+            xPos = startX;
+            valuesHeaders.forEach((header, idx) => {
+                doc.rect(xPos, yPosition - 4, valuesColWidths[idx], rowHeight, 'F');
+                const align = idx > 0 ? 'center' : 'left';
+                const textX = align === 'center' ? xPos + valuesColWidths[idx] / 2 : xPos + 1;
+                doc.text(header, textX, yPosition, { maxWidth: valuesColWidths[idx] - 2, align: align });
+                xPos += valuesColWidths[idx];
+            });
+            
+            yPosition += rowHeight;
+            
+            // Values table body
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+            
+            student.observedValues.forEach(coreValue => {
+                coreValue.behaviors.forEach((behavior, behaviorIdx) => {
+                    const coreValueDisplay = behaviorIdx === 0 ? coreValue.value : '';
+                    
+                    const valuesRowData = [
+                        coreValueDisplay.substring(0, 23),
+                        behavior.statement.substring(0, 55),
+                        behavior.q1 || 'NO',
+                        behavior.q2 || 'NO',
+                        behavior.q3 || 'NO',
+                        behavior.q4 || 'NO'
+                    ];
+                    
+                    xPos = startX;
+                    valuesRowData.forEach((cell, idx) => {
+                        doc.rect(xPos, yPosition - 4, valuesColWidths[idx], rowHeight);
+                        const align = (idx > 0) ? 'center' : 'left';
+                        const textX = align === 'center' ? xPos + valuesColWidths[idx] / 2 : xPos + 1;
+                        doc.text(String(cell), textX, yPosition, { 
+                            maxWidth: valuesColWidths[idx] - 2, 
+                            align: align,
+                            lineHeightFactor: 1
+                        });
+                        xPos += valuesColWidths[idx];
+                    });
+                    
+                    yPosition += rowHeight;
+                    
+                    // Check if we need a new page
+                    if (yPosition > pageHeight - 15) {
+                        doc.addPage();
+                        yPosition = 15;
+                        
+                        // Redraw values table header on new page
+                        doc.setFillColor(128, 0, 0);
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(8);
+                        
+                        xPos = startX;
+                        valuesHeaders.forEach((header, idx) => {
+                            doc.rect(xPos, yPosition - 4, valuesColWidths[idx], rowHeight, 'F');
+                            const align = idx > 0 ? 'center' : 'left';
+                            const textX = align === 'center' ? xPos + valuesColWidths[idx] / 2 : xPos + 1;
+                            doc.text(header, textX, yPosition, { maxWidth: valuesColWidths[idx] - 2, align: align });
+                            xPos += valuesColWidths[idx];
+                        });
+                        
+                        yPosition += rowHeight;
+                        doc.setTextColor(0, 0, 0);
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(7);
+                    }
+                });
+            });
+
+            // --- Footer ---
+            const totalPages = doc.internal.pages.length - 1;
+            for (let page = 1; page <= totalPages; page++) {
+                doc.setPage(page);
+                doc.setFontSize(7);
+                doc.setTextColor(150);
+                doc.text(
+                    `Generated on ${new Date().toLocaleDateString()} | Page ${page} of ${totalPages}`,
+                    pageWidth / 2,
+                    pageHeight - 8,
+                    { align: "center" }
+                );
+            }
+
+            // --- Save the PDF ---
+            const filename = `ReportCard_${student.name.replace(/ /g, '_')}_${currentYear}.pdf`;
+            doc.save(filename);
+
+            downloadBtn.innerHTML = originalContent;
+            downloadBtn.disabled = false;
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Error generating PDF: ' + error.message);
+            downloadBtn.innerHTML = originalContent;
+            downloadBtn.disabled = false;
         }
-    });
-
-    // --- Footer ---
-    lastY = doc.internal.pageSize.getHeight() - 15;
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text("This is a system-generated report. For inquiries, please contact the school registrar.", 14, lastY);
-
-    // --- Save the PDF ---
-    const filename = `ReportCard_${student.name.replace(/ /g, '_')}_${currentYear}.pdf`;
-    doc.save(filename);
-
-    downloadBtn.innerHTML = originalContent;
-    downloadBtn.disabled = false;
+    }, 500);
 }
 
 window.onload = init;
