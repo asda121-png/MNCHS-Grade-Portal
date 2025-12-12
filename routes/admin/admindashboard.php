@@ -8,6 +8,52 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
 // Get admin name from session
 $admin_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Admin');
 
+require_once '../../includes/config.php';
+
+function fetch_count(mysqli $conn, string $sql, string $label): int {
+    try {
+        $result = $conn->query($sql);
+        if (!$result) {
+            error_log("Admin dashboard count query failed for {$label}: " . $conn->error);
+            return 0;
+        }
+        $row = $result->fetch_assoc();
+        return isset($row['total']) ? (int)$row['total'] : 0;
+    } catch (Throwable $e) {
+        error_log("Admin dashboard count exception for {$label}: " . $e->getMessage());
+        return 0;
+    }
+}
+
+$total_students = fetch_count($conn, "SELECT COUNT(*) AS total FROM students", 'students');
+$total_teachers = fetch_count($conn, "SELECT COUNT(*) AS total FROM teachers", 'teachers');
+
+// --- Fetch Recent Portal Activity ---
+$recent_activity = [];
+try {
+    $query = "
+        SELECT 
+            COALESCE(u.first_name, 'Unknown') as first_name,
+            COALESCE(u.last_name, '') as last_name,
+            COALESCE(u.email, 'N/A') as email,
+            COALESCE(u.user_type, 'Unknown') as user_type,
+            COALESCE(u.status, 'inactive') as status,
+            u.last_login
+        FROM users u
+        ORDER BY u.last_login DESC
+        LIMIT 10
+    ";
+    
+    $result = $conn->query($query);
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $recent_activity[] = $row;
+        }
+    }
+} catch (Throwable $e) {
+    error_log("Failed to fetch recent activity: " . $e->getMessage());
+}
+
 // --- Securely load API Key from .env file ---
 $google_api_key = '';
 $dotenv_path = __DIR__ . '/../../.env';
@@ -204,14 +250,14 @@ if (file_exists($dotenv_path)) {
                 <div class="stat-card">
                     <div class="icon-container blue"><i class="fas fa-user-graduate"></i></div>
                     <div>
-                        <div class="value">1,250</div>
+                        <div class="value"><?php echo number_format($total_students); ?></div>
                         <div class="label">Total Students</div>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="icon-container green"><i class="fas fa-chalkboard-teacher"></i></div>
                     <div>
-                        <div class="value">85</div>
+                        <div class="value"><?php echo number_format($total_teachers); ?></div>
                         <div class="label">Total Teachers</div>
                     </div>
                 </div>
@@ -221,9 +267,17 @@ if (file_exists($dotenv_path)) {
             <div id="calendar-container" style="position: relative;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h2 style="color: #800000; margin: 0;">School Calendar</h2>
-                    <button id="add-grading-period-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-plus"></i> Add Grading Period
-                    </button>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="add-event-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-calendar-plus"></i> Add Event
+                        </button>
+                        <button id="manage-events-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-list"></i> Manage Events
+                        </button>
+                        <button id="add-grading-period-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-plus"></i> Add Grading Period
+                        </button>
+                    </div>
                 </div>
                 <div id="calendar"></div>
             </div>
@@ -239,31 +293,37 @@ if (file_exists($dotenv_path)) {
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th>Last Login</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>John Doe</td>
-                                <td>john.doe@example.com</td>
-                                <td>Student</td>
-                                <td><span class="status-badge active">Active</span></td>
-                                <td><a href="#" class="action-link">Edit</a></td>
-                            </tr>
-                            <tr>
-                                <td>Jane Smith</td>
-                                <td>jane.smith@example.com</td>
-                                <td>Teacher</td>
-                                <td><span class="status-badge active">Active</span></td>
-                                <td><a href="#" class="action-link">Edit</a></td>
-                            </tr>
-                            <tr>
-                                <td>Peter Jones</td>
-                                <td>peter.jones@example.com</td>
-                                <td>Parent</td>
-                                <td><span class="status-badge pending">Pending</span></td>
-                                <td><a href="#" class="action-link">Approve</a></td>
-                            </tr>
+                            <?php if (!empty($recent_activity)): ?>
+                                <?php foreach ($recent_activity as $activity): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars(trim($activity['first_name'] . ' ' . $activity['last_name'])); ?></td>
+                                        <td><?php echo htmlspecialchars($activity['email']); ?></td>
+                                        <td><?php echo htmlspecialchars(ucfirst($activity['user_type'])); ?></td>
+                                        <td>
+                                            <span class="status-badge <?php echo $activity['status'] === 'active' ? 'active' : 'inactive'; ?>">
+                                                <?php echo ucfirst($activity['status']); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php 
+                                                if ($activity['last_login']) {
+                                                    echo htmlspecialchars(date('M d, Y g:i A', strtotime($activity['last_login'])));
+                                                } else {
+                                                    echo 'Never';
+                                                }
+                                            ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2rem; color: #999;">No recent activity</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -299,6 +359,143 @@ if (file_exists($dotenv_path)) {
                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                     <button type="button" id="gp-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
                     <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Period</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manage Events Modal -->
+    <div id="manage-events-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; overflow-y: auto;">
+        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 900px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin: 2rem auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="color: #800000; margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-calendar-alt"></i> Manage Events
+                </h2>
+                <button id="close-manage-events-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Events Table -->
+            <div style="overflow-x: auto; max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background-color: #f9fafb;">
+                        <tr>
+                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Title</th>
+                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Start Date</th>
+                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">End Date</th>
+                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Type</th>
+                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Status</th>
+                            <th style="padding: 1rem 1.5rem; text-align: center; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body">
+                        <tr style="text-align: center; padding: 2rem;">
+                            <td colspan="6" style="padding: 2rem;">Loading events...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Event Modal (triggered by calendar click) -->
+    <div id="add-event-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2001; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 600px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h2 style="color: #800000; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-plus-circle"></i> Add New Event
+            </h2>
+            <form id="add-event-form">
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="add-event-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Title</label>
+                    <input type="text" id="add-event-title" required placeholder="Enter event title" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label for="add-event-start" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Start Date</label>
+                        <input type="date" id="add-event-start" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="add-event-end" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">End Date</label>
+                        <input type="date" id="add-event-end" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="add-event-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Type</label>
+                    <select id="add-event-type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                        <option value="other">Other</option>
+                        <option value="holiday">Holiday</option>
+                        <option value="examination">Examination</option>
+                        <option value="deadline">Deadline</option>
+                        <option value="celebration">Celebration</option>
+                        <option value="meeting">Meeting</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-weight: 500; color: #2d3436; cursor: pointer;">
+                        <input type="checkbox" id="add-event-published" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Published (visible to all users)</span>
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" id="add-event-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
+                    <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div id="edit-event-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2001; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 600px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h2 style="color: #800000; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-edit"></i> Edit Event
+            </h2>
+            <form id="edit-event-form">
+                <input type="hidden" id="edit-event-id">
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="edit-event-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Title</label>
+                    <input type="text" id="edit-event-title" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label for="edit-event-start" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Start Date</label>
+                        <input type="date" id="edit-event-start" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="edit-event-end" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">End Date</label>
+                        <input type="date" id="edit-event-end" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="edit-event-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Type</label>
+                    <select id="edit-event-type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                        <option value="other">Other</option>
+                        <option value="holiday">Holiday</option>
+                        <option value="examination">Examination</option>
+                        <option value="deadline">Deadline</option>
+                        <option value="celebration">Celebration</option>
+                        <option value="meeting">Meeting</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 10px; font-weight: 500; color: #2d3436; cursor: pointer;">
+                        <input type="checkbox" id="edit-event-published" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Published (visible to all users)</span>
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" id="edit-event-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
+                    <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Save Changes</button>
                 </div>
             </form>
         </div>

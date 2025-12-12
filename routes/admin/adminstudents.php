@@ -4,6 +4,70 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
+
+require_once '../../includes/config.php';
+
+function determine_student_status(array $student): array {
+    $statusLabel = 'Enrolled';
+    $statusClass = 'enrolled';
+
+    if (empty($student['enrollment_date'])) {
+        $statusLabel = 'Not Enrolled';
+        $statusClass = 'not-enrolled';
+    }
+
+    return [$statusLabel, $statusClass];
+}
+
+function format_grade_section($gradeLevel, $section): string {
+    $gradePart = ($gradeLevel !== null && $gradeLevel !== '') ? 'Grade ' . $gradeLevel : '';
+    $sectionPart = $section ? trim($section) : '';
+
+    if ($gradePart && $sectionPart) {
+        return $gradePart . ' - ' . $sectionPart;
+    }
+
+    if ($gradePart || $sectionPart) {
+        return $gradePart ?: $sectionPart;
+    }
+
+    return 'Not Assigned';
+}
+
+$students = [];
+$studentQueryError = null;
+
+try {
+    $query = "SELECT 
+                s.id,
+                s.student_id,
+                s.lrn,
+                s.student_name,
+                s.grade_level,
+                s.section,
+                s.guardian_contact,
+                s.address,
+                s.enrollment_date,
+                s.date_of_birth,
+                u.email,
+                u.username,
+                u.first_name,
+                u.last_name
+            FROM students s
+            LEFT JOIN users u ON s.user_id = u.id
+            ORDER BY s.student_name ASC";
+
+    if ($result = $conn->query($query)) {
+        while ($row = $result->fetch_assoc()) {
+            $students[] = $row;
+        }
+        $result->free();
+    } else {
+        $studentQueryError = $conn->error;
+    }
+} catch (Throwable $e) {
+    $studentQueryError = $e->getMessage();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,16 +83,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         :root {
             --primary: #800000; --primary-dark: #660000; --accent: #FFD700;
             --text: #2d3436; --text-light: #636e72; --shadow: 0 8px 25px rgba(0,0,0,0.08);
+            --header-height: 77px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: var(--text); }
-        .header { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: white; padding: 1.2rem 2rem; box-shadow: 0 4px 15px rgba(128, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: white; padding: 1.2rem 2rem; box-shadow: 0 4px 15px rgba(128, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; min-height: var(--header-height); }
         .header h1 { font-size: 1.8rem; font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 25px; }
         .notification-bell { position: relative; color: white; font-size: 1.3rem; text-decoration: none; }
-        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: flex; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
-        .container { display: flex; min-height: calc(100vh - 77px); }
-        .sidebar { width: 260px; background: white; padding: 2rem 1.5rem; box-shadow: 5px 0 15px rgba(0,0,0,0.05); position: sticky; top: 77px; height: calc(100vh - 77px); overflow-y: auto; }
+        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: none; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
+        .container { flex: 1; display: flex; }
+        .sidebar { width: 260px; background: white; padding: 2rem 1.5rem; box-shadow: 5px 0 15px rgba(0,0,0,0.05); position: sticky; top: var(--header-height); height: calc(100vh - var(--header-height)); overflow-y: auto; }
         .sidebar-logo-container { text-align: center; margin-bottom: 2rem; }
         .sidebar-logo { max-width: 120px; height: auto; }
         .sidebar ul { list-style: none; }
@@ -36,27 +108,143 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .sidebar ul li a { display: flex; align-items: center; gap: 12px; padding: 14px 18px; color: var(--text); text-decoration: none; border-radius: 12px; font-weight: 500; transition: all 0.3s ease; }
         .sidebar ul li a:hover, .sidebar ul li a.active { background: var(--primary); color: white; transform: translateX(5px); box-shadow: 0 5px 15px rgba(128, 0, 0, 0.2); }
         .sidebar ul li a i { font-size: 1.1rem; width: 20px; text-align: center; }
-        .main-content { flex: 1; padding: 2.5rem; }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .page-header h2 { font-size: 2rem; color: var(--primary); }
-        .btn-primary { background: var(--primary); color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; transition: all 0.3s ease; }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
-        .content-box { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 2rem; }
-        .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .filters input, .filters select { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 0.95rem; background-color: #f9fafb; }
-        .search-box { position: relative; }
-        .search-box input { padding-left: 40px; width: 300px; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #f0f0f0; }
-        thead th { background-color: #f9fafb; color: var(--text-light); text-transform: uppercase; font-size: 0.8rem; }
-        tbody tr:hover { background-color: #f5f6fa; }
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
-        .status-badge.enrolled { background-color: #e8f8f0; color: #27ae60; }
-        .status-badge.not-enrolled { background-color: #feeaed; color: #e74c3c; }
-        .action-links a { margin-right: 1rem; color: var(--primary); font-weight: 600; text-decoration: none; }
-        .action-links a:hover { text-decoration: underline; }
+        .main-content { flex: 1; padding: 1.75rem 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        .page-header h2 { font-size: 1.75rem; color: var(--primary); font-weight: 700; }
+        .btn-primary { background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; transition: all 0.3s ease; font-size: 1rem; box-shadow: 0 4px 12px rgba(128, 0, 0, 0.15); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(128, 0, 0, 0.25); }
+        .content-box { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); padding: 1.75rem; border: 1px solid #f0f0f0; }
+        .filters { 
+            display: flex; 
+            gap: 1rem; 
+            margin-bottom: 1.25rem; 
+            flex-wrap: wrap; 
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .filters input, .filters select { 
+            padding: 12px 16px; 
+            border: 2px solid #e5e7eb; 
+            border-radius: 8px; 
+            font-family: 'Poppins', sans-serif; 
+            font-size: 0.95rem; 
+            background-color: white;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .filters input::placeholder { color: #9ca3af; font-weight: 400; }
+        .filters input:focus, .filters select:focus { 
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(128, 0, 0, 0.1);
+            background-color: #fff5f5;
+        }
+        .search-box { 
+            position: relative; 
+            flex: 1;
+            min-width: 250px;
+        }
+        .search-box input { 
+            padding-left: 40px; 
+            width: 100%; 
+        }
+        .search-box i { 
+            position: absolute; 
+            left: 14px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: #9ca3af; 
+        }
+        .table-wrapper { overflow-x: auto; margin-top: 1.25rem; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 1rem 1.25rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 1rem; }
+        thead th { 
+            background: linear-gradient(135deg, #800000 0%, #660000 100%); 
+            color: white; 
+            text-transform: uppercase; 
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 3px solid #4a0000;
+        }
+        tbody tr { 
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        tbody tr:hover { 
+            background-color: #fef3f3;
+            box-shadow: 0 4px 12px rgba(128, 0, 0, 0.08) inset;
+            transform: scale(1.002);
+        }
+        tbody tr:nth-child(even) { background-color: #fafbfc; }
+        .status-badge { 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px; 
+            border-radius: 28px; 
+            font-weight: 700; 
+            font-size: 0.85rem;
+            text-align: center;
+            min-width: 130px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            text-transform: capitalize;
+            letter-spacing: 0.3px;
+        }
+        .status-badge::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-badge.enrolled { 
+            background: linear-gradient(135deg, #dcfce7 0%, #c8f7d8 100%);
+            color: #145a32; 
+            border: 2px solid #82d9a8;
+        }
+        .status-badge.enrolled::before { background-color: #27ae60; }
+        .status-badge.not-enrolled { 
+            background: linear-gradient(135deg, #fee2e4 0%, #fecdd3 100%);
+            color: #7f1d1d; 
+            border: 2px solid #fca5a5;
+        }
+        .status-badge.not-enrolled::before { background-color: #dc2626; }
+        .action-links { 
+            display: flex; 
+            gap: 1.75rem;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .action-links a { 
+            color: var(--primary); 
+            font-weight: 700; 
+            text-decoration: none; 
+            transition: all 0.3s ease; 
+            position: relative; 
+            font-size: 0.9rem;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .action-links a:hover { 
+            color: white;
+            background: var(--primary);
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(128, 0, 0, 0.3);
+            transform: translateY(-2px);
+            border-color: var(--primary-dark);
+        }
+        .action-links a:active {
+            transform: translateY(0);
+        }
 
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeIn 0.3s ease; }
@@ -66,24 +254,49 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .close-button { font-size: 2rem; color: var(--text-light); cursor: pointer; background: none; border: none; line-height: 1; }
         .modal-body .form-group { margin-bottom: 1rem; }
         .modal-body .form-row { display: flex; gap: 1rem; }
-        .modal-body .form-row .form-group { flex: 1; }
-        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text); }
-        .modal-body { min-height: 380px; } /* Set a consistent height for the form area */
+        .modal-body .form-row .form-group { flex: 1; min-width: 0; }
+        .modal-body .form-grid { display: grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap: 1rem; }
+        .modal-body .form-grid .full-width { grid-column: span 2; }
+        .modal-body label {
+            display: flex;
+            align-items: flex-end;
+            height: 2.6rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+        .modal-body .form-grid .form-group { display: flex; flex-direction: column; }
+        .modal-body { min-height: 380px; display: flex; flex-direction: column; }
         .modal-body input, .modal-body select { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1rem; }
         .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
         .btn-secondary { background: #f1f1f1; color: var(--text); border: 1px solid #ddd; }
         .btn-secondary:hover { background: #e7e7e7; }
         .modal-overlay.show { display: flex; }
 
+        .view-details { min-height: auto; }
+        .view-details ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .view-details li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.95rem; }
+        .view-details li span:first-child { font-weight: 600; color: var(--text-light); min-width: 140px; }
+        .view-details li span:last-child { color: var(--text); flex: 1; text-align: left; word-break: break-word; }
+
         /* Multi-step form styles */
-        .step-indicator { display: flex; justify-content: space-around; margin-bottom: 1.5rem; }
-        .step { text-align: center; color: var(--text-light); }
-        .step-number { background: #eee; color: var(--text-light); border-radius: 50%; width: 30px; height: 30px; line-height: 30px; display: inline-block; font-weight: 600; margin-bottom: 0.25rem; }
+        .step-indicator { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+        .step { flex: 1; text-align: center; color: var(--text-light); padding: 0.5rem 0; display: flex; flex-direction: column; align-items: center; }
+        .step-number { background: #eee; color: var(--text-light); border-radius: 50%; width: 36px; height: 36px; line-height: 36px; display: inline-block; font-weight: 600; margin-bottom: 0.25rem; }
         .step-title { font-size: 0.8rem; }
         .step.active .step-number { background: var(--primary); color: white; }
         .step.active .step-title { color: var(--primary); font-weight: 600; }
         .form-step { display: none; }
-        .form-step.active { display: block; animation: fadeIn 0.5s; }
+        .form-step.active { display: flex; flex-direction: column; gap: 1rem; animation: fadeIn 0.5s; }
 
 
         /* Animations */
@@ -91,6 +304,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         @keyframes scaleUp {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; }
+            .sidebar { position: static; width: 100%; height: auto; box-shadow: none; margin-bottom: 1.5rem; }
+            .main-content { padding: 1.5rem; }
+        }
+
+        @media (max-width: 600px) {
+            .modal-body .form-row { flex-direction: column; }
+            .modal-body .form-grid { grid-template-columns: 1fr; }
+            .modal-body .form-grid .full-width { grid-column: span 1; }
         }
     </style>
 </head>
@@ -102,7 +327,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
+                <span class="notification-badge"></span>
             </a>
             <span>Welcome, Admin</span>
         </div>
@@ -127,7 +352,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
                 <div>
                     <h2>Manage Students</h2>
                 </div>
-                <button class="btn-primary">
+                <button class="btn-primary" id="openAddStudentButton">
                     <i class="fas fa-plus"></i>
                     Add Student
                 </button>
@@ -167,36 +392,67 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
                             </tr>
                         </thead>
                         <tbody id="studentTableBody">
-                            <tr>
-                                <td>123456789012</td>
-                                <td>John Doe</td>
-                                <td>Grade 10 - Rizal</td>
-                                <td><span class="status-badge enrolled">Enrolled</span></td>
-                                <td class="action-links">
-                                    <a href="#">View</a>
-                                    <a href="#">Edit</a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>123456789013</td>
-                                <td>Jane Smith</td>
-                                <td>Grade 11 - STEM A</td>
-                                <td><span class="status-badge enrolled">Enrolled</span></td>
-                                <td class="action-links">
-                                    <a href="#">View</a>
-                                    <a href="#">Edit</a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>123456789014</td>
-                                <td>Peter Jones</td>
-                                <td>Grade 9 - Bonifacio</td>
-                                <td><span class="status-badge not-enrolled">Not Enrolled</span></td>
-                                <td class="action-links">
-                                    <a href="#">View</a>
-                                    <a href="#">Edit</a>
-                                </td>
-                            </tr>
+                            <?php if ($studentQueryError): ?>
+                                <tr>
+                                    <td colspan="5">Unable to load students: <?= htmlspecialchars($studentQueryError) ?></td>
+                                </tr>
+                            <?php elseif (empty($students)): ?>
+                                <tr>
+                                    <td colspan="5">No students found.</td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($students as $student): ?>
+                                    <?php
+                                        [$statusLabel, $statusClass] = determine_student_status($student);
+
+                                        $rawName = isset($student['student_name']) ? trim((string) $student['student_name']) : '';
+                                        $firstName = isset($student['first_name']) ? trim((string) $student['first_name']) : '';
+                                        $lastName = isset($student['last_name']) ? trim((string) $student['last_name']) : '';
+
+                                        if ($rawName === '' && ($firstName !== '' || $lastName !== '')) {
+                                            $rawName = trim($firstName . ' ' . $lastName);
+                                        }
+
+                                        if ($rawName === '' && !empty($student['username'])) {
+                                            $rawName = trim((string) $student['username']);
+                                        }
+
+                                        $displayName = $rawName !== '' ? $rawName : 'Unnamed Student';
+
+                                        $studentNumber = isset($student['student_id']) ? trim((string) $student['student_id']) : '';
+                                        $rawLrn = isset($student['lrn']) ? trim((string) $student['lrn']) : '';
+                                        $displayLrn = $rawLrn !== '' ? $rawLrn : ($studentNumber !== '' ? $studentNumber : 'N/A');
+
+                                        $gradeSection = format_grade_section($student['grade_level'] ?? '', $student['section'] ?? '');
+                                    ?>
+                                    <tr
+                                        data-student-id="<?= htmlspecialchars((string)($student['id'] ?? '')) ?>"
+                                        data-student-number="<?= htmlspecialchars($studentNumber) ?>"
+                                        data-student-lrn="<?= htmlspecialchars($rawLrn) ?>"
+                                        data-student-name="<?= htmlspecialchars($displayName) ?>"
+                                        data-student-first-name="<?= htmlspecialchars($firstName) ?>"
+                                        data-student-last-name="<?= htmlspecialchars($lastName) ?>"
+                                        data-student-grade="<?= htmlspecialchars((string)($student['grade_level'] ?? '')) ?>"
+                                        data-student-section="<?= htmlspecialchars($student['section'] ?? '') ?>"
+                                        data-student-status="<?= htmlspecialchars($statusLabel) ?>"
+                                        data-student-email="<?= htmlspecialchars($student['email'] ?? '') ?>"
+                                        data-student-username="<?= htmlspecialchars($student['username'] ?? '') ?>"
+                                        data-student-address="<?= htmlspecialchars($student['address'] ?? '') ?>"
+                                        data-student-guardian="<?= htmlspecialchars($student['guardian_contact'] ?? '') ?>"
+                                        data-student-dob="<?= htmlspecialchars($student['date_of_birth'] ?? '') ?>"
+                                        data-student-enrolled="<?= htmlspecialchars($student['enrollment_date'] ?? '') ?>"
+                                    >
+                                        <td><?= htmlspecialchars($displayLrn) ?></td>
+                                        <td><?= htmlspecialchars($displayName) ?></td>
+                                        <td><?= htmlspecialchars($gradeSection) ?></td>
+                                        <td><span class="status-badge <?= htmlspecialchars($statusClass) ?>"><?= htmlspecialchars($statusLabel) ?></span></td>
+                                        <td class="action-links">
+                                            <a href="#" data-action="view">View</a>
+                                            <a href="#" data-action="edit">Edit</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -282,25 +538,34 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
                     <!-- Step 3: Parents Information -->
                     <div class="form-step" data-step="3">
                         <h4>Step 3: Parents/Guardian Information</h4>
-                         <div class="form-group">
-                            <label for="fatherName">Father's Full Name</label>
-                            <input type="text" id="fatherName">
-                        </div>
-                        <div class="form-group">
-                            <label for="motherName">Mother's Full Name</label>
-                            <input type="text" id="motherName">
-                        </div>
-                        <div class="form-group">
-                            <label for="guardianName">Guardian's Full Name</label>
-                            <input type="text" id="guardianName" placeholder="Optional, if not parent">
-                        </div>
-                        <div class="form-group">
-                            <label for="emergencyContactPerson">Person to Contact in Case of Emergency</label>
-                            <input type="text" id="emergencyContactPerson" placeholder="Full Name">
-                        </div>
-                        <div class="form-group">
-                            <label for="emergencyContactNumber">Emergency Contact Number</label>
-                            <input type="tel" id="emergencyContactNumber" placeholder="e.g. 09123456789">
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="studentUsername">Username</label>
+                                    <input type="text" id="studentUsername" placeholder="Auto-generated or custom" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="studentStatus">Enrollment Status</label>
+                                    <select id="studentStatus">
+                                        <option value="Enrolled">Enrolled</option>
+                                        <option value="Not Enrolled">Not Enrolled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="studentGuardian">Guardian Contact</label>
+                                    <input type="tel" id="studentGuardian" placeholder="e.g. 09123456789">
+                                </div>
+                                <div class="form-group">
+                                    <label for="studentDateEnrolled">Date Enrolled</label>
+                                    <input type="date" id="studentDateEnrolled">
+                                </div>
+                            </div>
+                            <div class="form-group form-group-full">
+                                <label for="studentAddress">Address</label>
+                                <textarea id="studentAddress" rows="3" placeholder="Complete address..."></textarea>
+                            </div>
                         </div>
                     </div>
 
@@ -327,8 +592,40 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         </div>
     </div>
 
+    <!-- View Student Modal -->
+    <div id="viewStudentModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Student Details</h3>
+                <button class="close-button" data-close="view">&times;</button>
+            </div>
+            <div class="modal-body view-details">
+                <ul>
+                    <li><span>LRN</span><span id="viewStudentLrn">N/A</span></li>
+                    <li><span>Student Number</span><span id="viewStudentNumber">N/A</span></li>
+                    <li><span>Name</span><span id="viewStudentName">N/A</span></li>
+                    <li><span>Grade Level</span><span id="viewStudentGrade">N/A</span></li>
+                    <li><span>Section</span><span id="viewStudentSection">N/A</span></li>
+                    <li><span>Status</span><span id="viewStudentStatus">N/A</span></li>
+                    <li><span>Email</span><span id="viewStudentEmail">N/A</span></li>
+                    <li><span>Username</span><span id="viewStudentUsername">N/A</span></li>
+                    <li><span>Guardian Contact</span><span id="viewStudentGuardian">N/A</span></li>
+                    <li><span>Address</span><span id="viewStudentAddress">N/A</span></li>
+                    <li><span>Date of Birth</span><span id="viewStudentDob">N/A</span></li>
+                    <li><span>Enrollment Date</span><span id="viewStudentEnrollment">N/A</span></li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-primary btn-secondary" data-close="view">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
+
+    <!-- Shared admin notification logic -->
+    <script src="../../assets/js/NotificationManager.js"></script>
 
     <!-- Link to the external JavaScript file -->
     <script src="../../assets/js/adminstudents.js"></script>

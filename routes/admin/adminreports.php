@@ -4,6 +4,65 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
+
+require_once '../../includes/config.php';
+
+$gradeLevels = [];
+$sectionsByGrade = [];
+$subjects = [];
+$academicYears = [];
+
+try {
+    if ($gradeResult = $conn->query("SELECT DISTINCT grade_level FROM classes WHERE grade_level IS NOT NULL ORDER BY grade_level")) {
+        while ($row = $gradeResult->fetch_assoc()) {
+            $gradeLevels[] = (int) $row['grade_level'];
+        }
+        $gradeResult->free();
+    }
+
+    if ($sectionResult = $conn->query("SELECT grade_level, section FROM classes WHERE grade_level IS NOT NULL AND section IS NOT NULL AND TRIM(section) <> '' ORDER BY grade_level, section")) {
+        while ($row = $sectionResult->fetch_assoc()) {
+            $grade = isset($row['grade_level']) ? (int) $row['grade_level'] : null;
+            $section = isset($row['section']) ? trim((string) $row['section']) : '';
+            if ($grade === null || $section === '') {
+                continue;
+            }
+            if (!isset($sectionsByGrade[$grade])) {
+                $sectionsByGrade[$grade] = [];
+            }
+            if (!in_array($section, $sectionsByGrade[$grade], true)) {
+                $sectionsByGrade[$grade][] = $section;
+            }
+        }
+        $sectionResult->free();
+    }
+
+    if ($subjectResult = $conn->query("SELECT id, subject_name FROM subjects ORDER BY subject_name")) {
+        while ($row = $subjectResult->fetch_assoc()) {
+            $subjects[] = [
+                'id' => isset($row['id']) ? (int) $row['id'] : null,
+                'name' => isset($row['subject_name']) ? (string) $row['subject_name'] : ''
+            ];
+        }
+        $subjectResult->free();
+    }
+
+    if ($yearResult = $conn->query("SELECT year, is_active FROM academic_years ORDER BY start_date DESC")) {
+        while ($row = $yearResult->fetch_assoc()) {
+            $yearLabel = isset($row['year']) ? (string) $row['year'] : '';
+            if ($yearLabel === '') {
+                continue;
+            }
+            $academicYears[] = [
+                'year' => $yearLabel,
+                'is_active' => isset($row['is_active']) ? (int) $row['is_active'] === 1 : false
+            ];
+        }
+        $yearResult->free();
+    }
+} catch (Throwable $e) {
+    error_log('Error preparing admin reports data: ' . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +85,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .header h1 { font-size: 1.8rem; font-weight: 600; }
         .user-info { display: flex; align-items: center; gap: 25px; }
         .notification-bell { position: relative; color: white; font-size: 1.3rem; text-decoration: none; }
-        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: flex; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
+        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: none; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
         .container { display: flex; min-height: calc(100vh - 77px); }
         .sidebar { width: 260px; background: white; padding: 2rem 1.5rem; box-shadow: 5px 0 15px rgba(0,0,0,0.05); position: sticky; top: 77px; height: calc(100vh - 77px); overflow-y: auto; }
         .sidebar-logo-container { text-align: center; margin-bottom: 2rem; }
@@ -38,7 +97,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .sidebar ul li a i { font-size: 1.1rem; width: 20px; text-align: center; }
         .main-content { flex: 1; padding: 2.5rem; }
         .page-header { margin-bottom: 2rem; }
-        .page-header h2 { font-size: 2rem; color: var(--primary); }
+        .page-header h2 { font-size: 2.15rem; color: var(--primary); }
         .content-box { background: white; border-radius: 16px; box-shadow: var(--shadow); padding: 2rem; }
         .content-box h3 { font-size: 1.5rem; color: var(--text); margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
         .reports-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
@@ -50,13 +109,31 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         .report-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.07); }
         .report-card .icon { font-size: 2rem; color: var(--primary); margin-bottom: 1rem; }
         .report-card .title { font-size: 1.2rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
-        .report-card .description { font-size: 0.95rem; color: var(--text-light); flex-grow: 1; margin-bottom: 1.5rem; }
+        .report-card .description { font-size: 1rem; color: var(--text-light); flex-grow: 1; margin-bottom: 1.5rem; }
         .btn-generate {
-            background: var(--primary); color: white; padding: 10px 15px; border-radius: 8px;
+            background: var(--primary); color: white; padding: 12px 18px; border-radius: 8px;
             text-decoration: none; font-weight: 500; display: inline-flex; align-items: center;
             gap: 8px; border: none; cursor: pointer; transition: all 0.3s ease; align-self: flex-start;
+            font-size: 1.05rem;
         }
         .btn-generate:hover { background: var(--primary-dark); }
+
+        /* Modal styling */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 100%; max-width: 480px; box-shadow: 0 20px 45px rgba(0,0,0,0.18); position: relative; }
+        .modal h3 { font-size: 1.6rem; color: var(--primary); margin-bottom: 1.5rem; }
+        .modal .close-button { position: absolute; top: 16px; right: 20px; border: none; background: transparent; font-size: 1.8rem; color: var(--text-light); cursor: pointer; }
+        .modal .form-group { margin-bottom: 1rem; }
+        .modal label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--text); }
+        .modal select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #dfe6e9; font-family: 'Poppins', sans-serif; font-size: 1rem; }
+        .modal .modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+        .modal .btn-secondary { background: #f1f2f6; color: var(--text); border: 1px solid #dcdde1; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+        .modal .btn-secondary:hover { background: #e0e3e6; }
+        .modal .btn-primary { padding: 10px 20px; font-size: 1.05rem; }
+        .modal .form-row { display: flex; gap: 1rem; }
+        .modal .form-row .form-group { flex: 1; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -67,7 +144,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
+                <span class="notification-badge"></span>
             </a>
             <span>Welcome, Admin</span>
         </div>
@@ -125,8 +202,87 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
         </main>
     </div>
 
+    <!-- Report configuration modal -->
+    <div id="reportModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+        <div class="modal">
+            <button class="close-button" type="button" aria-label="Close" id="closeReportModal">&times;</button>
+            <h3 id="reportModalTitle">Configure Report</h3>
+            <form id="reportForm">
+                <input type="hidden" name="type" id="reportTypeInput" value="">
+
+                <div class="form-section hidden" data-section="student-masterlist">
+                    <div class="form-group">
+                        <label for="studentMasterlistGrade">Grade Level (optional)</label>
+                        <select id="studentMasterlistGrade" name="grade_level" data-required="false">
+                            <option value="">All grade levels</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentMasterlistYear">Academic Year (optional)</label>
+                        <select id="studentMasterlistYear" name="academic_year" data-required="false">
+                            <option value="">All academic years</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section hidden" data-section="section-grades">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sectionGradesGrade">Grade Level</label>
+                            <select id="sectionGradesGrade" name="grade_level" data-required="true">
+                                <option value="">Select grade level</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="sectionGradesSection">Section</label>
+                            <select id="sectionGradesSection" name="section" data-required="true">
+                                <option value="">Select section</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sectionGradesSubject">Subject</label>
+                            <select id="sectionGradesSubject" name="subject_id" data-required="true">
+                                <option value="">Select subject</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="sectionGradesYear">Academic Year (optional)</label>
+                            <select id="sectionGradesYear" name="academic_year" data-required="false">
+                                <option value="">All academic years</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="cancelReportModal">Cancel</button>
+                    <button type="submit" class="btn-primary">Download CSV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
+
+    <!-- Shared admin notification logic -->
+    <script src="../../assets/js/NotificationManager.js"></script>
+
+    <script>
+        window.reportOptions = <?php
+            echo json_encode(
+                [
+                    'gradeLevels' => $gradeLevels,
+                    'sectionsByGrade' => $sectionsByGrade,
+                    'subjects' => $subjects,
+                    'academicYears' => $academicYears
+                ],
+                JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+            );
+        ?>;
+    </script>
 
     <!-- Link to the external JavaScript file -->
     <script src="../../assets/js/adminreports.js"></script>

@@ -3,6 +3,11 @@
  * Main Database Connection
  */
 
+// Ensure output buffering is active to prevent any accidental output
+if (!ob_get_level()) {
+    ob_start();
+}
+
 // Load database credentials from .env file
 $env_file = __DIR__ . '/../.env';
 $db_host = "localhost";
@@ -76,9 +81,9 @@ try {
     
     $conn_temp->close();
 } catch (Exception $e) {
-    http_response_code(503);
     error_log("Database initialization error: " . $e->getMessage());
-    die("Database Error: " . $e->getMessage());
+    // Throw exception instead of die() - caller will handle HTTP response
+    throw new Exception("Database initialization error: " . $e->getMessage());
 }
 
 // Now connect to the actual database
@@ -89,9 +94,9 @@ try {
         throw new Exception($conn->connect_error);
     }
 } catch (Exception $e) {
-    http_response_code(503);
     error_log("Database Connection Error: " . $e->getMessage());
-    die("Database Connection Error: " . $e->getMessage());
+    // Throw exception instead of die() - caller will handle HTTP response
+    throw new Exception("Database Connection Error: " . $e->getMessage());
 }
 
 // Set character set to utf8mb4 for full Unicode support

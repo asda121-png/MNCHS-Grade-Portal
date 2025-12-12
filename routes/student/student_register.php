@@ -12,12 +12,12 @@ if (isset($_SESSION['user_id']) && $_SESSION['user_type'] === 'student') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Registration - MNCHS Grade Portal</title>
-    <link rel="icon" href="assets/images/logo.ico" type="image/x-icon">
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0D1117] text-white font-sans flex justify-center items-center min-h-screen relative overflow-hidden
              before:content-[''] before:fixed before:-top-[10px] before:-left-[10px] before:-right-[10px] before:-bottom-[10px] before:-z-10
-             before:bg-[url('assets/images/background.avif')] before:bg-cover before:bg-center before:bg-no-repeat before:blur-lg
+             before:bg-[url('../../assets/images/background.avif')] before:bg-cover before:bg-center before:bg-no-repeat before:blur-lg
              after:content-[''] after:fixed after:-top-[10px] after:-left-[10px] after:-right-[10px] after:-bottom-[10px] after:-z-10
              after:bg-[rgba(13,17,23,0.5)]">
 
@@ -28,7 +28,7 @@ if (isset($_SESSION['user_id']) && $_SESSION['user_type'] === 'student') {
             <div> <!-- Content wrapper -->
                 <div class="flex items-center gap-4 mb-8">
                     <div class="w-20 h-20 bg-[#800000] flex justify-center items-center rounded-lg">
-                        <img src="assets/images/logo.png" alt="Logo" class="w-14 h-14 object-contain">
+                        <img src="../../assets/images/logo.png" alt="Logo" class="w-14 h-14 object-contain">
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-[#800000] leading-tight">MNCHS</h1>
