@@ -1,7 +1,7 @@
 <?php
 session_start();
 // If a user is already logged in, redirect them to the dashboard.
-if (isset($_SESSION['user_id']) && $_SESSION['user_type'] === 'student') {
+if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'student') {
     header('Location: studentdashboard.php');
     exit();
 }
@@ -15,33 +15,47 @@ if (isset($_SESSION['user_id']) && $_SESSION['user_type'] === 'student') {
     <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#0D1117] text-white font-sans flex justify-center items-center min-h-screen relative overflow-hidden
-             before:content-[''] before:fixed before:-top-[10px] before:-left-[10px] before:-right-[10px] before:-bottom-[10px] before:-z-10
-             before:bg-[url('../../assets/images/background.avif')] before:bg-cover before:bg-center before:bg-no-repeat before:blur-lg
-             after:content-[''] after:fixed after:-top-[10px] after:-left-[10px] after:-right-[10px] after:-bottom-[10px] after:-z-10
-             after:bg-[rgba(13,17,23,0.5)]">
 
-    <div class="flex flex-col items-center w-[500px]">
+<!-- Added overflow-hidden to body to prevent scrollbars from the blur effect overflow -->
+<body class="bg-[#0D1117] text-white font-sans min-h-screen relative overflow-hidden">
 
-        <div class="bg-white border border-gray-300 rounded-2xl p-10 w-full text-black shadow-2xl h-[720px] flex flex-col justify-between relative">
+    <!-- Background blurred layer -->
+    <div class="fixed -top-[10px] -left-[10px] -right-[10px] -bottom-[10px] -z-20 bg-[url('../../assets/images/background.avif')] bg-cover bg-center bg-no-repeat blur-sm"></div>
+    
+    <!-- Dark overlay -->
+    <div class="fixed -top-[10px] -left-[10px] -right-[10px] -bottom-[10px] -z-10 bg-[rgba(13,17,23,0.5)]"></div>
 
-            <div> <!-- Content wrapper -->
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="w-20 h-20 bg-[#800000] flex justify-center items-center rounded-lg">
-                        <img src="../../assets/images/logo.png" alt="Logo" class="w-14 h-14 object-contain">
+    <!-- Main Container: Two columns layout -->
+    <div class="flex h-screen">
+        
+        <!-- LEFT SIDE: Branding and Message -->
+        <div class="hidden lg:flex w-1/2 flex-col justify-center items-center px-16">
+        </div>
+
+        <!-- RIGHT SIDE: Registration Form -->
+        <div class="w-full lg:w-1/2 flex justify-center items-center px-4 py-8">
+            <div class="bg-white border border-gray-300 rounded-2xl p-8 md:p-10 w-full max-w-[500px] text-black shadow-2xl">
+
+                <div> <!-- Content wrapper -->
+                    <!-- Logo + Title BLOCK -->
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-20 h-20 bg-[#800000] flex justify-center items-center rounded-lg shadow-sm">
+                            <!-- Ensure image path is correct or use a placeholder if missing -->
+                            <img src="../../assets/images/logo.png" alt="Logo" class="w-14 h-14 object-contain" onerror="this.style.display='none'">
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-bold text-[#800000] leading-tight">MNCHS</h2>
+                            <p class="text-lg text-gray-600">Grade Portal</p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 class="text-3xl font-bold text-[#800000] leading-tight">MNCHS</h1>
-                        <p class="text-lg text-gray-600">Grade Portal</p>
-                    </div>
-                </div>
 
-                <div class="flex justify-between items-baseline mb-4">
-                    <h2 class="text-3xl font-semibold text-[#0D1117]">Student Setup</h2>
-                    <span id="phaseTracker" class="text-sm font-semibold text-gray-500">1/3</span>
-                </div>
+                    <!-- Title -->
+                    <h3 class="text-3xl font-semibold text-[#0D1117] mb-4">Student Setup</h3>
 
-                <form id="registrationForm">
+                    <!-- Phase Tracker -->
+                    <span id="phaseTracker" class="text-sm font-semibold text-gray-500 block mb-6">1/3</span>
+
+                    <form id="registrationForm">
                         <!-- Phase 1: Personal Information -->
                         <div id="phase1" class="space-y-6">
                             <div class="relative">
@@ -231,14 +245,17 @@ if (isset($_SESSION['user_id']) && $_SESSION['user_type'] === 'student') {
                 </div>
             </div>
 
-            <div class="text-center text-gray-700">
-                <p>
-                    Already have an account?
-                    <a href="../../index.php" class="text-[#800000] font-semibold hover:underline">Sign in</a>.
-                </p>
-            </div>
+                    <div class="text-center text-gray-700 mt-6">
+                        <p>
+                            Already have an account?
+                            <a href="../../index.php" class="text-[#800000] font-semibold hover:underline">Sign in</a>.
+                        </p>
+                    </div>
 
+                </div>
+            </div>
         </div>
+
     </div>
 
     <script src="../../assets/js/student_register.js"></script>

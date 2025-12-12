@@ -100,7 +100,6 @@ if (isset($conn)) $conn->close();
         
         <!-- LEFT SIDE: Branding and Message -->
         <div class="hidden lg:flex w-1/2 flex-col justify-center items-center px-16">
-            <h1 class="text-5xl font-bold text-white mb-6">MNCHS GRADE PORTAL</h1>
         </div>
 
         <!-- RIGHT SIDE: Login Form -->
