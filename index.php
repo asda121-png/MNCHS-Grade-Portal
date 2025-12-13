@@ -175,7 +175,7 @@ if (isset($conn)) $conn->close();
 
                         <!-- Forgot password link -->
                         <div class="text-right -mt-4">
-                            <a href="#" class="text-sm text-[#800000] hover:underline font-medium">Forgot password?</a>
+                            <a href="forgot_password.php" class="text-sm text-[#800000] hover:underline font-medium">Forgot password?</a>
                         </div>
 
                         <!-- Login Button -->

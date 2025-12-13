@@ -34,7 +34,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['u
 
         <!-- RIGHT SIDE: Registration Form -->
         <div class="w-full lg:w-1/2 flex justify-center items-center px-4 py-8">
-            <div class="bg-white border border-gray-300 rounded-2xl p-8 md:p-10 w-full max-w-[500px] text-black shadow-2xl">
+            <div class="bg-white border border-gray-300 rounded-2xl p-10 w-full max-w-[500px] text-black shadow-2xl">
 
                 <div> <!-- Content wrapper -->
                     <!-- Logo + Title BLOCK -->
@@ -53,7 +53,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['u
                     <h3 class="text-3xl font-semibold text-[#0D1117] mb-4">Student Setup</h3>
 
                     <!-- Phase Tracker -->
-                    <span id="phaseTracker" class="text-sm font-semibold text-gray-500 block mb-6">1/3</span>
+                    <span id="phaseTracker" class="text-sm font-semibold text-gray-500 block mb-4">1/3</span>
 
                     <form id="registrationForm">
                         <!-- Phase 1: Personal Information -->

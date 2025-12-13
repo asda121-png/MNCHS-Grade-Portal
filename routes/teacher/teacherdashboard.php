@@ -375,6 +375,7 @@ if (file_exists($dotenv_path)) {
         <aside class="sidebar"><div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
                 <li><a href="teacherdashboard.php" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="teacherstudent.php"><i class="fas fa-user-graduate"></i> Students</a></li>
                 <li><a href="teachermyclasses.php"><i class="fas fa-users"></i> My Classes</a></li>
                 <li><a href="teachergradeentry.php"><i class="fas fa-edit"></i> Grade Entry</a></li>
                 <li><a href="teachervaluesentry.php"><i class="fas fa-tasks"></i> Values Entry</a></li>

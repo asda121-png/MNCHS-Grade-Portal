@@ -156,7 +156,6 @@ try {
             <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
                 <li><a href="admindashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="adminstudents.php"><i class="fas fa-user-graduate"></i> Students</a></li>
                 <li><a href="adminteachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
                 <li><a href="adminreports.php" class="active"><i class="fas fa-chart-bar"></i> Reports</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>

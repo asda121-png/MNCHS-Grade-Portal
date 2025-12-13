@@ -231,7 +231,6 @@ if (file_exists($dotenv_path)) {
             <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
                 <li><a href="admindashboard.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="adminstudents.php"><i class="fas fa-user-graduate"></i> Students</a></li>
                 <li><a href="adminteachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
                 <li><a href="adminreports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
@@ -434,12 +433,12 @@ if (file_exists($dotenv_path)) {
                     </select>
                 </div>
                 
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: flex; align-items: center; gap: 10px; font-weight: 500; color: #2d3436; cursor: pointer;">
-                        <input type="checkbox" id="add-event-published" checked style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Published (visible to all users)</span>
-                    </label>
+                <div id="add-other-type-container" style="margin-bottom: 1.5rem;">
+                    <label for="add-other-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Specify Event Type</label>
+                    <input type="text" id="add-other-type" placeholder="Enter custom event type..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
                 </div>
+                
+                <input type="hidden" id="add-event-published" value="1">
                 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                     <button type="button" id="add-event-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
@@ -486,11 +485,9 @@ if (file_exists($dotenv_path)) {
                     </select>
                 </div>
                 
-                <div style="margin-bottom: 1.5rem;">
-                    <label style="display: flex; align-items: center; gap: 10px; font-weight: 500; color: #2d3436; cursor: pointer;">
-                        <input type="checkbox" id="edit-event-published" checked style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Published (visible to all users)</span>
-                    </label>
+                <div id="edit-other-type-container" style="margin-bottom: 1.5rem;">
+                    <label for="edit-other-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Specify Event Type</label>
+                    <input type="text" id="edit-other-type" placeholder="Enter custom event type..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
                 </div>
                 
                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">

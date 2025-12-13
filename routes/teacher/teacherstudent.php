@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
@@ -34,10 +34,59 @@ function format_grade_section($gradeLevel, $section): string {
     return 'Not Assigned';
 }
 
+function normalize_grade_level($gradeLevel): string {
+    $raw = trim((string) ($gradeLevel ?? ''));
+    if ($raw === '') {
+        return '';
+    }
+
+    if (preg_match('/(\d{1,2})/', $raw, $matches)) {
+        return $matches[1];
+    }
+
+    return $raw;
+}
+
 $students = [];
 $studentQueryError = null;
+$gradeSections = [];
 
 try {
+    // Build grade->sections map from DB (merge both sources so we cover all existing sections)
+    $gradeSectionRows = [];
+    $gradeSectionQuery = "SELECT DISTINCT grade_level, section
+        FROM (
+            SELECT grade_level, section FROM classes
+            UNION ALL
+            SELECT grade_level, section FROM students
+        ) src
+        WHERE grade_level IS NOT NULL
+          AND grade_level <> ''
+          AND section IS NOT NULL
+          AND section <> ''
+        ORDER BY grade_level ASC, section ASC";
+
+    if ($result = $conn->query($gradeSectionQuery)) {
+        while ($row = $result->fetch_assoc()) {
+            $gradeSectionRows[] = $row;
+        }
+        $result->free();
+    }
+
+    foreach ($gradeSectionRows as $row) {
+        $grade = normalize_grade_level($row['grade_level'] ?? '');
+        $section = trim((string) ($row['section'] ?? ''));
+        if ($grade === '' || $section === '') {
+            continue;
+        }
+        if (!isset($gradeSections[$grade])) {
+            $gradeSections[$grade] = [];
+        }
+        if (!in_array($section, $gradeSections[$grade], true)) {
+            $gradeSections[$grade][] = $section;
+        }
+    }
+
     $query = "SELECT 
                 s.id,
                 s.student_id,
@@ -74,7 +123,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Students | MNCHS Grade Portal</title>
+    <title>Manage Students | MNCHS Grade Portal</title>
     <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
@@ -247,11 +296,12 @@ try {
         }
 
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeIn 0.3s ease; }
-        .modal-content { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; transform: scale(0.95); animation: scaleUp 0.3s ease forwards; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-start; animation: fadeIn 0.3s ease; padding: 40px 20px; }
+        .modal-content { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 550px; transform: scale(0.95); animation: scaleUp 0.3s ease forwards; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1.5rem; }
         .modal-header h3 { font-size: 1.5rem; color: var(--primary); }
         .close-button { font-size: 2rem; color: var(--text-light); cursor: pointer; background: none; border: none; line-height: 1; }
+        .modal-content form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
         .modal-body .form-group { margin-bottom: 1rem; }
         .modal-body .form-row { display: flex; gap: 1rem; }
         .modal-body .form-row .form-group { flex: 1; min-width: 0; }
@@ -268,9 +318,9 @@ try {
             overflow-wrap: anywhere;
         }
         .modal-body .form-grid .form-group { display: flex; flex-direction: column; }
-        .modal-body { min-height: 380px; display: flex; flex-direction: column; }
+        .modal-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 1rem 0; }
         .modal-body input, .modal-body select { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1rem; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee; }
         .btn-secondary { background: #f1f1f1; color: var(--text); border: 1px solid #ddd; }
         .btn-secondary:hover { background: #e7e7e7; }
         .modal-overlay.show { display: flex; }
@@ -329,7 +379,7 @@ try {
                 <i class="fas fa-bell"></i>
                 <span class="notification-badge"></span>
             </a>
-            <span>Welcome, Admin</span>
+            <span>Welcome, Teacher</span>
         </div>
     </header>
 
@@ -338,10 +388,11 @@ try {
         <aside class="sidebar">
             <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
-                <li><a href="admindashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="adminstudents.php" class="active"><i class="fas fa-user-graduate"></i> Students</a></li>
-                <li><a href="adminteachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
-                <li><a href="adminreports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="teacherdashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="teacherstudent.php" class="active"><i class="fas fa-user-graduate"></i> Students</a></li>
+                <li><a href="teachermyclasses.php"><i class="fas fa-chalkboard"></i> My Classes</a></li>
+                <li><a href="teachergradeentry.php"><i class="fas fa-edit"></i> Grade Entry</a></li>
+                <li><a href="teachervaluesentry.php"><i class="fas fa-star"></i> Values Entry</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
@@ -514,6 +565,12 @@ try {
                                 <input type="text" id="studentSuffix" placeholder="e.g. Jr.">
                             </div>
                         </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="studentEmail">Email Address</label>
+                                <input type="email" id="studentEmail" required />
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Step 2: Address -->
@@ -538,33 +595,34 @@ try {
                     <!-- Step 3: Parents Information -->
                     <div class="form-step" data-step="3">
                         <h4>Step 3: Parents/Guardian Information</h4>
-                        <div class="form-grid">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="studentUsername">Username</label>
-                                    <input type="text" id="studentUsername" placeholder="Auto-generated or custom" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="studentStatus">Enrollment Status</label>
-                                    <select id="studentStatus">
-                                        <option value="Enrolled">Enrolled</option>
-                                        <option value="Not Enrolled">Not Enrolled</option>
-                                    </select>
-                                </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fatherName">Father's Name</label>
+                                <input type="text" id="fatherName" placeholder="Full name">
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="studentGuardian">Guardian Contact</label>
-                                    <input type="tel" id="studentGuardian" placeholder="e.g. 09123456789">
-                                </div>
-                                <div class="form-group">
-                                    <label for="studentDateEnrolled">Date Enrolled</label>
-                                    <input type="date" id="studentDateEnrolled">
-                                </div>
+                            <div class="form-group">
+                                <label for="motherName">Mother's Name</label>
+                                <input type="text" id="motherName" placeholder="Full name">
                             </div>
-                            <div class="form-group form-group-full">
-                                <label for="studentAddress">Address</label>
-                                <textarea id="studentAddress" rows="3" placeholder="Complete address..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="guardianName">Guardian Name</label>
+                                <input type="text" id="guardianName" placeholder="If different from parents">
+                            </div>
+                            <div class="form-group">
+                                <label for="guardianRelationship">Relationship</label>
+                                <input type="text" id="guardianRelationship" placeholder="e.g. Aunt, Uncle">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="studentGuardian">Guardian Contact</label>
+                                <input type="tel" id="studentGuardian" placeholder="e.g. 09123456789">
+                            </div>
+                            <div class="form-group">
+                                <label for="emergencyContact">Emergency Contact</label>
+                                <input type="tel" id="emergencyContact" placeholder="e.g. 09123456789">
                             </div>
                         </div>
                     </div>
@@ -572,13 +630,36 @@ try {
                     <!-- Step 4: Others -->
                     <div class="form-step" data-step="4">
                         <h4>Step 4: Other Information</h4>
-                        <div class="form-group">
-                            <label for="studentGradeSection">Grade & Section</label>
-                            <input type="text" id="studentGradeSection" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="studentGradeLevel">Grade Level</label>
+                                <select id="studentGradeLevel" required>
+                                    <option value="">Select grade</option>
+                                    <?php foreach (array_keys($gradeSections) as $grade): ?>
+                                        <option value="<?= htmlspecialchars((string) $grade) ?>">Grade <?= htmlspecialchars((string) $grade) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="studentSection">Section</label>
+                                <select id="studentSection" required>
+                                    <option value="">Select section</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="studentStatus">Status</label>
-                            <input type="text" id="studentStatus" value="Enrolled" readonly>
+                        <input type="hidden" id="studentGradeSection" />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="studentStatus">Enrollment Status</label>
+                                <select id="studentStatus">
+                                    <option value="Enrolled">Enrolled</option>
+                                    <option value="Not Enrolled">Not Enrolled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="studentDateEnrolled">Date Enrolled</label>
+                                <input type="date" id="studentDateEnrolled">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -624,8 +705,12 @@ try {
     <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
 
-    <!-- Shared admin notification logic -->
+    <!-- Shared notification logic -->
     <script src="../../assets/js/NotificationManager.js"></script>
+
+    <script>
+        window.__GRADE_SECTIONS__ = <?= json_encode($gradeSections, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    </script>
 
     <!-- Link to the external JavaScript file -->
     <script src="../../assets/js/adminstudents.js"></script>
