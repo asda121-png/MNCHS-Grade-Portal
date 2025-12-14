@@ -131,6 +131,30 @@ function getSpecializations() {
 }
 
 /**
+ * Validate adviser teacher section count
+ * If a teacher is an adviser, they should only have 1 section (teach 1 class with 1 section)
+ */
+function validateAdviserSectionCount($conn, $teacherId) {
+    // Get count of distinct sections the teacher teaches
+    $stmt = $conn->prepare("
+        SELECT COUNT(DISTINCT c.section) as section_count
+        FROM class_subjects cs
+        INNER JOIN classes c ON cs.class_id = c.id
+        WHERE cs.teacher_id = ? AND c.section IS NOT NULL AND c.section != ''
+    ");
+    $stmt->bind_param("i", $teacherId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    
+    $sectionCount = isset($row['section_count']) ? (int)$row['section_count'] : 0;
+    
+    // If teacher has more than 1 section, they cannot be an adviser
+    return $sectionCount <= 1;
+}
+
+/**
  * Update teacher details
  */
 function updateTeacher() {
@@ -154,8 +178,17 @@ function updateTeacher() {
     }
     
     try {
-        // If setting as adviser, first clear any existing adviser for this class
+        // If setting as adviser, validate that teacher has only 1 section
         if ($isAdviser && $adviserClassId) {
+            if (!validateAdviserSectionCount($conn, $teacherId)) {
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Cannot assign as adviser: Teacher teaches more than 1 section. An adviser can only teach 1 section.'
+                ]);
+                return;
+            }
+            
+            // Clear any existing adviser for this class
             $clearStmt = $conn->prepare("UPDATE teachers SET is_adviser = 0, adviser_class_id = NULL WHERE adviser_class_id = ? AND id != ?");
             $clearStmt->bind_param("ii", $adviserClassId, $teacherId);
             $clearStmt->execute();
@@ -218,6 +251,9 @@ function addTeacher() {
         echo json_encode(['success' => false, 'message' => 'Employee ID, First Name, Last Name, and Email are required']);
         return;
     }
+    
+    // Note: When setting a new teacher as adviser, we cannot validate section count yet 
+    // as they haven't been assigned to classes. This will be validated when assigning classes.
     
     try {
         // Start transaction

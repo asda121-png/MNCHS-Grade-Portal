@@ -63,7 +63,7 @@ if (isset($_SESSION['user_id'])) {
                             <input type="tel" id="contact_number" name="contact_number" placeholder="Contact Number" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
                         </div>
                         <div class="relative">
-                            <input type="text" id="child_lrn" name="child_lrn" placeholder="Child's LRN" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
+                            <input type="text" id="child_lrn" name="child_lrn" placeholder="Child's LRN (12 digits)" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
                         </div>
                     </div>
 

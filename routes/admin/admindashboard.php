@@ -490,11 +490,28 @@ if (file_exists($dotenv_path)) {
                     <input type="text" id="edit-other-type" placeholder="Enter custom event type..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
                 </div>
                 
+                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="edit-event-published" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="edit-event-published" style="cursor: pointer; font-weight: 500; color: #2d3436;">Publish immediately</label>
+                </div>
+                
                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                     <button type="button" id="edit-event-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
                     <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Save Changes</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 8px; padding: 2rem; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); animation: slideIn 0.3s ease-out;">
+            <h3 id="confirm-title" style="margin: 0 0 1rem 0; color: #2d3436; font-size: 1.25rem;">Confirm Action</h3>
+            <p id="confirm-message" style="margin: 0 0 1.5rem 0; color: #636e72; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button id="confirm-cancel-btn" style="padding: 0.6rem 1.5rem; background: #e8e8e8; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; color: #2d3436; transition: background 0.2s;">Cancel</button>
+                <button id="confirm-ok-btn" style="padding: 0.6rem 1.5rem; background: #f44336; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; color: white; transition: background 0.2s;">Delete</button>
+            </div>
         </div>
     </div>
 

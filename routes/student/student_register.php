@@ -66,6 +66,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['u
                                     placeholder="Learner Reference Number (LRN)"
                                     class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
                                            focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
+                                    maxlength="12"
+                                    pattern="\d{12}"
+                                    title="LRN must be exactly 12 digits"
                                     required>
                             </div>
 

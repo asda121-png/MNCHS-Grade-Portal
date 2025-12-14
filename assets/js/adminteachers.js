@@ -103,10 +103,40 @@ document.addEventListener("DOMContentLoaded", function () {
           if (e.target.value === "adviser") {
             teacherAdviserClassSelect.parentElement.style.display = "block";
             teacherAdviserClassSelect.required = true;
+
+            // Show note about section limitation
+            let noteElement =
+              teacherAdviserClassSelect.parentElement.querySelector(
+                ".adviser-note"
+              );
+            if (!noteElement) {
+              noteElement = document.createElement("div");
+              noteElement.className = "adviser-note";
+              noteElement.style.cssText = `
+                color: #800000;
+                font-size: 0.85rem;
+                margin-top: 8px;
+                padding: 8px 12px;
+                background-color: #fff5f5;
+                border-left: 3px solid #800000;
+                border-radius: 4px;
+              `;
+              noteElement.textContent =
+                "Note: An adviser can only teach 1 section. Ensure the teacher is assigned to only one section.";
+              teacherAdviserClassSelect.parentElement.appendChild(noteElement);
+            }
+            noteElement.style.display = "block";
           } else {
             teacherAdviserClassSelect.parentElement.style.display = "none";
             teacherAdviserClassSelect.required = false;
             teacherAdviserClassSelect.value = "";
+
+            // Hide note
+            const noteElement =
+              teacherAdviserClassSelect.parentElement.querySelector(
+                ".adviser-note"
+              );
+            if (noteElement) noteElement.style.display = "none";
           }
         }
       });

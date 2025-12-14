@@ -3,18 +3,8 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-if (isset($_SESSION['user_id']) && isset($_SESSION['user_type'])) {
-    $redirects = [
-        'student' => 'routes/student/studentdashboard.php',
-        'teacher' => 'routes/teacher/teacherdashboard.php',
-        'admin' => 'routes/admin/admindashboard.php',
-        'parent' => 'routes/parent/Parent.php'
-    ];
-    if (isset($redirects[$_SESSION['user_type']])) {
-        header('Location: ' . $redirects[$_SESSION['user_type']]);
-        exit();
-    }
-}
+// Allow users to access forgot password page even if logged in
+// They may need to reset their own password or help someone else
 
 $message = '';
 $message_type = '';
@@ -80,21 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['step'] === 'student_lrn') {
                 $user_email = $user['email'];
                 $user_id = $user['id'];
                 
-                // Generate reset token
-                $reset_token = bin2hex(random_bytes(32));
-                $token_expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
-                
-                $update_stmt = $conn->prepare("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?");
-                if ($update_stmt) {
-                    $update_stmt->bind_param("ssi", $reset_token, $token_expiry, $user_id);
-                    $update_stmt->execute();
-                    $update_stmt->close();
-                    
-                    $reset_link = "http://" . $_SERVER['HTTP_HOST'] . "/forgot_password.php?token=" . $reset_token;
-                    $message = "Reset link has been sent to: <strong>" . htmlspecialchars($user_email) . "</strong><br><br><a href='" . htmlspecialchars($reset_link) . "' style='color:#800000;text-decoration:underline;font-weight:bold'>Click here to reset your password</a>";
-                    $message_type = 'success';
-                    $step = 'email_sent';
-                }
+                // Move to student email verification step
+                $step = 'student_email';
             } else {
                 $message = "No student account found with this LRN.";
                 $message_type = 'error';
@@ -106,6 +83,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['step'] === 'student_lrn') {
         $message = "Please enter your LRN.";
         $message_type = 'error';
         $step = 'student_lrn';
+    }
+}
+
+// Step 2a-2: Student Email verification
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['step'] === 'student_email') {
+    $email = trim($_POST['email'] ?? '');
+    $user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
+    
+    if (!empty($email) && $user_id > 0) {
+        $stmt = $conn->prepare("SELECT id FROM users WHERE id = ? AND email = ? AND role = 'student'");
+        if ($stmt) {
+            $stmt->bind_param("is", $user_id, $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 1) {
+                // Email matches, generate reset token
+                $reset_token = bin2hex(random_bytes(32));
+                $token_expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+                
+                $update_stmt = $conn->prepare("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?");
+                if ($update_stmt) {
+                    $update_stmt->bind_param("ssi", $reset_token, $token_expiry, $user_id);
+                    $update_stmt->execute();
+                    $update_stmt->close();
+                    
+                    $reset_link = "http://" . $_SERVER['HTTP_HOST'] . "/forgot_password.php?token=" . $reset_token;
+                    $message = "Reset link has been sent to: <strong>" . htmlspecialchars($email) . "</strong><br><br><a href='" . htmlspecialchars($reset_link) . "' style='color:#800000;text-decoration:underline;font-weight:bold'>Click here to reset your password</a>";
+                    $message_type = 'success';
+                    $step = 'email_sent';
+                }
+            } else {
+                $message = "The email address does not match our records for this LRN.";
+                $message_type = 'error';
+                $step = 'student_email';
+            }
+            $stmt->close();
+        }
+    } else {
+        $message = "Please enter a valid email address.";
+        $message_type = 'error';
+        $step = 'student_email';
     }
 }
 
@@ -329,8 +348,36 @@ $conn->close();
                                 Find My Account
                             </button>
 
-                            <div class="text-center mt-4">
+                            <div class="text-center mt-4 space-y-2">
                                 <p class="text-gray-600"><a href="forgot_password.php" class="text-[#800000] font-semibold hover:underline">Use different account type</a></p>
+                                <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
+                            </div>
+                        </form>
+
+                    <!-- Step 2a-2: Student Email Verification -->
+                    <?php elseif ($step === 'student_email'): ?>
+                        <form method="POST" class="space-y-6">
+                            <input type="hidden" name="step" value="student_email">
+                            <input type="hidden" name="user_id" value="<?php echo htmlspecialchars((string)($user_id ?? '')); ?>">
+                            
+                            <p class="text-gray-600 mb-4">Please enter the email address associated with your account to verify your identity</p>
+                            
+                            <div class="relative">
+                                <input 
+                                    type="email" 
+                                    name="email"
+                                    placeholder="Enter your email address"
+                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
+                                    required autofocus>
+                            </div>
+
+                            <button type="submit" class="w-full py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors">
+                                Send Reset Link
+                            </button>
+
+                            <div class="text-center mt-4 space-y-2">
+                                <p class="text-gray-600"><a href="forgot_password.php" class="text-[#800000] font-semibold hover:underline">Use different account type</a></p>
+                                <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
                             </div>
                         </form>
 
@@ -355,8 +402,9 @@ $conn->close();
                                 Send Reset Link
                             </button>
 
-                            <div class="text-center mt-4">
+                            <div class="text-center mt-4 space-y-2">
                                 <p class="text-gray-600"><a href="forgot_password.php" class="text-[#800000] font-semibold hover:underline">Use different account type</a></p>
+                                <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
                             </div>
                         </form>
 

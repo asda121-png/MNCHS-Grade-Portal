@@ -542,8 +542,8 @@ try {
                     <div class="form-step active" data-step="1">
                         <h4>Step 1: Personal Information</h4>
                         <div class="form-group">
-                            <label for="studentLRN">LRN (Learner Reference Number)</label>
-                            <input type="text" id="studentLRN" required>
+                            <label for="studentLRN">LRN (Learner Reference Number) - 12 digits</label>
+                            <input type="text" id="studentLRN" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
                         </div>
                         <div class="form-row">
                             <div class="form-group">

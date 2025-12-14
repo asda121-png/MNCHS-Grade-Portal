@@ -4,7 +4,7 @@
  * Checks students table status and helps populate data
  */
 
-require_once "includes/config.php";
+require_once "../includes/config.php";
 
 echo "<h2>Database Diagnostic Report</h2>";
 
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['action'] === 'create_studen
     $counter = 1;
     
     while ($user = $student_users->fetch_assoc()) {
-        $lrn = $current_year . str_pad($counter, 4, '0', STR_PAD_LEFT);
+        $lrn = $current_year . str_pad($counter, 8, '0', STR_PAD_LEFT);
         $student_name = trim($user['first_name'] . ' ' . $user['last_name']);
         $student_id = 'STU-' . $user['id'];
         

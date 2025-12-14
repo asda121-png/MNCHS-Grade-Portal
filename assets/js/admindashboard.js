@@ -78,6 +78,51 @@ style.textContent = `
 document.head.appendChild(style);
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize Notification Manager
+  window.notificationManager = new NotificationManager();
+
+  // --- Confirmation Modal Setup ---
+  const confirmModal = document.getElementById("confirm-modal");
+  const confirmTitle = document.getElementById("confirm-title");
+  const confirmMessage = document.getElementById("confirm-message");
+  const confirmOkBtn = document.getElementById("confirm-ok-btn");
+  const confirmCancelBtn = document.getElementById("confirm-cancel-btn");
+
+  let confirmCallback = null;
+
+  // Reusable confirmation dialog
+  window.showConfirmDialog = function (
+    title,
+    message,
+    okText = "Delete",
+    callback
+  ) {
+    confirmTitle.textContent = title;
+    confirmMessage.textContent = message;
+    confirmOkBtn.textContent = okText;
+    confirmCallback = callback;
+    confirmModal.style.display = "flex";
+  };
+
+  confirmOkBtn.addEventListener("click", () => {
+    if (confirmCallback) {
+      confirmCallback();
+    }
+    confirmModal.style.display = "none";
+  });
+
+  confirmCancelBtn.addEventListener("click", () => {
+    confirmModal.style.display = "none";
+    confirmCallback = null;
+  });
+
+  confirmModal.addEventListener("click", (e) => {
+    if (e.target === confirmModal) {
+      confirmModal.style.display = "none";
+      confirmCallback = null;
+    }
+  });
+
   // --- Reusable Logout Modal Logic ---
   const logoutLink = document.getElementById("logout-link");
   const modalContainer = document.getElementById("logout-modal-container");
@@ -299,6 +344,13 @@ document.addEventListener("DOMContentLoaded", function () {
             addEventForm.reset();
             window.calendar.refetchEvents();
             loadAdminEvents();
+
+            // Update notification badge to reflect newly created notifications
+            if (window.notificationManager) {
+              setTimeout(() => {
+                window.notificationManager.updateBadge();
+              }, 500);
+            }
           } else {
             showNotification(
               "Error: " + (data.error || "Could not add event"),
@@ -378,10 +430,10 @@ document.addEventListener("DOMContentLoaded", function () {
         body: JSON.stringify({
           id: eventId,
           title: title,
-          event_date: startDate,
-          end_date: endDate,
-          event_type: eventType,
-          is_published: isPublished,
+          start: startDate,
+          end: endDate,
+          type: eventType,
+          published: isPublished ? 1 : 0,
         }),
       })
         .then((response) => response.json())
@@ -396,6 +448,12 @@ document.addEventListener("DOMContentLoaded", function () {
             loadAdminEvents();
             if (window.calendar) {
               window.calendar.refetchEvents();
+            }
+            // Update notification badge to show the update notification
+            if (window.notificationManager) {
+              setTimeout(() => {
+                window.notificationManager.updateBadge();
+              }, 1000);
             }
           } else {
             showNotification(
@@ -415,6 +473,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // --- Load and Display Admin Events ---
   function loadAdminEvents() {
+    // Load events
     fetch("../../server/api/events.php?action=get_admin_events")
       .then((response) => {
         console.log(
@@ -466,6 +525,19 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("❌ Fetch Error:", error.message);
         showNotification("Error loading events: " + error.message, "error");
       });
+    
+    // Load grading periods
+    fetch("../../server/api/grading_periods.php?action=get_all")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success && data.periods) {
+          console.log("✓ Loaded", data.periods.length, "grading periods");
+          displayGradingPeriodsTable(data.periods);
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading grading periods:", error);
+      });
   }
 
   // --- Display Events in Table ---
@@ -487,11 +559,11 @@ document.addEventListener("DOMContentLoaded", function () {
       tableBody.innerHTML = events
         .map((event) => {
           const eventTypeColors = {
-            holiday: { color: "#4ecdc4", label: "Holiday" },
-            examination: { color: "#a29bfe", label: "Examination" },
-            deadline: { color: "#ff6b6b", label: "Deadline" },
-            celebration: { color: "#ffd93d", label: "Celebration" },
-            meeting: { color: "#74b9ff", label: "Meeting" },
+            holiday: { color: "#800000", label: "Holiday" },
+            examination: { color: "#800000", label: "Examination" },
+            deadline: { color: "#800000", label: "Deadline" },
+            celebration: { color: "#800000", label: "Celebration" },
+            meeting: { color: "#800000", label: "Meeting" },
             other: { color: "#800000", label: "Other" },
           };
 
@@ -554,13 +626,15 @@ document.addEventListener("DOMContentLoaded", function () {
           e.preventDefault();
           const eventId = btn.getAttribute("data-event-id");
           const event = events.find((e) => e.id == eventId);
-          if (
-            event &&
-            confirm(
-              `Are you sure you want to delete the event "${event.title}"?`
-            )
-          ) {
-            deleteEvent(eventId);
+          if (event) {
+            window.showConfirmDialog(
+              "Delete Event",
+              `Are you sure you want to delete the event "${event.title}"?`,
+              "Delete",
+              () => {
+                deleteEvent(eventId);
+              }
+            );
           }
         });
       });
@@ -568,6 +642,118 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("Error displaying events table:", e);
       showNotification("Error displaying events", "error");
     }
+  }
+
+  // --- Display Grading Periods in Manage Events Modal ---
+  function displayGradingPeriodsTable(periods) {
+    // Check if grading periods section exists, if not create it
+    let gradingPeriodsSection = document.getElementById("grading-periods-section");
+    
+    if (!gradingPeriodsSection) {
+      const manageEventsModal = document.getElementById("manage-events-modal");
+      const modalContent = manageEventsModal.querySelector("div[style*='max-width']");
+      
+      // Create grading periods section
+      gradingPeriodsSection = document.createElement("div");
+      gradingPeriodsSection.id = "grading-periods-section";
+      gradingPeriodsSection.style.marginTop = "2rem";
+      gradingPeriodsSection.style.paddingTop = "1.5rem";
+      gradingPeriodsSection.style.borderTop = "2px solid #eee";
+      
+      modalContent.appendChild(gradingPeriodsSection);
+    }
+
+    let html = `
+      <h3 style="color: #800000; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-calendar-check"></i> Grading Periods
+      </h3>
+      <div style="overflow-x: auto; max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead style="position: sticky; top: 0; background-color: #f9fafb;">
+            <tr>
+              <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Quarter</th>
+              <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Start Date</th>
+              <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">End Date</th>
+              <th style="padding: 1rem 1.5rem; text-align: center; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    if (periods.length === 0) {
+      html += '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: #999;">No grading periods found</td></tr>';
+    } else {
+      const quarterNames = ['1st Quarter', '2nd Quarter', '3rd Quarter', '4th Quarter'];
+      periods.forEach((period) => {
+        const quarterName = quarterNames[period.quarter - 1] || `Quarter ${period.quarter}`;
+        html += `
+          <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 1rem 1.5rem; color: #2d3436; font-weight: 500;">${quarterName}</td>
+            <td style="padding: 1rem 1.5rem; color: #636e72;">${formatDate(period.start_date)}</td>
+            <td style="padding: 1rem 1.5rem; color: #636e72;">${formatDate(period.end_date)}</td>
+            <td style="padding: 1rem 1.5rem; text-align: center;">
+              <button class="delete-grading-period-btn" data-period-id="${period.id}" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 1.2rem;" title="Delete">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    gradingPeriodsSection.innerHTML = html;
+
+    // Add delete event listeners
+    document.querySelectorAll(".delete-grading-period-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const periodId = btn.getAttribute("data-period-id");
+        const period = periods.find((p) => p.id == periodId);
+        if (period) {
+          const quarterNames = ['1st', '2nd', '3rd', '4th'];
+          const quarterName = quarterNames[period.quarter - 1] || `Quarter ${period.quarter}`;
+          window.showConfirmDialog(
+            "Delete Grading Period",
+            `Are you sure you want to delete the ${quarterName} Quarter grading period?`,
+            "Delete",
+            () => {
+              deleteGradingPeriod(periodId);
+            }
+          );
+        }
+      });
+    });
+  }
+
+  // --- Delete Grading Period ---
+  function deleteGradingPeriod(periodId) {
+    fetch("../../server/api/grading_periods.php?action=delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: periodId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          showNotification("Grading period deleted successfully!", "success");
+          loadAdminEvents();
+        } else {
+          showNotification(
+            "Error: " + (data.error || "Could not delete grading period"),
+            "error"
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showNotification("Error deleting grading period", "error");
+      });
   }
 
   // --- Format Date ---
@@ -589,8 +775,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("edit-event-id").value = event.id;
     document.getElementById("edit-event-title").value = event.title;
-    document.getElementById("edit-event-start").value = event.start;
-    document.getElementById("edit-event-end").value = event.end;
+    document.getElementById("edit-event-start").value = event.event_date;
+    document.getElementById("edit-event-end").value = event.end_date;
     document.getElementById("edit-event-type").value = event.event_type;
     document.getElementById("edit-event-published").checked =
       event.is_published == 1;
@@ -612,6 +798,12 @@ document.addEventListener("DOMContentLoaded", function () {
           loadAdminEvents();
           if (window.calendar) {
             window.calendar.refetchEvents();
+          }
+          // Update notification badge to show the deletion notification
+          if (window.notificationManager) {
+            setTimeout(() => {
+              window.notificationManager.updateBadge();
+            }, 1000);
           }
         } else {
           showNotification(
@@ -708,7 +900,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
           if (status === 200 && data.success) {
             showNotification(
-              "✓ Grading period added successfully!",
+              "Grading period added successfully!",
               "success",
               4000
             );
@@ -717,6 +909,12 @@ document.addEventListener("DOMContentLoaded", function () {
             // Reload calendar to show new grading period
             if (window.calendar) {
               window.calendar.refetchEvents();
+            }
+            // Update notification badge
+            if (window.notificationManager) {
+              setTimeout(() => {
+                window.notificationManager.updateBadge();
+              }, 1000);
             }
           } else if (status === 403) {
             showNotification(

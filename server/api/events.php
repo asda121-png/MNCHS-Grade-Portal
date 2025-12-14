@@ -51,12 +51,16 @@ function notifyUsersAboutEvent($eventId, $title, $eventDate, $eventType) {
     
     try {
         // Get all teachers
-        $teacherQuery = "SELECT id FROM users WHERE user_type = 'teacher'";
+        $teacherQuery = "SELECT id FROM users WHERE role = 'teacher'";
         $teacherResult = $conn->query($teacherQuery);
         
         // Get all students
-        $studentQuery = "SELECT id FROM users WHERE user_type = 'student'";
+        $studentQuery = "SELECT id FROM users WHERE role = 'student'";
         $studentResult = $conn->query($studentQuery);
+        
+        // Get all admins
+        $adminQuery = "SELECT id FROM users WHERE role = 'admin'";
+        $adminResult = $conn->query($adminQuery);
         
         // Prepare notification insert statement
         $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event', 0, NOW())");
@@ -90,6 +94,17 @@ function notifyUsersAboutEvent($eventId, $title, $eventDate, $eventType) {
             }
         }
         
+        // Notify all admins
+        if ($adminResult && $adminResult->num_rows > 0) {
+            while ($admin = $adminResult->fetch_assoc()) {
+                $userId = $admin['id'];
+                $stmt->bind_param("iss", $userId, $notificationTitle, $notificationMessage);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                }
+            }
+        }
+        
         $stmt->close();
         
         error_log("Sent event notifications to $notifiedCount users for event: $title");
@@ -97,6 +112,211 @@ function notifyUsersAboutEvent($eventId, $title, $eventDate, $eventType) {
         
     } catch (Exception $e) {
         error_log("Error sending event notifications: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Notify users about event update
+ */
+function notifyUsersAboutEventUpdate($eventId, $title, $message) {
+    global $conn;
+    
+    error_log("DEBUG: notifyUsersAboutEventUpdate called with title=$title, message=$message");
+    
+    try {
+        // Get all teachers
+        $teacherQuery = "SELECT id FROM users WHERE role = 'teacher'";
+        $teacherResult = $conn->query($teacherQuery);
+        if (!$teacherResult) {
+            error_log("ERROR: Failed to query teachers: " . $conn->error);
+        }
+        
+        // Get all students
+        $studentQuery = "SELECT id FROM users WHERE role = 'student'";
+        $studentResult = $conn->query($studentQuery);
+        if (!$studentResult) {
+            error_log("ERROR: Failed to query students: " . $conn->error);
+        }
+        
+        // Get all admins
+        $adminQuery = "SELECT id FROM users WHERE role = 'admin'";
+        $adminResult = $conn->query($adminQuery);
+        if (!$adminResult) {
+            error_log("ERROR: Failed to query admins: " . $conn->error);
+        }
+        
+        $notifiedCount = 0;
+        
+        // Notify all teachers
+        if ($teacherResult && $teacherResult->num_rows > 0) {
+            while ($teacher = $teacherResult->fetch_assoc()) {
+                $userId = $teacher['id'];
+                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event_update', 0, NOW())");
+                if (!$stmt) {
+                    error_log("ERROR: Failed to prepare statement for teacher notification: " . $conn->error);
+                    continue;
+                }
+                $stmt->bind_param("iss", $userId, $title, $message);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                    error_log("DEBUG: Notified teacher $userId about event update");
+                } else {
+                    error_log("ERROR: Failed to execute notification for teacher $userId: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+        
+        // Notify all students
+        if ($studentResult && $studentResult->num_rows > 0) {
+            while ($student = $studentResult->fetch_assoc()) {
+                $userId = $student['id'];
+                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event_update', 0, NOW())");
+                if (!$stmt) {
+                    error_log("ERROR: Failed to prepare statement for student notification: " . $conn->error);
+                    continue;
+                }
+                $stmt->bind_param("iss", $userId, $title, $message);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                    error_log("DEBUG: Notified student $userId about event update");
+                } else {
+                    error_log("ERROR: Failed to execute notification for student $userId: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+        
+        // Notify all admins
+        if ($adminResult && $adminResult->num_rows > 0) {
+            while ($admin = $adminResult->fetch_assoc()) {
+                $userId = $admin['id'];
+                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event_update', 0, NOW())");
+                if (!$stmt) {
+                    error_log("ERROR: Failed to prepare statement for admin notification: " . $conn->error);
+                    continue;
+                }
+                $stmt->bind_param("iss", $userId, $title, $message);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                    error_log("DEBUG: Notified admin $userId about event update");
+                } else {
+                    error_log("ERROR: Failed to execute notification for admin $userId: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+        
+        error_log("INFO: Sent event update notifications to $notifiedCount users");
+        return $notifiedCount;
+        
+    } catch (Exception $e) {
+        error_log("EXCEPTION: Error sending event update notifications: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Notify users about event deletion
+ */
+function notifyUsersAboutEventDelete($eventTitle) {
+    global $conn;
+    
+    error_log("DEBUG: notifyUsersAboutEventDelete called with eventTitle=$eventTitle");
+    
+    try {
+        // Get all teachers
+        $teacherQuery = "SELECT id FROM users WHERE role = 'teacher'";
+        $teacherResult = $conn->query($teacherQuery);
+        if (!$teacherResult) {
+            error_log("ERROR: Failed to query teachers: " . $conn->error);
+        }
+        
+        // Get all students
+        $studentQuery = "SELECT id FROM users WHERE role = 'student'";
+        $studentResult = $conn->query($studentQuery);
+        if (!$studentResult) {
+            error_log("ERROR: Failed to query students: " . $conn->error);
+        }
+        
+        // Get all admins
+        $adminQuery = "SELECT id FROM users WHERE role = 'admin'";
+        $adminResult = $conn->query($adminQuery);
+        if (!$adminResult) {
+            error_log("ERROR: Failed to query admins: " . $conn->error);
+        }
+        
+        $notificationTitle = "Event Cancelled: $eventTitle";
+        $notificationMessage = "The event '$eventTitle' has been cancelled.";
+        
+        $notifiedCount = 0;
+        
+        // Notify all teachers
+        if ($teacherResult && $teacherResult->num_rows > 0) {
+            while ($teacher = $teacherResult->fetch_assoc()) {
+                $userId = $teacher['id'];
+                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event_delete', 0, NOW())");
+                if (!$stmt) {
+                    error_log("ERROR: Failed to prepare statement for teacher notification: " . $conn->error);
+                    continue;
+                }
+                $stmt->bind_param("iss", $userId, $notificationTitle, $notificationMessage);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                    error_log("DEBUG: Notified teacher $userId about event deletion");
+                } else {
+                    error_log("ERROR: Failed to execute notification for teacher $userId: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+        
+        // Notify all students
+        if ($studentResult && $studentResult->num_rows > 0) {
+            while ($student = $studentResult->fetch_assoc()) {
+                $userId = $student['id'];
+                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event_delete', 0, NOW())");
+                if (!$stmt) {
+                    error_log("ERROR: Failed to prepare statement for student notification: " . $conn->error);
+                    continue;
+                }
+                $stmt->bind_param("iss", $userId, $notificationTitle, $notificationMessage);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                    error_log("DEBUG: Notified student $userId about event deletion");
+                } else {
+                    error_log("ERROR: Failed to execute notification for student $userId: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+        
+        // Notify all admins
+        if ($adminResult && $adminResult->num_rows > 0) {
+            while ($admin = $adminResult->fetch_assoc()) {
+                $userId = $admin['id'];
+                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, 'event_delete', 0, NOW())");
+                if (!$stmt) {
+                    error_log("ERROR: Failed to prepare statement for admin notification: " . $conn->error);
+                    continue;
+                }
+                $stmt->bind_param("iss", $userId, $notificationTitle, $notificationMessage);
+                if ($stmt->execute()) {
+                    $notifiedCount++;
+                    error_log("DEBUG: Notified admin $userId about event deletion");
+                } else {
+                    error_log("ERROR: Failed to execute notification for admin $userId: " . $stmt->error);
+                }
+                $stmt->close();
+            }
+        }
+        
+        error_log("INFO: Sent event deletion notifications to $notifiedCount users");
+        return $notifiedCount;
+        
+    } catch (Exception $e) {
+        error_log("EXCEPTION: Error sending event deletion notifications: " . $e->getMessage());
         return false;
     }
 }
@@ -142,32 +362,32 @@ function getEvents() {
                 ]
             ];
             
-            // Set color based on event type
+            // Set color based on event type - all events use maroon
             switch ($row['type']) {
                 case 'holiday':
-                    $event['backgroundColor'] = '#4ecdc4';
-                    $event['borderColor'] = '#45b7aa';
+                    $event['backgroundColor'] = '#800000';
+                    $event['borderColor'] = '#660000';
                     break;
                 case 'deadline':
-                    $event['backgroundColor'] = '#ff6b6b';
-                    $event['borderColor'] = '#ff5252';
+                    $event['backgroundColor'] = '#800000';
+                    $event['borderColor'] = '#660000';
                     break;
                 case 'examination':
-                    $event['backgroundColor'] = '#9b59b6';
-                    $event['borderColor'] = '#8e44ad';
+                    $event['backgroundColor'] = '#800000';
+                    $event['borderColor'] = '#660000';
                     break;
                 case 'celebration':
-                    $event['backgroundColor'] = '#27ae60';
-                    $event['borderColor'] = '#219a52';
+                    $event['backgroundColor'] = '#800000';
+                    $event['borderColor'] = '#660000';
                     break;
                 case 'meeting':
-                    $event['backgroundColor'] = '#3498db';
-                    $event['borderColor'] = '#2980b9';
+                    $event['backgroundColor'] = '#800000';
+                    $event['borderColor'] = '#660000';
                     break;
                 default:
-                    $event['backgroundColor'] = '#ffd93d';
-                    $event['borderColor'] = '#ffb800';
-                    $event['textColor'] = '#2d3436';
+                    $event['backgroundColor'] = '#800000';
+                    $event['borderColor'] = '#660000';
+                    $event['textColor'] = 'white';
             }
             
             $events[] = $event;
@@ -349,6 +569,14 @@ function updateEvent() {
         
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
+                // Notify teachers and students about the event update
+                $formattedDate = date('F j, Y', strtotime($startDate));
+                $typeLabel = ucfirst($eventType);
+                $notificationTitle = "Event Updated: $title";
+                $notificationMessage = "An event has been updated: $typeLabel on $formattedDate - $title";
+                
+                notifyUsersAboutEventUpdate($id, $notificationTitle, $notificationMessage);
+                
                 echo json_encode(['success' => true, 'message' => 'Event updated successfully']);
             } else {
                 echo json_encode(['success' => false, 'error' => 'No event found with that ID or no changes made']);
@@ -392,6 +620,15 @@ function deleteEvent() {
     }
     
     try {
+        // Get event title before deleting
+        $getEventStmt = $conn->prepare("SELECT title FROM school_events WHERE id = ?");
+        $getEventStmt->bind_param("i", $id);
+        $getEventStmt->execute();
+        $eventResult = $getEventStmt->get_result();
+        $eventRow = $eventResult->fetch_assoc();
+        $eventTitle = $eventRow ? $eventRow['title'] : 'Unknown Event';
+        $getEventStmt->close();
+        
         $stmt = $conn->prepare("DELETE FROM school_events WHERE id = ?");
         
         if (!$stmt) {
@@ -403,6 +640,9 @@ function deleteEvent() {
         
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
+                // Notify teachers and students about the event deletion
+                notifyUsersAboutEventDelete($eventTitle);
+                
                 echo json_encode(['success' => true, 'message' => 'Event deleted successfully']);
             } else {
                 echo json_encode(['success' => false, 'error' => 'No event found with that ID']);

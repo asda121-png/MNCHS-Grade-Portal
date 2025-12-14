@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT,
-    type ENUM('grade', 'event', 'message', 'system') DEFAULT 'system',
+    type ENUM('grade', 'event', 'event_update', 'event_delete', 'grading_period', 'message', 'system') DEFAULT 'system',
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
