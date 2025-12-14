@@ -8,13 +8,18 @@ if (!ob_get_level()) {
     ob_start();
 }
 
+// Check if mysqli extension is loaded
+if (!extension_loaded('mysqli')) {
+    die("Critical Error: The 'mysqli' extension is not loaded. Please enable 'extension=mysqli' in your php.ini configuration.");
+}
+
 // Load database credentials from .env file
 $env_file = __DIR__ . '/../.env';
-$db_host = "localhost";
-$db_username = "root";
-$db_password = "password";
+$db_host = "10.145.154.69";
+$db_username = "christian";
+$db_password = "labrador";
 $db_name = "mnchs_grade_portal";
-$db_port = 3306;
+$db_port = 3307;
 
 if (file_exists($env_file)) {
     $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -81,9 +86,13 @@ try {
     
     $conn_temp->close();
 } catch (Exception $e) {
-    error_log("Database initialization error: " . $e->getMessage());
+    $msg = $e->getMessage();
+    if (strpos($msg, 'refused') !== false) {
+        $msg .= " - Please ensure MySQL is running in XAMPP Control Panel (Port $port).";
+    }
+    error_log("Database initialization error: " . $msg);
     // Throw exception instead of die() - caller will handle HTTP response
-    throw new Exception("Database initialization error: " . $e->getMessage());
+    throw new Exception("Database initialization error: " . $msg);
 }
 
 // Now connect to the actual database
