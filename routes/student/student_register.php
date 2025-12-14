@@ -58,164 +58,88 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['u
                     <form id="registrationForm">
                         <!-- Phase 1: Personal Information -->
                         <div id="phase1" class="space-y-6">
-                            <div class="relative">
-                                <input
-                                    type="text"
-                                    id="lrn"
-                                    name="lrn"
-                                    placeholder="Learner Reference Number (LRN)"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    maxlength="12"
-                                    pattern="\d{12}"
-                                    title="LRN must be exactly 12 digits"
-                                    required>
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    type="text"
-                                    id="first_name"
-                                    name="first_name"
-                                    placeholder="First Name"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required>
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    type="text"
-                                    id="middle_name"
-                                    name="middle_name"
-                                    placeholder="Middle Name (O)"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30">
-                            </div>
-
-                            <div class="flex gap-4">
-                                <div class="flex-grow relative">
-                                    <input
-                                        type="text"
-                                        id="last_name"
-                                        name="last_name"
-                                        placeholder="Last Name"
-                                        class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                               focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                        required>
-                                </div>
-                                <div class="w-1/3 relative">
-                                    <select
-                                        id="suffix"
-                                        name="suffix"
-                                        class="w-full p-4 pr-12 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none
-                                               focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30">
-                                        <option value="">Suffix (O)</option>
-                                        <option value="Jr.">Jr.</option>
-                                        <option value="Sr.">Sr.</option>
-                                        <option value="II">II</option>
-                                        <option value="III">III</option>
-                                        <option value="IV">IV</option>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
-                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div>
-                                </div>
-                            </div>
+                                                <div class="relative">
+                                                    <input type="email" id="email" name="email" placeholder="Email Address" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
+                                                </div>
+                        <div class="relative">
+                            <input type="text" id="first_name" name="first_name" placeholder="First Name" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
                         </div>
-
-                        <!-- Phase 2: Academic Information -->
-                        <div id="phase2" class="space-y-6 hidden">
-                            <div class="relative">
-                                <select id="grade_level" name="grade_level" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
-                                    <option value="">Grade Level</option>
-                                    <option value="7">7</option>
-                                    <option value="8">8</option>
-                                    <option value="9">9</option>
-                                    <option value="10">10</option>
-                                    <option value="11">11</option>
-                                    <option value="12">12</option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
-                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                </div>
+                        <div class="relative">
+                            <input type="text" id="middle_name" name="middle_name" placeholder="Middle Name (O)" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-grow relative">
+                                <input type="text" id="last_name" name="last_name" placeholder="Last Name" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
                             </div>
-                            <div class="relative">
-                                <input type="text" id="section" name="section" placeholder="Section" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
-                            </div>
-                            
-                            <div id="strand_container" class="relative">
-                                <select id="strand" name="strand" class="w-full p-4 pr-12 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30 disabled:bg-gray-200 disabled:cursor-not-allowed" disabled>
-                                    <option value="">Strand</option>
-                                    <option value="STEM">STEM (Science, Technology, Engineering, and Mathematics)</option>
-                                    <option value="ABM">ABM (Accountancy, Business, and Management)</option>
-                                    <option value="HUMSS">HUMSS (Humanities and Social Sciences)</option>
-                                    <option value="GAS">GAS (General Academic Strand)</option>
-                                    <option value="TVL-ICT">TVL-ICT (Information and Communications Technology)</option>
-                                    <option value="TVL-HE">TVL-HE (Home Economics)</option>
+                            <div class="w-1/3 relative">
+                                <select id="suffix" name="suffix" class="w-full p-4 pr-12 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30">
+                                    <option value="">Suffix (O)</option>
+                                    <option value="Jr.">Jr.</option>
+                                    <option value="Sr.">Sr.</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                    <option value="IV">IV</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                                 </div>
                             </div>
-                            
-                            <div class="relative">
-                                <input type="text" id="adviser_name" name="adviser_name" placeholder="Adviser's Name" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
+                        </div>
+                        </div>
+
+
+                        <!-- Phase 2: Academic Information -->
+                        <div id="phase2" class="space-y-6 hidden">
+                            <div class="relative mb-2">
+                                <label for="lrn" class="block text-sm font-semibold text-gray-700 mb-1">Learner Reference Number (LRN)</label>
+                                <input type="text" id="lrn" name="lrn" placeholder="e.g. 123456789012" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
+                            </div>
+                            <div class="relative mb-2">
+                                <label for="parent_name" class="block text-sm font-semibold text-gray-700 mb-1">Parent/Guardian Name</label>
+                                <input type="text" id="parent_name" name="parent_name" placeholder="Parent/Guardian Name" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
                             </div>
                         </div>
 
                         <!-- Phase 3: Account Details -->
                         <div id="phase3" class="space-y-6 hidden">
-                            <div class="relative">
-                                <input
-                                    type="text"
-                                    id="username"
-                                    name="username"
-                                    placeholder="Username"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required>
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    placeholder="Email address"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required>
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    placeholder="Password"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required>
-                                <button type="button" onclick="togglePassword('password', 'eyeOpen1', 'eyeClosed1')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600">
-                                    <svg id="eyeOpen1" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                    <svg id="eyeClosed1" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-                                </button>
-                            </div>
-
-                            <div class="relative">
-                                <input
-                                    type="password"
-                                    id="confirm_password"
-                                    name="confirm_password"
-                                    placeholder="Confirm Password"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg
-                                           focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required>
-                                <button type="button" onclick="togglePassword('confirm_password', 'eyeOpen2', 'eyeClosed2')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600">
-                                    <svg id="eyeOpen2" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                    <svg id="eyeClosed2" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
-                                </button>
+                                        <div class="relative">
+                                            <select id="grade_level" name="grade_level" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
+                                                <option value="">Grade Level</option>
+                                                <option value="7">7</option>
+                                                <option value="8">8</option>
+                                                <option value="9">9</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                            </div>
+                                        </div>
+                                        <div id="section_container" class="relative">
+                                            <select id="section" name="section" class="w-full p-4 pr-12 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30 disabled:bg-gray-200 disabled:cursor-not-allowed" required disabled>
+                                                <option value="">Select grade level first</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                            </div>
+                                        </div>
+                                        <div id="strand_container" class="relative">
+                                            <select id="strand" name="strand" class="w-full p-4 pr-12 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg h-full appearance-none focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30 disabled:bg-gray-200 disabled:cursor-not-allowed" disabled>
+                                                <option value="">Strand</option>
+                                                <option value="STEM">STEM (Science, Technology, Engineering, and Mathematics)</option>
+                                                <option value="ABM">ABM (Accountancy, Business, and Management)</option>
+                                                <option value="HUMSS">HUMSS (Humanities and Social Sciences)</option>
+                                                <option value="GAS">GAS (General Academic Strand)</option>
+                                                <option value="TVL-ICT">TVL-ICT (Information and Communications Technology)</option>
+                                                <option value="TVL-HE">TVL-HE (Home Economics)</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                            </div>
+                                        </div>
+                            <div class="text-center text-gray-700 text-lg font-semibold py-6">
+                                Your account credentials will be generated and sent to your email after registration.
                             </div>
                         </div>
 

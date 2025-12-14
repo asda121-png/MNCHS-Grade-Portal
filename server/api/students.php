@@ -122,6 +122,10 @@ function addStudent($conn) {
         // Commit transaction
         $conn->commit();
 
+        // Send email notification to student
+        require_once __DIR__ . '/send_student_account_email.php';
+        $emailSent = sendStudentAccountEmail($email, $username, $tempPassword);
+
         // Return success response
         echo json_encode([
             'success' => true,
@@ -129,7 +133,8 @@ function addStudent($conn) {
             'studentId' => $studentDbId,
             'username' => $username,
             'tempPassword' => $tempPassword,
-            'lrn' => $lrn
+            'lrn' => $lrn,
+            'emailSent' => $emailSent
         ]);
 
     } catch (Exception $e) {

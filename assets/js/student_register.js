@@ -30,32 +30,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const registrationForm = document.getElementById("registrationForm");
   const phaseTracker = document.getElementById("phaseTracker");
 
+  const sectionSelect = document.getElementById("section");
   const gradeLevelSelect = document.getElementById("grade_level");
-  const passwordInput = document.getElementById("password");
-  const confirmPasswordInput = document.getElementById("confirm_password");
+  // Password fields removed as credentials are now auto-generated and emailed
   const successNotification = document.getElementById("successNotification");
   const strandContainer = document.getElementById("strand_container");
   const strandSelect = document.getElementById("strand");
 
   // --- Event Listeners ---
   nextPhase1Btn.addEventListener("click", () => {
-    // Check validity of Phase 1 inputs
-    const phase1Inputs = phase1.querySelectorAll("input[required]");
+    // Only validate required inputs that are visible in Phase 1
+    const phase1Inputs = Array.from(
+      phase1.querySelectorAll("input[required], select[required]")
+    );
     let allValid = true;
     phase1Inputs.forEach((input) => {
-      if (!input.checkValidity()) {
+      if (input.offsetParent !== null && !input.checkValidity()) {
         allValid = false;
-        // This will trigger the browser's own validation UI
         registrationForm.reportValidity();
       }
     });
 
     if (allValid) {
-      // Hide Phase 1
       phase1.classList.add("hidden");
       nextPhase1Btn.classList.add("hidden");
-
-      // Show Phase 2 content and its buttons
       phase2.classList.remove("hidden");
       phase2Buttons.classList.remove("hidden");
       phaseTracker.textContent = "2/3";
@@ -74,23 +72,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   nextPhase2Btn.addEventListener("click", () => {
-    const phase2Inputs = phase2.querySelectorAll(
-      "select[required], input[required]"
+    // Only validate required inputs that are visible in Phase 2
+    const phase2Inputs = Array.from(
+      phase2.querySelectorAll("input[required], select[required]")
     );
     let allValid = true;
     phase2Inputs.forEach((input) => {
-      if (!input.checkValidity()) {
+      if (input.offsetParent !== null && !input.checkValidity()) {
         allValid = false;
         registrationForm.reportValidity();
       }
     });
 
     if (allValid) {
-      // Hide Phase 2
       phase2.classList.add("hidden");
       phase2Buttons.classList.add("hidden");
-
-      // Show Phase 3 content and its buttons
       phase3.classList.remove("hidden");
       phase3Buttons.classList.remove("hidden");
       phaseTracker.textContent = "3/3";
@@ -108,17 +104,64 @@ document.addEventListener("DOMContentLoaded", () => {
     phaseTracker.textContent = "2/3";
   });
 
-  gradeLevelSelect.addEventListener("change", () => {
-    const selectedGrade = gradeLevelSelect.value;
-    if (selectedGrade === "11" || selectedGrade === "12") {
-      strandSelect.removeAttribute("disabled");
-      strandSelect.setAttribute("required", "");
-    } else {
-      strandSelect.setAttribute("disabled", "");
-      strandSelect.removeAttribute("required");
-      strandSelect.value = ""; // Reset value
+  // --- Dynamic Section and Strand Logic ---
+
+  async function updateSections() {
+    const gradeLevel = gradeLevelSelect.value;
+
+    // Reset and disable section select
+    sectionSelect.innerHTML = '<option value="">Loading...</option>';
+    sectionSelect.disabled = true;
+
+    if (!gradeLevel) {
+      sectionSelect.innerHTML =
+        '<option value="">Select grade level first</option>';
+      return;
     }
-  });
+
+    try {
+      // The path to the API endpoint. Adjust if your file structure is different.
+      const response = await fetch(
+        `../../server/api/get_sections.php?grade_level=${gradeLevel}`
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Network response was not ok, status: ${response.status}`
+        );
+      }
+      const data = await response.json();
+
+      if (data.success && data.data.sections.length > 0) {
+        sectionSelect.innerHTML = '<option value="">Select a Section</option>';
+        data.data.sections.forEach((sec) => {
+          const option = document.createElement("option");
+          option.value = sec.section_name;
+          option.textContent = sec.section_name;
+          sectionSelect.appendChild(option);
+        });
+        sectionSelect.disabled = false; // Enable the dropdown
+      } else {
+        sectionSelect.innerHTML =
+          '<option value="">No sections available</option>';
+      }
+    } catch (error) {
+      console.error("Error fetching sections:", error);
+      sectionSelect.innerHTML =
+        '<option value="">Failed to load sections</option>';
+    }
+  }
+
+  function handleStrandVisibility() {
+    const gradeLevel = parseInt(gradeLevelSelect.value, 10);
+    const isSeniorHigh = gradeLevel === 11 || gradeLevel === 12;
+
+    strandContainer.style.display = isSeniorHigh ? "block" : "none";
+    strandSelect.disabled = !isSeniorHigh;
+    strandSelect.required = isSeniorHigh;
+    if (!isSeniorHigh) {
+      strandSelect.value = ""; // Clear value if not SHS
+    }
+  }
 
   registrationForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -132,20 +175,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Manually check if passwords match
-    if (passwordInput.value !== confirmPasswordInput.value) {
-      alert("Passwords do not match. Please try again.");
-      allValid = false;
-    }
+    // Password fields and validation removed: credentials are auto-generated and emailed
 
     if (allValid) {
       // Gather all form data
-      const formData = new FormData(registrationForm);
 
-      fetch("student_register_api.php", {
-        method: "POST",
-        body: formData,
-      })
+      const formData = new FormData(registrationForm);
+      // Debug: log all form data before sending
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
+      fetch(
+        "http://localhost/MNCHS%20Grade%20Portal/server/api/student_register_api.php",
+        {
+          method: "POST",
+          body: formData,
+        }
+      )
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
@@ -167,9 +214,22 @@ document.addEventListener("DOMContentLoaded", () => {
             alert(data.message || "Registration failed.");
           }
         })
-        .catch(() => {
-          alert("An error occurred. Please try again.");
+        .catch((error) => {
+          console.error("Registration error:", error);
+          alert("An error occurred. Please try again.\n" + error);
         });
     }
   });
+
+  // Combined event listener for grade level changes
+  gradeLevelSelect.addEventListener("change", () => {
+    updateSections();
+    handleStrandVisibility();
+  });
+
+  // Initial setup on page load
+  handleStrandVisibility();
+  if (gradeLevelSelect.value) {
+    updateSections();
+  }
 });

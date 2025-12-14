@@ -292,6 +292,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const lastName =
           document.getElementById("teacherLastName")?.value || "";
         const suffix = document.getElementById("teacherSuffix")?.value || "";
+        const email = document.getElementById("teacherEmail")?.value || "";
+        const phone = document.getElementById("teacherPhone")?.value || "";
         const department =
           document.getElementById("teacherDepartment")?.value || "";
         const specialization =
@@ -333,6 +335,38 @@ document.addEventListener("DOMContentLoaded", function () {
         ]
           .filter(Boolean)
           .join("\n");
+
+        // --- REGEX VALIDATION ---
+        const nameRegex = /^[A-Za-z .'-]+$/;
+        const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/;
+        const phoneRegex = /^09\d{9}$/;
+
+        if (!nameRegex.test(firstName)) {
+          alert(
+            "First name must contain only letters, spaces, apostrophes, periods, or hyphens."
+          );
+          document.getElementById("teacherFirstName").focus();
+          return;
+        }
+        if (!nameRegex.test(lastName)) {
+          alert(
+            "Last name must contain only letters, spaces, apostrophes, periods, or hyphens."
+          );
+          document.getElementById("teacherLastName").focus();
+          return;
+        }
+        if (email && !emailRegex.test(email)) {
+          alert("Please enter a valid email address.");
+          document.getElementById("teacherEmail").focus();
+          return;
+        }
+        if (phone && !phoneRegex.test(phone)) {
+          alert(
+            "Phone number must be a valid Philippine mobile number (e.g., 09123456789)."
+          );
+          document.getElementById("teacherPhone").focus();
+          return;
+        }
 
         // If in edit mode and teacher has ID, save role information via API
         if (addTeacherForm.dataset.mode === "edit" && teacherId) {

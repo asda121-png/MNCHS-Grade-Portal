@@ -391,24 +391,72 @@ try {
 </head>
 <body>
 
-    <header class="header">
-        <a href="#" class="menu-icon"><i class="fas fa-bars"></i></a>
-        <h1>MNCHS Grade Portal</h1>
-        <div class="user-info">
-            <a href="#" class="notification-bell">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge"></span>
-            </a>
-            <div class="profile-link" title="View Profile">
-                <i class="fas fa-user-circle"></i>
-                <i class="fas fa-caret-down dropdown-caret"></i>
-                <div class="profile-dropdown">
-                    <a href="teacherprofile.php">Profile</a>
+        <header class="header">
+                <h1>MNCHS Grade Portal</h1>
+                <div class="user-info">
+                        <a href="#" class="notification-bell">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge"></span>
+                        </a>
+                        <div class="profile-link" id="profileLink" title="View Profile" style="position: relative; color: white; font-size: 1.5rem; display: flex; align-items: center; cursor: pointer;">
+                            <i class="fas fa-user-circle" style="color: white; font-size: 1.5rem;"></i>
+                            <i class="fas fa-caret-down dropdown-caret" style="font-size: 0.85rem; margin-left: 6px; color: white;"></i>
+                            <div class="profile-dropdown" id="profileDropdown" style="position: absolute; top: 120%; right: 0; background: white; border: 1px solid rgba(0,0,0,0.15); border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; min-width: 160px; z-index: 100;">
+                                <a href="teacherprofile.php" style="display: block; padding: 10px 15px; text-decoration: none; color: #2d3436; transition: background-color 0.3s ease; text-align: left;">Profile</a>
+                            </div>
+                        </div>
+                        <span><?php echo htmlspecialchars($teacher_name); ?></span>
                 </div>
-            </div>
-            <span><?php echo htmlspecialchars($teacher_name); ?></span>
-        </div>
-    </header>
+        </header>
+        <style>
+            .profile-link .profile-dropdown.show {
+                display: block !important;
+            }
+            .profile-link .profile-dropdown a:hover {
+                background-color: #f5f6fa;
+            }
+            .profile-link:hover {
+                opacity: 0.85;
+            }
+            .profile-link .profile-dropdown {
+                background: white;
+                border: 1px solid #eee;
+                border-radius: 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                z-index: 100;
+                min-width: 120px;
+                padding: 0.5rem 0;
+            }
+            .profile-link .profile-dropdown a {
+                display: block;
+                padding: 10px 18px;
+                color: #800000;
+                text-decoration: none;
+                font-weight: 500;
+                transition: background 0.2s;
+            }
+            .profile-link .profile-dropdown a:hover {
+                background: #f5f6fa;
+            }
+        </style>
+        <script>
+        // Profile dropdown toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const profileLink = document.getElementById('profileLink');
+            const profileDropdown = document.getElementById('profileDropdown');
+            if (profileLink && profileDropdown) {
+                profileLink.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+                document.addEventListener('click', function(e) {
+                    if (!profileLink.contains(e.target)) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+        });
+        </script>
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -564,36 +612,36 @@ try {
                         <h4>Step 1: Personal Information</h4>
                         <div class="form-group">
                             <label for="studentLRN">LRN (Learner Reference Number)</label>
-                            <input type="text" id="studentLRN" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
+                            <input type="text" id="studentLRN" name="lrn" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentFirstName">First Name</label>
-                                <input type="text" id="studentFirstName" pattern="^[a-zA-Z\s'-]{2,50}$" title="First name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" required>
+                                <input type="text" id="studentFirstName" name="first_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="First name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" required>
                             </div>
                             <div class="form-group">
                                 <label for="studentLastName">Last Name</label>
-                                <input type="text" id="studentLastName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Last name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" required>
+                                <input type="text" id="studentLastName" name="last_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="Last name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentMiddleName">Middle Name</label>
-                                <input type="text" id="studentMiddleName" pattern="^[a-zA-Z\s'-]*$" title="Middle name must contain only letters, spaces, hyphens, and apostrophes" placeholder="Optional">
+                                <input type="text" id="studentMiddleName" name="middle_name" pattern="^[a-zA-Z\s'\-]*$" title="Middle name must contain only letters, spaces, hyphens, and apostrophes" placeholder="Optional">
                             </div>
                             <div class="form-group">
                                 <label for="studentSuffix">Suffix</label>
-                                <input type="text" id="studentSuffix" pattern="^[a-zA-Z.\s]*$" title="Suffix must contain only letters and periods" placeholder="e.g. Jr.">
+                                <input type="text" id="studentSuffix" name="suffix" pattern="^[a-zA-Z.\s]*$" title="Suffix must contain only letters and periods" placeholder="e.g. Jr.">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentEmail">Email Address</label>
-                                <input type="email" id="studentEmail" required />
+                                <input type="email" id="studentEmail" name="email" required />
                             </div>
                             <div class="form-group">
                                 <label for="studentDOB">Date of Birth</label>
-                                <input type="date" id="studentDOB">
+                                <input type="date" id="studentDOB" name="date_of_birth">
                             </div>
                         </div>
                     </div>
@@ -603,16 +651,16 @@ try {
                         <h4>Step 2: Address</h4>
                         <div class="form-group">
                             <label for="streetAddress">Street Address</label>
-                            <input type="text" id="streetAddress" pattern="^[a-zA-Z0-9\s.,#-]{3,100}$" title="Street address must be 3-100 characters and contain only letters, numbers, and common punctuation" placeholder="House No., Street Name, Brgy.">
+                            <input type="text" id="streetAddress" name="address" pattern="^[a-zA-Z0-9\s.,#\-]{3,100}$" title="Street address must be 3-100 characters and contain only letters, numbers, and common punctuation" placeholder="House No., Street Name, Brgy.">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="city">City/Municipality</label>
-                                <input type="text" id="city" pattern="^[a-zA-Z\s'-]{2,50}$" title="City must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)">
+                                <input type="text" id="city" name="city" pattern="^[a-zA-Z\s'\-]{2,50}$" title="City must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)">
                             </div>
                             <div class="form-group">
                                 <label for="province">Province</label>
-                                <input type="text" id="province" pattern="^[a-zA-Z\s'-]{2,50}$" title="Province must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)">
+                                <input type="text" id="province" name="province" pattern="^[a-zA-Z\s'\-]{2,50}$" title="Province must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)">
                             </div>
                         </div>
                     </div>
@@ -623,31 +671,31 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="fatherName">Father's Name</label>
-                                <input type="text" id="fatherName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Father's name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="Full name">
+                                <input type="text" id="fatherName" name="father_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="Father's name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="Full name">
                             </div>
                             <div class="form-group">
                                 <label for="motherName">Mother's Name</label>
-                                <input type="text" id="motherName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Mother's name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="Full name">
+                                <input type="text" id="motherName" name="mother_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="Mother's name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="Full name">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="guardianName">Guardian Name</label>
-                                <input type="text" id="guardianName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Guardian name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="If different from parents">
+                                <input type="text" id="guardianName" name="guardian_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="Guardian name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="If different from parents">
                             </div>
                             <div class="form-group">
                                 <label for="guardianRelationship">Relationship</label>
-                                <input type="text" id="guardianRelationship" pattern="^[a-zA-Z\s]{2,30}$" title="Relationship must contain only letters and spaces (2-30 characters)" placeholder="e.g. Aunt, Uncle">
+                                <input type="text" id="guardianRelationship" name="guardian_relationship" pattern="^[a-zA-Z\s]{2,30}$" title="Relationship must contain only letters and spaces (2-30 characters)" placeholder="e.g. Aunt, Uncle">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentGuardian">Guardian Contact</label>
-                                <input type="tel" id="studentGuardian" pattern="^[0-9\s\-+()]{7,15}$" title="Guardian contact must be a valid phone number (7-15 digits)" placeholder="e.g. 09123456789">
+                                <input type="tel" id="studentGuardian" name="guardian_contact" pattern="^[0-9\s()+\-]{7,15}$" title="Guardian contact must be a valid phone number (7-15 digits)" placeholder="e.g. 09123456789">
                             </div>
                             <div class="form-group">
                                 <label for="emergencyContact">Emergency Contact</label>
-                                <input type="tel" id="emergencyContact" pattern="^[0-9\s\-+()]{7,15}$" title="Emergency contact must be a valid phone number (7-15 digits)" placeholder="e.g. 09123456789">
+                                <input type="tel" id="emergencyContact" name="emergency_contact" pattern="^[0-9\s()+\-]{7,15}$" title="Emergency contact must be a valid phone number (7-15 digits)" placeholder="e.g. 09123456789">
                             </div>
                         </div>
                     </div>
@@ -658,7 +706,7 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentGradeLevel">Grade Level</label>
-                                <select id="studentGradeLevel" required>
+                                <select id="studentGradeLevel" name="grade_level" required>
                                     <option value="">Select grade</option>
                                     <?php foreach (array_keys($gradeSections) as $grade): ?>
                                         <option value="<?= htmlspecialchars((string) $grade) ?>">Grade <?= htmlspecialchars((string) $grade) ?></option>
@@ -667,22 +715,22 @@ try {
                             </div>
                             <div class="form-group">
                                 <label for="studentSection">Section</label>
-                                <select id="studentSection" required>
+                                <select id="studentSection" name="section" required>
                                     <option value="">Select section</option>
                                 </select>
                             </div>
                         </div>
-                        <input type="hidden" id="studentGradeSection" />
+                        <input type="hidden" id="studentGradeSection" name="grade_section" />
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentStatus">Enrollment Status</label>
-                                <select id="studentStatus" disabled>
+                                <select id="studentStatus" name="enrollment_status" disabled>
                                     <option value="Enrolled" selected>Enrolled</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="studentDateEnrolled">Date Enrolled</label>
-                                <input type="date" id="studentDateEnrolled">
+                                <input type="date" id="studentDateEnrolled" name="enrollment_date">
                             </div>
                         </div>
                     </div>
@@ -691,7 +739,7 @@ try {
                     <button type="button" class="btn-primary btn-secondary" id="cancelButton">Cancel</button>
                     <button type="button" class="btn-primary btn-secondary" id="prevButton" style="display: none;">Previous</button>
                     <button type="button" class="btn-primary" id="nextButton">Next</button>
-                    <button type="submit" class="btn-primary" id="saveButton" style="display: none;">Save Student</button>
+                    <button type="submit" class="btn-primary" id="saveButton" style="display: none;">Enroll Student</button>
                 </div>
             </form>
         </div>
@@ -747,6 +795,6 @@ try {
     </script>
 
     <!-- Link to the external JavaScript file -->
-    <script src="../../assets/js/adminstudents.js"></script>
+    <script src="../../assets/js/teacherstudent.js"></script>
 </body>
 </html>
