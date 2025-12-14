@@ -525,7 +525,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("❌ Fetch Error:", error.message);
         showNotification("Error loading events: " + error.message, "error");
       });
-    
+
     // Load grading periods
     fetch("../../server/api/grading_periods.php?action=get_all")
       .then((response) => response.json())
@@ -647,19 +647,23 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Display Grading Periods in Manage Events Modal ---
   function displayGradingPeriodsTable(periods) {
     // Check if grading periods section exists, if not create it
-    let gradingPeriodsSection = document.getElementById("grading-periods-section");
-    
+    let gradingPeriodsSection = document.getElementById(
+      "grading-periods-section"
+    );
+
     if (!gradingPeriodsSection) {
       const manageEventsModal = document.getElementById("manage-events-modal");
-      const modalContent = manageEventsModal.querySelector("div[style*='max-width']");
-      
+      const modalContent = manageEventsModal.querySelector(
+        "div[style*='max-width']"
+      );
+
       // Create grading periods section
       gradingPeriodsSection = document.createElement("div");
       gradingPeriodsSection.id = "grading-periods-section";
       gradingPeriodsSection.style.marginTop = "2rem";
       gradingPeriodsSection.style.paddingTop = "1.5rem";
       gradingPeriodsSection.style.borderTop = "2px solid #eee";
-      
+
       modalContent.appendChild(gradingPeriodsSection);
     }
 
@@ -681,18 +685,31 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
 
     if (periods.length === 0) {
-      html += '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: #999;">No grading periods found</td></tr>';
+      html +=
+        '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: #999;">No grading periods found</td></tr>';
     } else {
-      const quarterNames = ['1st Quarter', '2nd Quarter', '3rd Quarter', '4th Quarter'];
+      const quarterNames = [
+        "1st Quarter",
+        "2nd Quarter",
+        "3rd Quarter",
+        "4th Quarter",
+      ];
       periods.forEach((period) => {
-        const quarterName = quarterNames[period.quarter - 1] || `Quarter ${period.quarter}`;
+        const quarterName =
+          quarterNames[period.quarter - 1] || `Quarter ${period.quarter}`;
         html += `
           <tr style="border-bottom: 1px solid #f0f0f0;">
             <td style="padding: 1rem 1.5rem; color: #2d3436; font-weight: 500;">${quarterName}</td>
-            <td style="padding: 1rem 1.5rem; color: #636e72;">${formatDate(period.start_date)}</td>
-            <td style="padding: 1rem 1.5rem; color: #636e72;">${formatDate(period.end_date)}</td>
+            <td style="padding: 1rem 1.5rem; color: #636e72;">${formatDate(
+              period.start_date
+            )}</td>
+            <td style="padding: 1rem 1.5rem; color: #636e72;">${formatDate(
+              period.end_date
+            )}</td>
             <td style="padding: 1rem 1.5rem; text-align: center;">
-              <button class="delete-grading-period-btn" data-period-id="${period.id}" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 1.2rem;" title="Delete">
+              <button class="delete-grading-period-btn" data-period-id="${
+                period.id
+              }" style="background: none; border: none; color: #f44336; cursor: pointer; font-size: 1.2rem;" title="Delete">
                 <i class="fas fa-trash"></i>
               </button>
             </td>
@@ -716,8 +733,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const periodId = btn.getAttribute("data-period-id");
         const period = periods.find((p) => p.id == periodId);
         if (period) {
-          const quarterNames = ['1st', '2nd', '3rd', '4th'];
-          const quarterName = quarterNames[period.quarter - 1] || `Quarter ${period.quarter}`;
+          const quarterNames = ["1st", "2nd", "3rd", "4th"];
+          const quarterName =
+            quarterNames[period.quarter - 1] || `Quarter ${period.quarter}`;
           window.showConfirmDialog(
             "Delete Grading Period",
             `Are you sure you want to delete the ${quarterName} Quarter grading period?`,

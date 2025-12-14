@@ -133,6 +133,13 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
         .modal-footer { display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem; padding-top:1rem; border-top:1px solid #eee; }
         .btn-secondary { background:#f1f1f1; color:var(--text); border:1px solid #ddd; padding:10px 20px; border-radius:8px; font-weight:600; cursor:pointer; font-family:'Poppins',sans-serif; }
         .btn-secondary:hover { background:#e7e7e7; }
+        .role-badge { display:inline-block; padding:6px 12px; border-radius:20px; font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+        .role-badge.adviser { background:linear-gradient(135deg, #28a745 0%, #20c997 100%); color:white; }
+        .role-badge.subject { background:linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color:white; }
+        .classes-section { margin-bottom:3rem; }
+        .section-title { color:var(--primary); font-size:1.3rem; font-weight:600; margin-bottom:1.5rem; padding-bottom:0.75rem; border-bottom:2px solid var(--primary); display:flex; align-items:center; gap:12px; }
+        .section-title i { font-size:1.5rem; }
+        .section-subtitle { color:var(--text-light); font-size:0.95rem; margin-bottom:1rem; }
         @media (max-width: 768px) {
             .container { flex-direction:column; }
             .sidebar { width:100%; height:auto; position:relative; top:0; padding:1.5rem; }
@@ -177,49 +184,85 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
         </aside>
 
         <main class="main-content">
-            <h1 class="page-title">Classes</h1>
+            <h1 class="page-title"><i class="fas fa-chalkboard-user"></i> My Classes</h1>
 
-            <table class="classes-table">
-                <thead>
-                    <tr>
-                        <th>Grade & Section</th>
-                        <th>Subject</th>
-                        <th class="col-center">No. of Students</th>
-                        <th>Schedule</th>
-                        <th class="col-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Grade 11 - STEM A</td>
-                        <td>Pre-Calculus</td>
-                        <td class="col-center">42</td>
-                        <td>Mon/Wed 9:00-10:00 AM</td>
-                        <td class="col-center"><button class="btn-view" data-class="11-STEM-A" data-grade="Grade 11 - STEM A" data-subject="Pre-Calculus">View Class</button></td>
-                    </tr>
-                    <tr>
-                        <td>Grade 11 - STEM B</td>
-                        <td>Pre-Calculus</td>
-                        <td class="col-center">40</td>
-                        <td>Mon/Wed 10:00-11:00 AM</td>
-                        <td class="col-center"><button class="btn-view" data-class="11-STEM-B" data-grade="Grade 11 - STEM B" data-subject="Pre-Calculus">View Class</button></td>
-                    </tr>
-                    <tr>
-                        <td>Grade 12 - HUMSS A</td>
-                        <td>Practical Research 2</td>
-                        <td class="col-center">45</td>
-                        <td>Tue/Thu 1:00-2:30 PM</td>
-                        <td class="col-center"><button class="btn-view" data-class="12-HUMSS-A" data-grade="Grade 12 - HUMSS A" data-subject="Practical Research 2">View Class</button></td>
-                    </tr>
-                    <tr>
-                        <td>Grade 12 - ABM C</td>
-                        <td>Applied Economics</td>
-                        <td class="col-center">35</td>
-                        <td>Fri 8:00-10:00 AM</td>
-                        <td class="col-center"><button class="btn-view" data-class="12-ABM-C" data-grade="Grade 12 - ABM C" data-subject="Applied Economics">View Class</button></td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- ADVISER CLASS SECTION -->
+            <div class="classes-section">
+                <div class="section-title">
+                    <i class="fas fa-people-roof"></i> Class Adviser
+                </div>
+                <p class="section-subtitle">Classes where you serve as the class adviser</p>
+                
+                <table class="classes-table">
+                    <thead>
+                        <tr>
+                            <th>Grade & Section</th>
+                            <th>Subject</th>
+                            <th class="col-center">No. of Students</th>
+                            <th>Schedule</th>
+                            <th class="col-center">Role</th>
+                            <th class="col-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Grade 11 - STEM A</td>
+                            <td>Pre-Calculus</td>
+                            <td class="col-center">42</td>
+                            <td>Mon/Wed 9:00-10:00 AM</td>
+                            <td class="col-center"><span class="role-badge adviser">⭐ Adviser</span></td>
+                            <td class="col-center"><a class="btn-view" href="teacher/teacherstudent.php">View Class</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SUBJECT TEACHER CLASSES SECTION -->
+            <div class="classes-section">
+                <div class="section-title">
+                    <i class="fas fa-book"></i> Subject Teacher
+                </div>
+                <p class="section-subtitle">Classes where you teach as a subject teacher</p>
+                
+                <table class="classes-table">
+                    <thead>
+                        <tr>
+                            <th>Grade & Section</th>
+                            <th>Subject</th>
+                            <th class="col-center">No. of Students</th>
+                            <th>Schedule</th>
+                            <th class="col-center">Role</th>
+                            <th class="col-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Grade 11 - STEM B</td>
+                            <td>Pre-Calculus</td>
+                            <td class="col-center">40</td>
+                            <td>Mon/Wed 10:00-11:00 AM</td>
+                            <td class="col-center"><span class="role-badge subject">Subject</span></td>
+                            <td class="col-center"><button class="btn-view" data-class="11-STEM-B" data-grade="Grade 11 - STEM B" data-subject="Pre-Calculus">View Class</button></td>
+                        </tr>
+                        <tr>
+                            <td>Grade 12 - HUMSS A</td>
+                            <td>Practical Research 2</td>
+                            <td class="col-center">45</td>
+                            <td>Tue/Thu 1:00-2:30 PM</td>
+                            <td class="col-center"><span class="role-badge subject">Subject</span></td>
+                            <td class="col-center"><button class="btn-view" data-class="12-HUMSS-A" data-grade="Grade 12 - HUMSS A" data-subject="Practical Research 2">View Class</button></td>
+                        </tr>
+                        <tr>
+                            <td>Grade 12 - ABM C</td>
+                            <td>Applied Economics</td>
+                            <td class="col-center">35</td>
+                            <td>Fri 8:00-10:00 AM</td>
+                            <td class="col-center"><span class="role-badge subject">Subject</span></td>
+                            <td class="col-center"><button class="btn-view" data-class="12-ABM-C" data-grade="Grade 12 - ABM C" data-subject="Applied Economics">View Class</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </main>
     </div>
 

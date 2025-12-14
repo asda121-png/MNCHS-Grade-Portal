@@ -4,6 +4,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
+// Get teacher name from session
+$teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Teacher');
 
 require_once '../../includes/config.php';
 
@@ -50,8 +52,26 @@ function normalize_grade_level($gradeLevel): string {
 $students = [];
 $studentQueryError = null;
 $gradeSections = [];
+$adviserClass = null;
 
 try {
+    // Get teacher's adviser class information
+    $adviserQuery = "SELECT c.grade_level, c.section 
+                     FROM teachers t 
+                     JOIN classes c ON t.adviser_class_id = c.id 
+                     WHERE t.user_id = ? AND t.is_adviser = 1";
+    
+    if ($adviserStmt = $conn->prepare($adviserQuery)) {
+        $userId = $_SESSION['user_id'];
+        $adviserStmt->bind_param("i", $userId);
+        $adviserStmt->execute();
+        $adviserResult = $adviserStmt->get_result();
+        if ($adviserRow = $adviserResult->fetch_assoc()) {
+            $adviserClass = format_grade_section($adviserRow['grade_level'], $adviserRow['section']);
+        }
+        $adviserStmt->close();
+    }
+
     // Build grade->sections map from DB (merge both sources so we cover all existing sections)
     $gradeSectionRows = [];
     $gradeSectionQuery = "SELECT DISTINCT grade_level, section
@@ -371,18 +391,24 @@ try {
 </head>
 <body>
 
-    <!-- Header -->
     <header class="header">
+        <a href="#" class="menu-icon"><i class="fas fa-bars"></i></a>
         <h1>MNCHS Grade Portal</h1>
         <div class="user-info">
             <a href="#" class="notification-bell">
                 <i class="fas fa-bell"></i>
                 <span class="notification-badge"></span>
             </a>
-            <span>Welcome, Teacher</span>
+            <div class="profile-link" title="View Profile">
+                <i class="fas fa-user-circle"></i>
+                <i class="fas fa-caret-down dropdown-caret"></i>
+                <div class="profile-dropdown">
+                    <a href="teacherprofile.php">Profile</a>
+                </div>
+            </div>
+            <span><?php echo htmlspecialchars($teacher_name); ?></span>
         </div>
     </header>
-
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -401,7 +427,7 @@ try {
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h2>Manage Students</h2>
+                    <h2><?php echo $adviserClass ? htmlspecialchars($adviserClass) : 'Students'; ?></h2>
                 </div>
                 <button class="btn-primary" id="openAddStudentButton">
                     <i class="fas fa-plus"></i>
@@ -411,25 +437,22 @@ try {
 
             <!-- Student Table -->
             <div class="content-box">
-                <div class="filters">
+                <div class="filters" style="justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 2.5rem;">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
                         <input type="text" id="searchInput" placeholder="Search by name or LRN...">
                     </div>
-                    <select id="gradeFilter">
-                        <option value="">Filter by Grade</option>
-                        <option>Grade 7</option>
-                        <option>Grade 8</option>
-                        <option>Grade 9</option>
-                        <option>Grade 10</option>
-                        <option>Grade 11</option>
-                        <option>Grade 12</option>
-                    </select>
-                    <select id="statusFilter">
-                        <option value="">Filter by Status</option>
-                        <option value="Enrolled">Enrolled</option>
-                        <option value="Not Enrolled">Not Enrolled</option>
-                    </select>
+                    <span style="font-size: 1.1rem; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-calendar-alt"></i>
+                        Schedule:
+                        <span style="font-size: 1.05rem; font-weight: 500; color: var(--text); background: #f3f4f6; border-radius: 6px; padding: 4px 12px; margin-left: 2px;">
+                            Mon/Wed 9:00-10:00 AM
+                        </span>
+                    </span>
+                    <span style="font-size: 1.1rem; font-weight: 500; color: var(--text-light);">
+                        <i class="fas fa-users" style="margin-right: 6px;"></i>
+                        Number of Students: <span id="studentCount">40</span>
+                    </span>
                 </div>
                 <div class="table-wrapper">
                     <table>
@@ -437,7 +460,6 @@ try {
                             <tr>
                                 <th>LRN</th>
                                 <th>Name</th>
-                                <th>Grade & Section</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -445,11 +467,11 @@ try {
                         <tbody id="studentTableBody">
                             <?php if ($studentQueryError): ?>
                                 <tr>
-                                    <td colspan="5">Unable to load students: <?= htmlspecialchars($studentQueryError) ?></td>
+                                    <td colspan="4">Unable to load students: <?= htmlspecialchars($studentQueryError) ?></td>
                                 </tr>
                             <?php elseif (empty($students)): ?>
                                 <tr>
-                                    <td colspan="5">No students found.</td>
+                                    <td colspan="4">No students found.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($students as $student): ?>
@@ -495,7 +517,6 @@ try {
                                     >
                                         <td><?= htmlspecialchars($displayLrn) ?></td>
                                         <td><?= htmlspecialchars($displayName) ?></td>
-                                        <td><?= htmlspecialchars($gradeSection) ?></td>
                                         <td><span class="status-badge <?= htmlspecialchars($statusClass) ?>"><?= htmlspecialchars($statusLabel) ?></span></td>
                                         <td class="action-links">
                                             <a href="#" data-action="view">View</a>
@@ -542,33 +563,37 @@ try {
                     <div class="form-step active" data-step="1">
                         <h4>Step 1: Personal Information</h4>
                         <div class="form-group">
-                            <label for="studentLRN">LRN (Learner Reference Number) - 12 digits</label>
+                            <label for="studentLRN">LRN (Learner Reference Number)</label>
                             <input type="text" id="studentLRN" maxlength="12" pattern="\d{12}" title="LRN must be exactly 12 digits" required>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentFirstName">First Name</label>
-                                <input type="text" id="studentFirstName" required>
+                                <input type="text" id="studentFirstName" pattern="^[a-zA-Z\s'-]{2,50}$" title="First name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" required>
                             </div>
                             <div class="form-group">
                                 <label for="studentLastName">Last Name</label>
-                                <input type="text" id="studentLastName" required>
+                                <input type="text" id="studentLastName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Last name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentMiddleName">Middle Name</label>
-                                <input type="text" id="studentMiddleName" placeholder="Optional">
+                                <input type="text" id="studentMiddleName" pattern="^[a-zA-Z\s'-]*$" title="Middle name must contain only letters, spaces, hyphens, and apostrophes" placeholder="Optional">
                             </div>
                             <div class="form-group">
                                 <label for="studentSuffix">Suffix</label>
-                                <input type="text" id="studentSuffix" placeholder="e.g. Jr.">
+                                <input type="text" id="studentSuffix" pattern="^[a-zA-Z.\s]*$" title="Suffix must contain only letters and periods" placeholder="e.g. Jr.">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentEmail">Email Address</label>
                                 <input type="email" id="studentEmail" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="studentDOB">Date of Birth</label>
+                                <input type="date" id="studentDOB">
                             </div>
                         </div>
                     </div>
@@ -578,16 +603,16 @@ try {
                         <h4>Step 2: Address</h4>
                         <div class="form-group">
                             <label for="streetAddress">Street Address</label>
-                            <input type="text" id="streetAddress" placeholder="House No., Street Name, Brgy.">
+                            <input type="text" id="streetAddress" pattern="^[a-zA-Z0-9\s.,#-]{3,100}$" title="Street address must be 3-100 characters and contain only letters, numbers, and common punctuation" placeholder="House No., Street Name, Brgy.">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="city">City/Municipality</label>
-                                <input type="text" id="city">
+                                <input type="text" id="city" pattern="^[a-zA-Z\s'-]{2,50}$" title="City must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)">
                             </div>
                             <div class="form-group">
                                 <label for="province">Province</label>
-                                <input type="text" id="province">
+                                <input type="text" id="province" pattern="^[a-zA-Z\s'-]{2,50}$" title="Province must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)">
                             </div>
                         </div>
                     </div>
@@ -598,31 +623,31 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="fatherName">Father's Name</label>
-                                <input type="text" id="fatherName" placeholder="Full name">
+                                <input type="text" id="fatherName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Father's name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="Full name">
                             </div>
                             <div class="form-group">
                                 <label for="motherName">Mother's Name</label>
-                                <input type="text" id="motherName" placeholder="Full name">
+                                <input type="text" id="motherName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Mother's name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="Full name">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="guardianName">Guardian Name</label>
-                                <input type="text" id="guardianName" placeholder="If different from parents">
+                                <input type="text" id="guardianName" pattern="^[a-zA-Z\s'-]{2,50}$" title="Guardian name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)" placeholder="If different from parents">
                             </div>
                             <div class="form-group">
                                 <label for="guardianRelationship">Relationship</label>
-                                <input type="text" id="guardianRelationship" placeholder="e.g. Aunt, Uncle">
+                                <input type="text" id="guardianRelationship" pattern="^[a-zA-Z\s]{2,30}$" title="Relationship must contain only letters and spaces (2-30 characters)" placeholder="e.g. Aunt, Uncle">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentGuardian">Guardian Contact</label>
-                                <input type="tel" id="studentGuardian" placeholder="e.g. 09123456789">
+                                <input type="tel" id="studentGuardian" pattern="^[0-9\s\-+()]{7,15}$" title="Guardian contact must be a valid phone number (7-15 digits)" placeholder="e.g. 09123456789">
                             </div>
                             <div class="form-group">
                                 <label for="emergencyContact">Emergency Contact</label>
-                                <input type="tel" id="emergencyContact" placeholder="e.g. 09123456789">
+                                <input type="tel" id="emergencyContact" pattern="^[0-9\s\-+()]{7,15}$" title="Emergency contact must be a valid phone number (7-15 digits)" placeholder="e.g. 09123456789">
                             </div>
                         </div>
                     </div>
@@ -651,9 +676,8 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentStatus">Enrollment Status</label>
-                                <select id="studentStatus">
-                                    <option value="Enrolled">Enrolled</option>
-                                    <option value="Not Enrolled">Not Enrolled</option>
+                                <select id="studentStatus" disabled>
+                                    <option value="Enrolled" selected>Enrolled</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -710,6 +734,16 @@ try {
 
     <script>
         window.__GRADE_SECTIONS__ = <?= json_encode($gradeSections, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+        window.__ADVISER_CLASS__ = <?php
+            if ($adviserClass && isset($adviserRow)) {
+                echo json_encode([
+                    'grade' => $adviserRow['grade_level'],
+                    'section' => $adviserRow['section']
+                ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+            } else {
+                echo 'null';
+            }
+        ?>;
     </script>
 
     <!-- Link to the external JavaScript file -->

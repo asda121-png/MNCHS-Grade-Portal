@@ -251,7 +251,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['u
                     <div class="text-center text-gray-700 mt-6">
                         <p>
                             Already have an account?
-                            <a href="../../index.php" class="text-[#800000] font-semibold hover:underline">Sign in</a>.
+                            <a href="../../index.php" id="signInLink" class="text-[#800000] font-semibold hover:underline">Sign in</a>.
                         </p>
                     </div>
 

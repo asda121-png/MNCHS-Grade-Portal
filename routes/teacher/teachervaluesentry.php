@@ -109,9 +109,13 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
 <body>
 
     <header class="header">
-        <h1>MNCHS Grade Portal</h1>
+        <a href="#" class="menu-icon"><i class="fas fa-bars"></i></a>
+        <h1></i> MNCHS Grade Portal</h1>
         <div class="user-info">
-            <a href="#" class="notification-bell"><i class="fas fa-bell"></i><span class="notification-badge"></span></a>
+            <a href="#" class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge"></span>
+            </a>
             <div class="profile-link" title="View Profile">
                 <i class="fas fa-user-circle"></i><i class="fas fa-caret-down dropdown-caret"></i>
                 <div class="profile-dropdown">

@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   // --- Element Selectors ---
   const searchInput = document.getElementById("searchInput");
-  const gradeFilter = document.getElementById("gradeFilter");
-  const statusFilter = document.getElementById("statusFilter");
   const studentTableBody = document.getElementById("studentTableBody");
   const addStudentButton = document.getElementById("openAddStudentButton");
   const modal = document.getElementById("addStudentModal");
@@ -39,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Skip if core elements don't exist
-  if (!searchInput || !gradeFilter || !statusFilter || !studentTableBody) {
+  if (!searchInput || !studentTableBody) {
     console.warn("Student page elements not found");
     return;
   }
@@ -53,7 +51,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const cancelButton = modal.querySelector("#cancelButton");
     const addStudentForm = document.getElementById("addStudentForm");
     const nextButton = document.getElementById("nextButton");
-    const prevButton = document.getElementById("prevButton");
+    const prevButton = modal.querySelector("#prevButton");
     const saveButton = document.getElementById("saveButton");
     const formSteps = document.querySelectorAll(".form-step");
     const stepIndicators = document.querySelectorAll(".step-indicator .step");
@@ -61,6 +59,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const gradeLevelSelect = document.getElementById("studentGradeLevel");
     const sectionSelect = document.getElementById("studentSection");
     const gradeSectionHidden = document.getElementById("studentGradeSection");
+
+    // Adviser class info from PHP (window.__ADVISER_CLASS__)
+    const adviserClass = window.__ADVISER_CLASS__ || null;
+    let adviserGrade = "";
+    let adviserSection = "";
+    if (adviserClass && typeof adviserClass === "object") {
+      adviserGrade = adviserClass.grade;
+      adviserSection = adviserClass.section;
+    }
 
     let currentStep = 1;
     const defaultModalTitle = modalTitle ? modalTitle.textContent : "";
@@ -186,13 +193,26 @@ document.addEventListener("DOMContentLoaded", function () {
         addStudentForm.dataset.mode = mode;
         addStudentForm.dataset.studentId = data?.id || "";
       }
-      if (data) {
+      if (mode === "add" && adviserGrade && adviserSection) {
+        // Auto-fill and lock grade/section for adviser's class
+        setFieldValue("studentGradeLevel", adviserGrade);
+        populateSectionOptions(adviserGrade, adviserSection);
+        setFieldValue("studentSection", adviserSection);
+        if (gradeLevelSelect) {
+          gradeLevelSelect.value = adviserGrade;
+          gradeLevelSelect.disabled = true;
+        }
+        if (sectionSelect) {
+          sectionSelect.value = adviserSection;
+          sectionSelect.disabled = true;
+        }
+      } else if (data) {
+        // Edit mode: fill with student data
         setFieldValue("studentLRN", data.lrn || "");
         let firstName = data.firstName || "";
         let middleName = data.middleName || "";
         let lastName = data.lastName || "";
         let suffix = data.suffix || "";
-
         if (!firstName && !lastName) {
           const nameParts = (data.name || "")
             .trim()
@@ -202,7 +222,6 @@ document.addEventListener("DOMContentLoaded", function () {
           lastName = nameParts.length > 0 ? nameParts.pop() : "";
           middleName = nameParts.join(" ");
         }
-
         setFieldValue("studentFirstName", firstName);
         setFieldValue("studentMiddleName", middleName);
         setFieldValue("studentLastName", lastName);
@@ -227,8 +246,12 @@ document.addEventListener("DOMContentLoaded", function () {
         setFieldValue("studentGradeSection", data.gradeSection || "");
         syncGradeSection();
         setFieldValue("studentStatus", data.status || "Enrolled");
+        if (gradeLevelSelect) gradeLevelSelect.disabled = false;
+        if (sectionSelect) sectionSelect.disabled = false;
       } else {
         populateSectionOptions(gradeLevelSelect?.value || "", "");
+        if (gradeLevelSelect) gradeLevelSelect.disabled = false;
+        if (sectionSelect) sectionSelect.disabled = false;
       }
       modal.classList.add("show");
       setBodyScrollLocked(true);
@@ -277,25 +300,135 @@ document.addEventListener("DOMContentLoaded", function () {
     if (addStudentForm) {
       addStudentForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const lrn = document.getElementById("studentLRN")?.value || "";
-        const firstName =
-          document.getElementById("studentFirstName")?.value || "";
-        const middleName =
-          document.getElementById("studentMiddleName")?.value || "";
-        const lastName =
-          document.getElementById("studentLastName")?.value || "";
-        const suffix = document.getElementById("studentSuffix")?.value || "";
-        const nameParts = [firstName, middleName, lastName, suffix];
-        const fullName = nameParts.filter((part) => part).join(" ");
-        const actionText =
-          addStudentForm.dataset.mode === "edit" ? "Updating" : "Saving";
-        const studentIdentifier = addStudentForm.dataset.studentId
-          ? `ID: ${addStudentForm.dataset.studentId}\n`
-          : "";
-        alert(
-          `${actionText} student (simulated):\n${studentIdentifier}LRN: ${lrn}\nName: ${fullName}`
+
+        // Collect all form data
+        const formData = new FormData();
+        formData.append(
+          "lrn",
+          document.getElementById("studentLRN")?.value || ""
         );
-        closeAddModal();
+        formData.append(
+          "firstName",
+          document.getElementById("studentFirstName")?.value || ""
+        );
+        formData.append(
+          "middleName",
+          document.getElementById("studentMiddleName")?.value || ""
+        );
+        formData.append(
+          "lastName",
+          document.getElementById("studentLastName")?.value || ""
+        );
+        formData.append(
+          "suffix",
+          document.getElementById("studentSuffix")?.value || ""
+        );
+        formData.append(
+          "email",
+          document.getElementById("studentEmail")?.value || ""
+        );
+        formData.append(
+          "streetAddress",
+          document.getElementById("streetAddress")?.value || ""
+        );
+        formData.append("city", document.getElementById("city")?.value || "");
+        formData.append(
+          "province",
+          document.getElementById("province")?.value || ""
+        );
+        formData.append(
+          "fatherName",
+          document.getElementById("fatherName")?.value || ""
+        );
+        formData.append(
+          "motherName",
+          document.getElementById("motherName")?.value || ""
+        );
+        formData.append(
+          "guardianName",
+          document.getElementById("guardianName")?.value || ""
+        );
+        formData.append(
+          "guardianRelationship",
+          document.getElementById("guardianRelationship")?.value || ""
+        );
+        formData.append(
+          "guardianContact",
+          document.getElementById("studentGuardian")?.value || ""
+        );
+        formData.append(
+          "emergencyContact",
+          document.getElementById("emergencyContact")?.value || ""
+        );
+        formData.append(
+          "gradeLevel",
+          document.getElementById("studentGradeLevel")?.value || ""
+        );
+        formData.append(
+          "section",
+          document.getElementById("studentSection")?.value || ""
+        );
+        formData.append(
+          "status",
+          document.getElementById("studentStatus")?.value || "Not Enrolled"
+        );
+        formData.append(
+          "dateEnrolled",
+          document.getElementById("studentDateEnrolled")?.value || ""
+        );
+        formData.append(
+          "dateOfBirth",
+          document.getElementById("studentDOB")?.value || ""
+        );
+
+        // Determine action (add or update)
+        const isEdit = addStudentForm.dataset.mode === "edit";
+        const action = isEdit ? "update" : "add";
+
+        if (isEdit) {
+          formData.append("studentId", addStudentForm.dataset.studentId);
+        }
+
+        // Show loading indicator
+        const saveButton = document.getElementById("saveButton");
+        const originalText = saveButton?.textContent || "Save Student";
+        if (saveButton) saveButton.textContent = "Saving...";
+        if (saveButton) saveButton.disabled = true;
+
+        // Send to API
+        fetch(`../../server/api/students.php?action=${action}`, {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              showNotification(
+                isEdit
+                  ? "Student updated successfully!"
+                  : "Student saved successfully!",
+                "success"
+              );
+              closeAddModal();
+              // Reload page to refresh student list
+              setTimeout(() => location.reload(), 1500);
+            } else {
+              showNotification(
+                "Error: " + (data.error || "Failed to save student"),
+                "error"
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Error saving student: " + error.message, "error");
+          })
+          .finally(() => {
+            if (saveButton) {
+              saveButton.textContent = originalText;
+              saveButton.disabled = false;
+            }
+          });
       });
     }
   }
@@ -395,32 +528,21 @@ document.addEventListener("DOMContentLoaded", function () {
   // --- Table Filtering ---
   const applyFilters = () => {
     const searchText = searchInput.value.toLowerCase();
-    const selectedGrade = gradeFilter.value;
-    const selectedStatus = statusFilter.value;
     const tableRows = studentTableBody.getElementsByTagName("tr");
 
     for (let i = 0; i < tableRows.length; i++) {
       const row = tableRows[i];
       const lrn = row.cells[0]?.textContent.toLowerCase() || "";
       const name = row.cells[1]?.textContent.toLowerCase() || "";
-      const gradeSection = row.cells[2]?.textContent || "";
-      const statusCell = row.cells[3]?.textContent || "";
 
       const searchMatch = lrn.includes(searchText) || name.includes(searchText);
-      const gradeMatch =
-        selectedGrade === "" || gradeSection.includes(selectedGrade);
-      const statusMatch =
-        selectedStatus === "" || statusCell.includes(selectedStatus);
 
-      row.style.display =
-        searchMatch && gradeMatch && statusMatch ? "" : "none";
+      row.style.display = searchMatch ? "" : "none";
     }
   };
 
   // Event listeners for filters
   searchInput.addEventListener("keyup", applyFilters);
-  gradeFilter.addEventListener("change", applyFilters);
-  statusFilter.addEventListener("change", applyFilters);
 
   // Table action links
   studentTableBody.addEventListener("click", function (e) {
