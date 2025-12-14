@@ -1,305 +1,146 @@
 <?php
-session_start();
+// --- CORS HEADERS FOR CROSS-ORIGIN SESSION SHARING ---
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+set_exception_handler(function($e) {
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+    }
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    exit;
+});
+
+
+// --- CORS HEADERS ---
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 header('Content-Type: application/json');
 
-// Allow CORS for local development
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
-
+// Use the fully-qualified name to avoid conflicts and for clarity
 require_once '../../includes/config.php';
+require_once '../../src/Utilities/APIResponse.php';
+require_once __DIR__ . '/send_account_email.php'; // For sending credentials
 
-// Get action from query string
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+// Import the APIResponse class to use it directly
+use src\Utilities\APIResponse;
 
-switch ($action) {
-    case 'get_classes':
-        getClasses();
-        break;
-    case 'get_departments':
-        getDepartments();
-        break;
-    case 'get_specializations':
-        getSpecializations();
-        break;
-    case 'update_teacher':
-        updateTeacher();
-        break;
-    case 'add_teacher':
-        addTeacher();
-        break;
-    default:
-        echo json_encode(['success' => false, 'error' => 'Invalid action']);
+session_start();
+
+// Security check: only admins can perform this action
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+    // Use the imported class
+    APIResponse::unauthorized('Admin access required.');
 }
 
-/**
- * Get all classes for adviser dropdown
- */
-function getClasses() {
-    global $conn;
-    
-    try {
-        // Get unique classes by grade_level and section using MIN(id) for the id
-        $query = "SELECT MIN(id) as id, class_name as name, section, grade_level 
-                  FROM classes 
-                  GROUP BY grade_level, section, class_name
-                  ORDER BY grade_level ASC, section ASC";
-        
-        $result = $conn->query($query);
-        
-        if (!$result) {
-            echo json_encode(['success' => false, 'error' => 'Database error: ' . $conn->error]);
-            return;
-        }
-        
-        $classes = [];
-        while ($row = $result->fetch_assoc()) {
-            $classes[] = [
-                'id' => $row['id'],
-                'name' => $row['name'] ?: 'Grade ' . $row['grade_level'],
-                'section' => $row['section'],
-                'grade_level' => $row['grade_level']
-            ];
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'data' => $classes
-        ]);
-        
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-    }
+$method = $_SERVER['REQUEST_METHOD'];
+$action = $_GET['action'] ?? '';
+
+if ($method === 'POST' && $action === 'add_teacher') {
+    add_teacher($conn);
+} else {
+    APIResponse::error('Invalid request', 400);
 }
 
-/**
- * Get departments list
- */
-function getDepartments() {
-    $departments = [
-        ['id' => 'junior_high', 'name' => 'Junior High School'],
-        ['id' => 'senior_high', 'name' => 'Senior High School'],
-        ['id' => 'science', 'name' => 'Science Department'],
-        ['id' => 'mathematics', 'name' => 'Mathematics Department'],
-        ['id' => 'english', 'name' => 'English Department'],
-        ['id' => 'filipino', 'name' => 'Filipino Department'],
-        ['id' => 'social_studies', 'name' => 'Social Studies Department'],
-        ['id' => 'mapeh', 'name' => 'MAPEH Department'],
-        ['id' => 'tle', 'name' => 'TLE Department'],
-        ['id' => 'values', 'name' => 'Values Education Department']
-    ];
-    
-    echo json_encode([
-        'success' => true,
-        'data' => $departments
-    ]);
-}
-
-/**
- * Get specializations list
- */
-function getSpecializations() {
-    $specializations = [
-        ['id' => 'english', 'name' => 'English'],
-        ['id' => 'filipino', 'name' => 'Filipino'],
-        ['id' => 'mathematics', 'name' => 'Mathematics'],
-        ['id' => 'science', 'name' => 'Science'],
-        ['id' => 'biology', 'name' => 'Biology'],
-        ['id' => 'chemistry', 'name' => 'Chemistry'],
-        ['id' => 'physics', 'name' => 'Physics'],
-        ['id' => 'social_studies', 'name' => 'Social Studies'],
-        ['id' => 'araling_panlipunan', 'name' => 'Araling Panlipunan'],
-        ['id' => 'mapeh', 'name' => 'MAPEH'],
-        ['id' => 'music', 'name' => 'Music'],
-        ['id' => 'arts', 'name' => 'Arts'],
-        ['id' => 'pe', 'name' => 'Physical Education'],
-        ['id' => 'health', 'name' => 'Health'],
-        ['id' => 'tle', 'name' => 'TLE'],
-        ['id' => 'ict', 'name' => 'ICT'],
-        ['id' => 'esp', 'name' => 'Edukasyon sa Pagpapakatao'],
-        ['id' => 'values', 'name' => 'Values Education']
-    ];
-    
-    echo json_encode([
-        'success' => true,
-        'data' => $specializations
-    ]);
-}
-
-/**
- * Validate adviser teacher section count
- * If a teacher is an adviser, they should only have 1 section (teach 1 class with 1 section)
- */
-function validateAdviserSectionCount($conn, $teacherId) {
-    // Get count of distinct sections the teacher teaches
-    $stmt = $conn->prepare("
-        SELECT COUNT(DISTINCT c.section) as section_count
-        FROM class_subjects cs
-        INNER JOIN classes c ON cs.class_id = c.id
-        WHERE cs.teacher_id = ? AND c.section IS NOT NULL AND c.section != ''
-    ");
-    $stmt->bind_param("i", $teacherId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $stmt->close();
-    
-    $sectionCount = isset($row['section_count']) ? (int)$row['section_count'] : 0;
-    
-    // If teacher has more than 1 section, they cannot be an adviser
-    return $sectionCount <= 1;
-}
-
-/**
- * Update teacher details
- */
-function updateTeacher() {
-    global $conn;
-    
-    // Get JSON input
+function add_teacher(mysqli $conn): void {
     $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!$input) {
-        echo json_encode(['success' => false, 'message' => 'Invalid JSON input']);
-        return;
-    }
-    
-    $teacherId = isset($input['teacher_id']) ? (int)$input['teacher_id'] : 0;
-    $isAdviser = isset($input['is_adviser']) ? (int)$input['is_adviser'] : 0;
-    $adviserClassId = isset($input['adviser_class_id']) && $input['adviser_class_id'] !== '' ? (int)$input['adviser_class_id'] : null;
-    
-    if ($teacherId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid teacher ID']);
-        return;
-    }
-    
-    try {
-        // If setting as adviser, validate that teacher has only 1 section
-        if ($isAdviser && $adviserClassId) {
-            if (!validateAdviserSectionCount($conn, $teacherId)) {
-                echo json_encode([
-                    'success' => false, 
-                    'message' => 'Cannot assign as adviser: Teacher teaches more than 1 section. An adviser can only teach 1 section.'
-                ]);
-                return;
-            }
-            
-            // Clear any existing adviser for this class
-            $clearStmt = $conn->prepare("UPDATE teachers SET is_adviser = 0, adviser_class_id = NULL WHERE adviser_class_id = ? AND id != ?");
-            $clearStmt->bind_param("ii", $adviserClassId, $teacherId);
-            $clearStmt->execute();
-            $clearStmt->close();
-        }
-        
-        // Update the teacher
-        if ($isAdviser && $adviserClassId) {
-            $stmt = $conn->prepare("UPDATE teachers SET is_adviser = ?, adviser_class_id = ? WHERE id = ?");
-            $stmt->bind_param("iii", $isAdviser, $adviserClassId, $teacherId);
-        } else {
-            $stmt = $conn->prepare("UPDATE teachers SET is_adviser = 0, adviser_class_id = NULL WHERE id = ?");
-            $stmt->bind_param("i", $teacherId);
-        }
-        
-        if ($stmt->execute()) {
-            echo json_encode([
-                'success' => true,
-                'message' => 'Teacher updated successfully'
-            ]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to update teacher: ' . $stmt->error]);
-        }
-        
-        $stmt->close();
-        
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
-    }
-}
 
-/**
- * Add a new teacher
- */
-function addTeacher() {
-    global $conn;
-    
-    // Get JSON input
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!$input) {
-        echo json_encode(['success' => false, 'message' => 'Invalid JSON input']);
+    // --- Basic Input Validation ---
+    $required_fields = ['employee_id', 'first_name', 'last_name', 'email', 'department', 'specialization', 'role'];
+    foreach ($required_fields as $field) {
+        if (!isset($input[$field]) || trim($input[$field]) === '') {
+            APIResponse::error("Missing required field: $field", 400);
+            return;
+        }
+    }
+
+    // --- Sanitize Inputs ---
+    $employee_id = trim($input['employee_id']);
+    $first_name = trim($input['first_name']);
+    $last_name = trim($input['last_name']);
+    $middle_name = isset($input['middle_name']) ? trim($input['middle_name']) : null;
+    $suffix = isset($input['suffix']) ? trim($input['suffix']) : null;
+    $email = filter_var(trim($input['email']), FILTER_SANITIZE_EMAIL);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        APIResponse::error('Invalid email format.', 400);
         return;
     }
-    
-    $employeeId = isset($input['employee_id']) ? trim($input['employee_id']) : '';
-    $firstName = isset($input['first_name']) ? trim($input['first_name']) : '';
-    $lastName = isset($input['last_name']) ? trim($input['last_name']) : '';
-    $middleName = isset($input['middle_name']) ? trim($input['middle_name']) : '';
-    $suffix = isset($input['suffix']) ? trim($input['suffix']) : '';
-    $email = isset($input['email']) ? trim($input['email']) : '';
-    $phone = isset($input['phone']) ? trim($input['phone']) : '';
-    $department = isset($input['department']) ? trim($input['department']) : '';
-    $specialization = isset($input['specialization']) ? trim($input['specialization']) : '';
-    $isAdviser = isset($input['is_adviser']) ? (int)$input['is_adviser'] : 0;
-    $adviserClassId = isset($input['adviser_class_id']) && $input['adviser_class_id'] !== '' ? (int)$input['adviser_class_id'] : null;
-    
-    // Validate required fields
-    if (empty($employeeId) || empty($firstName) || empty($lastName) || empty($email)) {
-        echo json_encode(['success' => false, 'message' => 'Employee ID, First Name, Last Name, and Email are required']);
-        return;
-    }
-    
-    // Note: When setting a new teacher as adviser, we cannot validate section count yet 
-    // as they haven't been assigned to classes. This will be validated when assigning classes.
-    
+    $phone = isset($input['phone']) ? preg_replace('/[^0-9]/', '', $input['phone']) : null;
+    $department = trim($input['department']);
+    $specialization = trim($input['specialization']);
+    $is_adviser = ($input['role'] === 'adviser') ? 1 : 0;
+    $adviser_class_id = ($is_adviser && !empty($input['adviser_class_id'])) ? (int)$input['adviser_class_id'] : null;
+
+    // --- Generate unique username and temporary password ---
+    $base_username = strtolower(preg_replace('/[^a-z0-9]/', '', substr($first_name, 0, 1) . $last_name));
+    $username = $base_username . rand(100, 999); // Add random digits for uniqueness
+    $password = bin2hex(random_bytes(8)); // Generate a random 16-char password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    // --- Database Transaction ---
+    $conn->begin_transaction();
+
     try {
-        // Start transaction
-        $conn->begin_transaction();
-        
-        // Generate a temporary password
-        $tempPassword = password_hash('teacher123', PASSWORD_DEFAULT);
-        
-        // Create user account first
-        $userStmt = $conn->prepare("INSERT INTO users (username, email, password, first_name, last_name, user_type, is_active) VALUES (?, ?, ?, ?, ?, 'teacher', 1)");
-        $username = strtolower($firstName . '.' . $lastName);
-        $userStmt->bind_param("sssss", $username, $email, $tempPassword, $firstName, $lastName);
-        
-        if (!$userStmt->execute()) {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Failed to create user account: ' . $userStmt->error]);
-            return;
+        // 1. Create user account
+        $user_sql = "INSERT INTO users (username, password, email, first_name, last_name, middle_name, suffix, user_type, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 'teacher', 1)";
+        $user_stmt = $conn->prepare($user_sql);
+        if (!$user_stmt) {
+            throw new Exception("User prepare failed: " . $conn->error);
         }
-        
-        $userId = $conn->insert_id;
-        $userStmt->close();
-        
-        // Create teacher record
-        $teacherStmt = $conn->prepare("INSERT INTO teachers (user_id, teacher_id, department, specialization, is_adviser, adviser_class_id, hire_date) VALUES (?, ?, ?, ?, ?, ?, CURDATE())");
-        $teacherStmt->bind_param("isssis", $userId, $employeeId, $department, $specialization, $isAdviser, $adviserClassId);
-        
-        if (!$teacherStmt->execute()) {
-            $conn->rollback();
-            echo json_encode(['success' => false, 'message' => 'Failed to create teacher record: ' . $teacherStmt->error]);
-            return;
+        $user_stmt->bind_param('sssssss', $username, $hashed_password, $email, $first_name, $last_name, $middle_name, $suffix);
+        $user_stmt->execute();
+        $user_id = $conn->insert_id;
+        $user_stmt->close();
+
+        // 2. Create teacher record
+        $teacher_sql = "INSERT INTO teachers (user_id, teacher_id, department, specialization, hire_date, is_adviser, adviser_class_id) VALUES (?, ?, ?, ?, CURDATE(), ?, ?)";
+        $teacher_stmt = $conn->prepare($teacher_sql);
+        if (!$teacher_stmt) {
+            throw new Exception("Teacher prepare failed: " . $conn->error);
         }
-        
-        $teacherStmt->close();
-        
+        $teacher_stmt->bind_param('isssii', $user_id, $employee_id, $department, $specialization, $is_adviser, $adviser_class_id);
+        $teacher_stmt->execute();
+        $teacher_stmt->close();
+
         // Commit transaction
         $conn->commit();
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Teacher added successfully',
-            'user_id' => $userId
+
+        // Send an email to the teacher with their login credentials
+        $emailSent = sendAccountEmail($email, $first_name, $username, $password, 'Teacher');
+
+        APIResponse::success([
+            'message' => 'Teacher added successfully!',
+            'teacher_id' => $employee_id,
+            'user_id' => $user_id,
+            'username' => $username,
+            'email_sent' => $emailSent,
+            'temp_password' => $password // Keep for admin to see in alert, but don't rely on it.
         ]);
-        
+
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        // Check for duplicate entry
+        if ($conn->errno === 1062) {
+            APIResponse::error('A teacher with this Employee ID or Email already exists.', 409);
+        } else {
+            APIResponse::error('Database error: ' . $e->getMessage(), 500);
+        }
     }
 }
+
 ?>

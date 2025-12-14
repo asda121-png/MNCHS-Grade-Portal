@@ -391,7 +391,13 @@ try {
         }
 
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: center; animation: fadeIn 0.3s ease; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000 !important; display: none; justify-content: center; align-items: center; animation: fadeIn 0.3s ease; }
+        .modal-overlay.show {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 9999 !important;
+        }
         .modal-content { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 520px; transform: scale(0.95); animation: scaleUp 0.3s ease forwards; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1.25rem; }
         .modal-header h3 { font-size: 1.75rem; color: var(--primary); }
@@ -654,26 +660,26 @@ try {
                         <h4>Step 1: Personal Information</h4>
                         <div class="form-group">
                             <label for="teacherEmployeeID">Employee ID</label>
-                            <input type="text" id="teacherEmployeeID" required>
+                            <input type="text" id="teacherEmployeeID" name="employee_id" pattern="^[a-zA-Z0-9\-]{4,20}$" title="Employee ID must be 4-20 alphanumeric characters." required>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="teacherFirstName">First Name</label>
-                                <input type="text" id="teacherFirstName" required>
+                                <input type="text" id="teacherFirstName" name="first_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="First name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)." required>
                             </div>
                             <div class="form-group">
                                 <label for="teacherLastName">Last Name</label>
-                                <input type="text" id="teacherLastName" required>
+                                <input type="text" id="teacherLastName" name="last_name" pattern="^[a-zA-Z\s'\-]{2,50}$" title="Last name must contain only letters, spaces, hyphens, and apostrophes (2-50 characters)." required>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="teacherMiddleName">Middle Name</label>
-                                <input type="text" id="teacherMiddleName" placeholder="Optional">
+                                <input type="text" id="teacherMiddleName" name="middle_name" pattern="^[a-zA-Z]?$" title="Middle initial must be a single letter." placeholder="Optional" maxlength="1">
                             </div>
                             <div class="form-group">
                                 <label for="teacherSuffix">Suffix</label>
-                                <input type="text" id="teacherSuffix" placeholder="e.g. Jr.">
+                                <input type="text" id="teacherSuffix" name="suffix" pattern="^[a-zA-Z.\s]*$" title="Suffix must contain only letters and periods." placeholder="e.g. Jr.">
                             </div>
                         </div>
                     </div>
@@ -683,11 +689,11 @@ try {
                         <h4>Step 2: Contact Information</h4>
                         <div class="form-group">
                             <label for="teacherEmail">Email Address</label>
-                            <input type="email" id="teacherEmail" required>
+                            <input type="email" id="teacherEmail" name="email" required>
                         </div>
                         <div class="form-group">
                             <label for="teacherPhone">Phone Number</label>
-                            <input type="tel" id="teacherPhone" placeholder="e.g. 09123456789">
+                            <input type="tel" id="teacherPhone" name="phone" pattern="\d{11}" title="Phone number must be exactly 11 digits." placeholder="e.g. 09123456789" maxlength="11">
                         </div>
                     </div>
 
@@ -697,7 +703,7 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="teacherSchoolLevel">School Level</label>
-                                <select id="teacherSchoolLevel">
+                                <select id="teacherSchoolLevel" name="school_level">
                                     <option value="">Select school level</option>
                                     <option value="Junior High School">Junior High School</option>
                                     <option value="Senior High School">Senior High School</option>
@@ -705,36 +711,48 @@ try {
                             </div>
                             <div class="form-group">
                                 <label for="teacherDepartment">Department</label>
-                                <select id="teacherDepartment">
+                                <select id="teacherDepartment" name="department">
                                     <option value="">Select department</option>
-                                    <option value="Junior High">Junior High</option>
-                                    <option value="Senior High">Senior High</option>
-                                    <option value="Science">Science</option>
-                                    <option value="Mathematics">Mathematics</option>
-                                    <option value="Languages">Languages</option>
+                                    <option value="Science">Science Department</option>
+                                    <option value="Mathematics">Mathematics Department</option>
+                                    <option value="Languages">Languages Department</option>
+                                    <option value="Social Studies">Social Studies Department</option>
                                     <option value="MAPEH">MAPEH</option>
-                                    <option value="TLE">TLE</option>
+                                    <option value="TLE">TLE/ICT</option>
+                                    <option value="Values">Values Education</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="teacherSpecialization">Specialization</label>
-                                <select id="teacherSpecialization">
+                                <select id="teacherSpecialization" name="specialization" disabled>
                                     <option value="">Select specialization</option>
-                                    <option value="English">English</option>
-                                    <option value="Filipino">Filipino</option>
-                                    <option value="Mathematics">Mathematics</option>
-                                    <option value="Science">Science</option>
-                                    <option value="Social Studies">Social Studies</option>
-                                    <option value="MAPEH">MAPEH</option>
-                                    <option value="TLE">TLE</option>
-                                    <option value="ICT">ICT</option>
+                                    <!-- Science -->
+                                    <option value="Science" data-department="Science">General Science</option>
+                                    <option value="Biology" data-department="Science">Biology</option>
+                                    <option value="Chemistry" data-department="Science">Chemistry</option>
+                                    <option value="Physics" data-department="Science">Physics</option>
+                                    <!-- Mathematics -->
+                                    <option value="Mathematics" data-department="Mathematics">Mathematics</option>
+                                    <!-- Languages -->
+                                    <option value="English" data-department="Languages">English</option>
+                                    <option value="Filipino" data-department="Languages">Filipino</option>
+                                    <!-- Social Studies -->
+                                    <option value="Social Studies" data-department="Social Studies">Social Studies</option>
+                                    <option value="Araling Panlipunan" data-department="Social Studies">Araling Panlipunan</option>
+                                    <!-- MAPEH -->
+                                    <option value="MAPEH" data-department="MAPEH">MAPEH</option>
+                                    <!-- TLE/ICT -->
+                                    <option value="TLE" data-department="TLE">Technology and Livelihood Education (TLE)</option>
+                                    <option value="ICT" data-department="TLE">Information & Communications Technology (ICT)</option>
+                                    <!-- Values -->
+                                    <option value="Values" data-department="Values">Values Education (ESP)</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="teacherGradeLevel">Grade Level</label>
-                                <select id="teacherGradeLevel">
+                                <select id="teacherGradeLevel" name="grade_level">
                                     <option value="">Select grade level</option>
                                     <option value="7">Grade 7</option>
                                     <option value="8">Grade 8</option>
@@ -745,20 +763,18 @@ try {
                                 </select>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="teacherStatus">Role</label>
-                                <select id="teacherStatus" required>
-                                    <option value="subject-teacher">Subject Teacher</option>
-                                    <option value="adviser">Adviser (Class Adviser)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="teacherAdviserClass">Adviser Class</label>
-                                <select id="teacherAdviserClass">
-                                    <option value="">Not an Adviser</option>
-                                </select>
-                            </div>
+                        <div class="form-group">
+                            <label for="teacherStatus">Role</label>
+                            <select id="teacherStatus" name="role" required>
+                                <option value="subject-teacher">Subject Teacher</option>
+                                <option value="adviser">Adviser (Class Adviser)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="adviserClassContainer" style="display: none;">
+                            <label for="teacherAdviserClass">Adviser Class</label>
+                            <select id="teacherAdviserClass" name="adviser_class_id">
+                                <option value="">Select a class to advise</option>
+                            </select>
                         </div>
                     </div>
                 </div>

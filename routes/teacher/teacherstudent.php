@@ -627,7 +627,7 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="studentMiddleName">Middle Name</label>
-                                <input type="text" id="studentMiddleName" name="middle_name" pattern="^[a-zA-Z\s'\-]*$" title="Middle name must contain only letters, spaces, hyphens, and apostrophes" placeholder="Optional">
+                                <input type="text" id="studentMiddleName" name="middle_name" pattern="^[a-zA-Z]?$" title="Middle initial must be a single letter." placeholder="Optional" maxlength="1">
                             </div>
                             <div class="form-group">
                                 <label for="studentSuffix">Suffix</label>

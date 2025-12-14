@@ -1,4 +1,16 @@
 <?php
+// --- SESSION COOKIE PARAMS FOR CROSS-ORIGIN (for local dev) ---
+if (PHP_SAPI !== 'cli') {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_set_cookie_params([
+            'samesite' => 'None',
+            'secure' => false, // Set to true if using HTTPS
+            'httponly' => true,
+            'path' => '/',
+        ]);
+        session_start();
+    }
+}
 /*
  * Main Database Connection
  */
