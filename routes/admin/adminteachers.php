@@ -653,6 +653,10 @@ try {
                         <div class="step-number">3</div>
                         <div class="step-title">Assignment</div>
                     </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Section</div>
+                    </div>
                 </div>
                 <div class="modal-body">
                     <!-- Step 1: Personal Information -->
@@ -750,18 +754,6 @@ try {
                                     <option value="Values" data-department="Values">Values Education (ESP)</option>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label for="teacherGradeLevel">Grade Level</label>
-                                <select id="teacherGradeLevel" name="grade_level">
-                                    <option value="">Select grade level</option>
-                                    <option value="7">Grade 7</option>
-                                    <option value="8">Grade 8</option>
-                                    <option value="9">Grade 9</option>
-                                    <option value="10">Grade 10</option>
-                                    <option value="11">Grade 11</option>
-                                    <option value="12">Grade 12</option>
-                                </select>
-                            </div>
                         </div>
                         <div class="form-group">
                             <label for="teacherStatus">Role</label>
@@ -775,6 +767,31 @@ try {
                             <select id="teacherAdviserClass" name="adviser_class_id">
                                 <option value="">Select a class to advise</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Section Assignment -->
+                    <div class="form-step" data-step="4">
+                        <h4>Step 4: Section Assignment</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="teacherGradeLevel">Grade Level</label>
+                                <select id="teacherGradeLevel" name="grade_level">
+                                    <option value="">Select grade level</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                    <option value="10">Grade 10</option>
+                                    <option value="11">Grade 11</option>
+                                    <option value="12">Grade 12</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="teacherSection">Section</label>
+                                <select id="teacherSection" name="section" required>
+                                    <option value="">Select section</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -824,5 +841,36 @@ try {
 
     <!-- Link to the external JavaScript file -->
     <script src="../../assets/js/adminteachers.js"></script>
+<script>
+// Ensure Save Teacher button only shows on Step 4
+document.addEventListener("DOMContentLoaded", function() {
+    const steps = document.querySelectorAll(".form-step");
+    const saveButton = document.getElementById("saveButton");
+    const nextButton = document.getElementById("nextButton");
+    let currentStep = 1;
+    function updateStepIndicator() {
+        steps.forEach((formStep, idx) => {
+            formStep.classList.toggle("active", idx + 1 === currentStep);
+        });
+        saveButton.style.display = currentStep === 4 ? "inline-block" : "none";
+        nextButton.style.display = currentStep < 4 ? "inline-block" : "none";
+    }
+    // Patch for multi-step navigation
+    nextButton.addEventListener("click", function() {
+        if (currentStep < 4) {
+            currentStep++;
+            updateStepIndicator();
+        }
+    });
+    document.getElementById("prevButton").addEventListener("click", function() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateStepIndicator();
+        }
+    });
+    // Initial state
+    updateStepIndicator();
+});
+</script>
 </body>
 </html>
