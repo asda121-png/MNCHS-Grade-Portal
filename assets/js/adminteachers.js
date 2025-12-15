@@ -170,6 +170,14 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     if (!validateStep(currentStep)) return;
 
+    // Require grade level and section
+    const gradeLevel = document.getElementById("teacherGradeLevel").value;
+    const section = document.getElementById("teacherSection").value;
+    if (!gradeLevel || !section) {
+      alert("Please select both Grade Level and Section.");
+      return;
+    }
+
     saveButton.disabled = true;
     saveButton.textContent = "Saving...";
 
@@ -352,10 +360,40 @@ document.addEventListener("DOMContentLoaded", () => {
       populateViewModal(row.dataset);
       openModal(viewTeacherModal);
     } else if (action === "edit") {
-      // TODO: Implement edit functionality
-      alert("Edit functionality is not yet implemented.");
-      // populateEditForm(row.dataset);
-      // openModal(addTeacherModal);
+      populateEditForm(row.dataset);
+      modalTitle.textContent = "Edit Teacher";
+      saveButton.textContent = "Update Teacher";
+      openModal(addTeacherModal);
+    }
+    /**
+     * Populates the add/edit teacher form with existing data and disables grade level selection.
+     * @param {object} data - The dataset from the teacher row.
+     */
+    function populateEditForm(data) {
+      resetForm();
+      // Step 1: Personal Info
+      document.getElementById("teacherEmployeeID").value =
+        data.teacherEmployeeId || "";
+      document.getElementById("teacherFirstName").value =
+        data.teacherFirstName || "";
+      document.getElementById("teacherLastName").value =
+        data.teacherLastName || "";
+      // Step 2: Contact Info
+      document.getElementById("teacherEmail").value = data.teacherEmail || "";
+      // Step 3: Assignment
+      document.getElementById("teacherDepartment").value =
+        data.teacherDepartment || "";
+      document.getElementById("teacherSpecialization").value =
+        data.teacherSpecialization || "";
+      // Step 4: Grade Level (fixed)
+      const gradeLevelSelect = document.getElementById("teacherGradeLevel");
+      gradeLevelSelect.value = data.teacherGradeLevel || "";
+      gradeLevelSelect.disabled = true;
+      // Optionally, also disable section selection if needed
+      // document.getElementById("teacherSection").disabled = true;
+      // Move to step 4 directly for editing grade/section if desired
+      currentStep = 4;
+      updateStepIndicator();
     }
   });
 

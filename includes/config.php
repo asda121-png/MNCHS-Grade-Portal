@@ -27,11 +27,11 @@ if (!extension_loaded('mysqli')) {
 
 // Load database credentials from .env file
 $env_file = __DIR__ . '/../.env';
-$db_host = "10.145.154.69";
-$db_username = "christian";
-$db_password = "labrador";
+$db_host = "localhost";
+$db_username = "root";
+$db_password = "password";
 $db_name = "mnchs_grade_portal";
-$db_port = 3307;
+$db_port = 3306;
 
 if (file_exists($env_file)) {
     $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

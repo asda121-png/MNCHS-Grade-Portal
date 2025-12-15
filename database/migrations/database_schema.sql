@@ -1,3 +1,11 @@
+-- Sections Table (Normalized sections for grade levels)
+CREATE TABLE IF NOT EXISTS sections (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    section_name VARCHAR(50) NOT NULL,
+    grade_level INT NOT NULL,
+    UNIQUE KEY unique_section_grade (section_name, grade_level),
+    INDEX idx_grade_level (grade_level)
+);
 -- MNCHS Grade Portal Database Schema
 -- Character Set: utf8mb4
 -- Collation: utf8mb4_unicode_ci

@@ -679,7 +679,7 @@ try {
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="teacherMiddleName">Middle Name</label>
-                                <input type="text" id="teacherMiddleName" name="middle_name" pattern="^[a-zA-Z]?$" title="Middle initial must be a single letter." placeholder="Optional" maxlength="1">
+                                <input type="text" id="teacherMiddleName" name="middle_name" pattern="^[a-zA-Z]?$" title="Middle initial must be a single letter.">
                             </div>
                             <div class="form-group">
                                 <label for="teacherSuffix">Suffix</label>

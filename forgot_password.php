@@ -244,26 +244,17 @@ $conn->close();
     <div class="fixed -top-[10px] -left-[10px] -right-[10px] -bottom-[10px] -z-10 bg-[rgba(13,17,23,0.5)]"></div>
 
     <!-- Main Container: Two columns layout -->
-    <div class="flex h-screen">
-        
-        <!-- LEFT SIDE: Branding and Message -->
-        <div class="hidden lg:flex w-1/2 flex-col justify-center items-center px-16">
-            <div class="text-center">
-                <h1 class="text-5xl font-bold text-white mb-6">Forgot Your Password?</h1>
-                <p class="text-xl text-gray-300 mb-8">Don't worry! We'll help you regain access to your account.</p>
-                <p class="text-gray-400">Enter your email address and we'll send you a link to reset your password.</p>
-            </div>
-        </div>
 
+    <div class="flex h-screen">
+        <!-- LEFT SIDE: (empty, for spacing/alignment) -->
+        <div class="hidden lg:flex w-1/2"></div>
         <!-- RIGHT SIDE: Forgot Password Form -->
         <div class="w-full lg:w-1/2 flex justify-center items-center px-4 py-8">
             <div class="bg-white border border-gray-300 rounded-2xl p-10 w-full max-w-[500px] text-black shadow-2xl">
-
                 <div> <!-- Content wrapper -->
                     <!-- Logo + Title BLOCK -->
                     <div class="flex items-center gap-4 mb-8">
                         <div class="w-20 h-20 bg-[#800000] flex justify-center items-center rounded-lg shadow-sm">
-                            <!-- Ensure image path is correct or use a placeholder if missing -->
                             <img src="assets/images/logo.png" alt="Logo" class="w-14 h-14 object-contain" onerror="this.style.display='none'">
                         </div>
                         <div>
@@ -271,194 +262,120 @@ $conn->close();
                             <p class="text-lg text-gray-600">Grade Portal</p>
                         </div>
                     </div>
-
                     <!-- Title -->
                     <h3 class="text-3xl font-semibold text-[#0D1117] mb-4">Reset Password</h3>
-
                     <!-- Success Message -->
                     <?php if ($message_type === 'success'): ?>
                         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
                             <?php echo $message; ?>
                         </div>
                     <?php endif; ?>
-
                     <!-- Error Message -->
                     <?php if ($message_type === 'error'): ?>
                         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
                             <p><?php echo htmlspecialchars($message); ?></p>
                         </div>
                     <?php endif; ?>
-
                     <!-- Step 1: Select Account Type -->
                     <?php if ($step === 'select_type'): ?>
                         <form method="POST" class="space-y-6">
                             <input type="hidden" name="step" value="select_type">
-                            
                             <p class="text-gray-600 mb-4">What type of account do you have?</p>
-                            
                             <div class="space-y-3">
                                 <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition" onclick="document.getElementById('type_student').checked=true">
                                     <input type="radio" id="type_student" name="user_type" value="student" class="w-5 h-5" required>
                                     <span class="ml-3 font-semibold text-[#0D1117]">Student</span>
                                 </label>
-                                
-                                <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition" onclick="document.getElementById('type_teacher').checked=true">
-                                    <input type="radio" id="type_teacher" name="user_type" value="teacher" class="w-5 h-5">
-                                    <span class="ml-3 font-semibold text-[#0D1117]">Teacher</span>
-                                </label>
-                                
                                 <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition" onclick="document.getElementById('type_parent').checked=true">
                                     <input type="radio" id="type_parent" name="user_type" value="parent" class="w-5 h-5">
                                     <span class="ml-3 font-semibold text-[#0D1117]">Parent</span>
                                 </label>
-                                
-                                <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition" onclick="document.getElementById('type_admin').checked=true">
-                                    <input type="radio" id="type_admin" name="user_type" value="admin" class="w-5 h-5">
-                                    <span class="ml-3 font-semibold text-[#0D1117]">Administrator</span>
-                                </label>
                             </div>
-
                             <button type="submit" class="w-full py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors">
                                 Continue
                             </button>
-
                             <div class="text-center mt-4">
                                 <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
                             </div>
                         </form>
-
-                    <!-- Step 2a: Student LRN -->
                     <?php elseif ($step === 'student_lrn'): ?>
                         <form method="POST" class="space-y-6">
                             <input type="hidden" name="step" value="student_lrn">
                             <input type="hidden" name="user_type" value="student">
-                            
                             <p class="text-gray-600 mb-4">Enter your Learner Reference Number (LRN)</p>
-                            
                             <div class="relative">
-                                <input 
-                                    type="text" 
-                                    name="lrn"
-                                    placeholder="Enter your LRN"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required autofocus>
+                                <input type="text" name="lrn" placeholder="Enter your LRN" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required autofocus>
                             </div>
-
                             <button type="submit" class="w-full py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors">
                                 Find My Account
                             </button>
-
                             <div class="text-center mt-4 space-y-2">
                                 <p class="text-gray-600"><a href="forgot_password.php" class="text-[#800000] font-semibold hover:underline">Use different account type</a></p>
                                 <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
                             </div>
                         </form>
-
-                    <!-- Step 2a-2: Student Email Verification -->
                     <?php elseif ($step === 'student_email'): ?>
                         <form method="POST" class="space-y-6">
                             <input type="hidden" name="step" value="student_email">
                             <input type="hidden" name="user_id" value="<?php echo htmlspecialchars((string)($user_id ?? '')); ?>">
-                            
                             <p class="text-gray-600 mb-4">Please enter the email address associated with your account to verify your identity</p>
-                            
                             <div class="relative">
-                                <input 
-                                    type="email" 
-                                    name="email"
-                                    placeholder="Enter your email address"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required autofocus>
+                                <input type="email" name="email" placeholder="Enter your email address" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required autofocus>
                             </div>
-
                             <button type="submit" class="w-full py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors">
                                 Send Reset Link
                             </button>
-
                             <div class="text-center mt-4 space-y-2">
                                 <p class="text-gray-600"><a href="forgot_password.php" class="text-[#800000] font-semibold hover:underline">Use different account type</a></p>
                                 <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
                             </div>
                         </form>
-
-                    <!-- Step 2b: Email for Teachers/Parents/Admins -->
                     <?php elseif ($step === 'email'): ?>
                         <form method="POST" class="space-y-6">
                             <input type="hidden" name="step" value="email">
                             <input type="hidden" name="user_type" value="<?php echo htmlspecialchars($user_type); ?>">
-                            
                             <p class="text-gray-600 mb-4">Enter the email address associated with your account</p>
-                            
                             <div class="relative">
-                                <input 
-                                    type="email" 
-                                    name="email"
-                                    placeholder="Enter your email address"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required autofocus>
+                                <input type="email" name="email" placeholder="Enter your email address" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required autofocus>
                             </div>
-
                             <button type="submit" class="w-full py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors">
                                 Send Reset Link
                             </button>
-
                             <div class="text-center mt-4 space-y-2">
                                 <p class="text-gray-600"><a href="forgot_password.php" class="text-[#800000] font-semibold hover:underline">Use different account type</a></p>
                                 <p class="text-gray-600">Back to login? <a href="index.php" class="text-[#800000] font-semibold hover:underline">Log in here</a></p>
                             </div>
                         </form>
-
-                    <!-- Step 3: Email Sent -->
                     <?php elseif ($step === 'email_sent'): ?>
                         <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
                             <p><strong>Check your email!</strong> We've sent a password reset link to your email address.</p>
                         </div>
-                        
                         <?php if ($message): ?>
                             <div class="bg-green-50 p-4 rounded-lg mb-6">
                                 <?php echo $message; ?>
                             </div>
                         <?php endif; ?>
-                        
                         <div class="text-center">
                             <p class="text-gray-600 mb-4">Didn't receive the email?</p>
                             <a href="forgot_password.php" class="block py-4 rounded-lg bg-gray-300 text-gray-800 text-lg font-bold hover:bg-gray-400 transition-colors text-center">Request New Link</a>
                         </div>
-
-                    <!-- Step 4: Reset Password -->
                     <?php elseif ($step === 'reset'): ?>
                         <form method="POST" class="space-y-6">
                             <input type="hidden" name="step" value="reset">
                             <input type="hidden" name="token" value="<?php echo htmlspecialchars($reset_token); ?>">
-                            
                             <div class="relative">
-                                <input 
-                                    type="password" 
-                                    name="new_password"
-                                    placeholder="New Password (minimum 8 characters)"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required autofocus>
+                                <input type="password" name="new_password" placeholder="New Password (minimum 8 characters)" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required autofocus>
                             </div>
-
                             <div class="relative">
-                                <input 
-                                    type="password" 
-                                    name="confirm_password"
-                                    placeholder="Confirm Password"
-                                    class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30"
-                                    required>
+                                <input type="password" name="confirm_password" placeholder="Confirm Password" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
                             </div>
-
                             <button type="submit" class="w-full py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors">
                                 Reset Password
                             </button>
-
                             <div class="text-center mt-4">
                                 <p class="text-gray-600"><a href="index.php" class="text-[#800000] font-semibold hover:underline">Back to Login</a></p>
                             </div>
                         </form>
-
-                    <!-- Step 5: Success -->
                     <?php elseif ($step === 'complete'): ?>
                         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6">
                             <p><?php echo htmlspecialchars($message); ?></p>
@@ -467,10 +384,10 @@ $conn->close();
                             <a href="index.php" class="block py-4 rounded-lg bg-[#800000] text-white text-lg font-bold hover:bg-[#990000] transition-colors text-center">Return to Login</a>
                         </div>
                     <?php endif; ?>
-
                 </div>
             </div>
         </div>
+        <!-- RIGHT SIDE: (empty, removed) -->
     </div>
 
 </body>

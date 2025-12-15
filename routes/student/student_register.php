@@ -65,7 +65,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['u
                             <input type="text" id="first_name" name="first_name" placeholder="First Name" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30" required>
                         </div>
                         <div class="relative">
-                            <input type="text" id="middle_name" name="middle_name" placeholder="Middle Name (O)" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30">
+                            <input type="text" id="middle_name" name="middle_name" placeholder="Middle Name" class="w-full p-4 text-lg bg-gray-100 text-black border border-gray-300 rounded-lg focus:outline-none focus:border-[#F6D64A] focus:ring-2 focus:ring-[#F6D64A]/30">
                         </div>
                         <div class="flex gap-4">
                             <div class="flex-grow relative">
