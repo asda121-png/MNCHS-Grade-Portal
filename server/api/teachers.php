@@ -115,7 +115,24 @@ function add_teacher(mysqli $conn): void {
         }
         $teacher_stmt->bind_param('isssii', $user_id, $employee_id, $department, $specialization, $is_adviser, $adviser_class_id);
         $teacher_stmt->execute();
+        $teacher_id = $conn->insert_id;
         $teacher_stmt->close();
+
+        // 3. Assign section/class if provided (for adviser or subject teacher)
+        if (!empty($input['grade_level']) && !empty($input['section'])) {
+            $grade_level = (int)$input['grade_level'];
+            $section = trim($input['section']);
+            $class_name = $section . ' ' . $grade_level;
+            $academic_year = date('Y') . '-' . (date('Y') + 1);
+            $class_sql = "INSERT INTO classes (class_name, grade_level, section, teacher_id, academic_year) VALUES (?, ?, ?, ?, ?)";
+            $class_stmt = $conn->prepare($class_sql);
+            if (!$class_stmt) {
+                throw new Exception("Class prepare failed: " . $conn->error);
+            }
+            $class_stmt->bind_param('sisis', $class_name, $grade_level, $section, $teacher_id, $academic_year);
+            $class_stmt->execute();
+            $class_stmt->close();
+        }
 
         // Commit transaction
         $conn->commit();
