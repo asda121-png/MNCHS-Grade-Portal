@@ -1,3 +1,20 @@
 {
-    "liveServer.settings.port": 5501
+    "liveServer.settings.port": 5501,
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "10.145.154.69",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "MNCHS Grade Portal",
+            "database": "mnchs_grade_portal",
+            "username": "christian",
+            "password": "labrador"
+        }
+    ]
 }

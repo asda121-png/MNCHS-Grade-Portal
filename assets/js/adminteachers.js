@@ -1,4 +1,43 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Section and grade level elements for Step 4
+  const sectionSelect = document.getElementById("teacherSection");
+  const gradeLevelSelect = document.getElementById("teacherGradeLevel");
+
+  // Disable section dropdown until grade level is selected
+  if (sectionSelect && gradeLevelSelect) {
+    sectionSelect.disabled = true;
+    gradeLevelSelect.addEventListener("change", function () {
+      const gradeLevel = gradeLevelSelect.value;
+      console.log("Selected grade level:", gradeLevel); // Debug
+      sectionSelect.innerHTML = '<option value="">Select section</option>';
+      sectionSelect.disabled = !gradeLevel;
+      if (!gradeLevel) return;
+      // Use absolute path for fetch (works for localhost and Windows)
+      const apiUrl =
+        window.location.origin +
+        "/MNCHS%20Grade%20Portal/server/api/get_sections.php?grade_level=" +
+        encodeURIComponent(gradeLevel);
+      console.log("Fetching sections from:", apiUrl); // Debug
+      fetch(apiUrl)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("API response for sections:", data); // Debug
+          if (data.status === "success" && data.data.sections.length > 0) {
+            data.data.sections.forEach((s) => {
+              sectionSelect.innerHTML += `<option value="${s.section_name}">${s.section_name}</option>`;
+            });
+          } else {
+            sectionSelect.innerHTML +=
+              '<option value="">No sections found</option>';
+          }
+        })
+        .catch((err) => {
+          console.error("Error loading sections:", err); // Debug
+          sectionSelect.innerHTML +=
+            '<option value="">Error loading sections</option>';
+        });
+    });
+  }
   // Modal elements
   const addTeacherModal = document.getElementById("addTeacherModal");
   const addTeacherBtn = document.getElementById("addTeacherBtn");
@@ -69,8 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     prevButton.style.display = currentStep > 1 ? "inline-block" : "none";
-    nextButton.style.display = currentStep < 3 ? "inline-block" : "none";
-    saveButton.style.display = currentStep === 3 ? "inline-block" : "none";
+    // Step count: 4 steps, so nextButton on steps 1-3, saveButton only on 4
+    nextButton.style.display = currentStep < 4 ? "inline-block" : "none";
+    saveButton.style.display = currentStep === 4 ? "inline-block" : "none";
   };
 
   const validateStep = (step) => {
@@ -86,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   nextButton.addEventListener("click", () => {
-    if (validateStep(currentStep) && currentStep < 3) {
+    if (validateStep(currentStep) && currentStep < 4) {
       currentStep++;
       updateStepIndicator();
     }

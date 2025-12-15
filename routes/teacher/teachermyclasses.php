@@ -107,6 +107,8 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
         .classes-table tbody tr:hover { background-color:#f5f6fa; }
         .btn-view { background:var(--primary); color:white; padding:8px 15px; border-radius:8px; text-decoration:none; font-weight:500; transition:var(--transition); display:inline-block; border:none; cursor:pointer; font-family:'Poppins',sans-serif; font-size:0.95rem; }
         .btn-view:hover { background:var(--primary-dark); transform:scale(1.05); }
+        .btn-view1 { background:var(--primary); color:white; padding:8px 15px; border-radius:8px; text-decoration:none; font-weight:500; transition:var(--transition); display:inline-block; border:none; cursor:pointer; font-family:'Poppins',sans-serif; font-size:0.95rem; }
+        .btn-view1:hover { background:var(--primary-dark); transform:scale(1.05); }
         .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:flex-start; padding:40px 20px; z-index:2000; opacity:0; visibility:hidden; transition:opacity 0.3s ease, visibility 0.3s ease; overflow-y:auto; }
         .modal-overlay.show { opacity:1; visibility:visible; }
         .modal-content { background:white; padding:2rem; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); text-align:center; max-width:800px; width:95%; transform:scale(0.9); transition:transform 0.3s ease; }
@@ -211,7 +213,7 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
                             <td class="col-center">42</td>
                             <td>Mon/Wed 9:00-10:00 AM</td>
                             <td class="col-center"><span class="role-badge adviser">⭐ Adviser</span></td>
-                            <td class="col-center"><a class="btn-view" href="teacher/teacherstudent.php">View Class</a></td>
+                            <td class="col-center"><a class="btn-view1" href="teacherstudent.php">View Class</a></td>
                         </tr>
                     </tbody>
                 </table>
