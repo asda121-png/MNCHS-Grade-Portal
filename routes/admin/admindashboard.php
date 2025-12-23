@@ -1,58 +1,12 @@
 <?php
 session_start();
+// Check if user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
-    header('Location: ../../index.php'); // Redirect to login page
+    header('Location: ../../index.php');
     exit();
 }
 
-// Get admin name from session
-$admin_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Admin');
-
-require_once '../../includes/config.php';
-
-function fetch_count(mysqli $conn, string $sql, string $label): int {
-    try {
-        $result = $conn->query($sql);
-        if (!$result) {
-            error_log("Admin dashboard count query failed for {$label}: " . $conn->error);
-            return 0;
-        }
-        $row = $result->fetch_assoc();
-        return isset($row['total']) ? (int)$row['total'] : 0;
-    } catch (Throwable $e) {
-        error_log("Admin dashboard count exception for {$label}: " . $e->getMessage());
-        return 0;
-    }
-}
-
-$total_students = fetch_count($conn, "SELECT COUNT(*) AS total FROM students", 'students');
-$total_teachers = fetch_count($conn, "SELECT COUNT(*) AS total FROM teachers", 'teachers');
-
-// --- Fetch Recent Portal Activity ---
-$recent_activity = [];
-try {
-    $query = "
-        SELECT 
-            COALESCE(u.first_name, 'Unknown') as first_name,
-            COALESCE(u.last_name, '') as last_name,
-            COALESCE(u.email, 'N/A') as email,
-            COALESCE(u.user_type, 'Unknown') as user_type,
-            COALESCE(u.status, 'inactive') as status,
-            u.last_login
-        FROM users u
-        ORDER BY u.last_login DESC
-        LIMIT 10
-    ";
-    
-    $result = $conn->query($query);
-    if ($result) {
-        while ($row = $result->fetch_assoc()) {
-            $recent_activity[] = $row;
-        }
-    }
-} catch (Throwable $e) {
-    error_log("Failed to fetch recent activity: " . $e->getMessage());
-}
+$admin_name = $_SESSION['user_name'] ?? 'Administrator';
 
 // --- Securely load API Key from .env file ---
 $google_api_key = '';
@@ -61,11 +15,10 @@ $dotenv_path = __DIR__ . '/../../.env';
 if (file_exists($dotenv_path)) {
     $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+        if (strpos(trim($line), '#') === 0) continue;
         list($name, $value) = explode('=', $line, 2);
         if (trim($name) === 'GOOGLE_CALENDAR_API_KEY') {
             $value = trim($value);
-            // Remove quotes if they exist
             if (substr($value, 0, 1) == '"' && substr($value, -1) == '"') {
                 $google_api_key = substr($value, 1, -1);
             } else { $google_api_key = $value; }
@@ -80,457 +33,266 @@ if (file_exists($dotenv_path)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | MNCHS Grade Portal</title>
-    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
-    <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!-- FullCalendar CSS -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <link rel="icon" href="../../assets/images/logo.ico" type="image/x-icon">
     <style>
         :root {
-            --primary: #800000;      /* Maroon */
-            --primary-dark: #660000;
-            --accent: #FFD700;       /* Gold */
-            --text: #2d3436;
-            --text-light: #636e72;
-            --bg: #f5f6fa;
-            --white: #ffffff;
-            --shadow: 0 8px 25px rgba(0,0,0,0.08);
-            --transition: all 0.3s ease;
+            --primary: #800000; --primary-dark: #660000; --accent: #FFD700;
+            --text: #2d3436; --text-light: #636e72; --bg: #f5f6fa; --white: #ffffff;
+            --shadow: 0 8px 25px rgba(0,0,0,0.08); --transition: all 0.3s ease;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: var(--text);
-            min-height: 100vh;
-        }
-        .header {
-            background: linear-gradient(90deg, var(--primary), var(--primary-dark));
-            color: white; padding: 1.2rem 2rem;
-            box-shadow: 0 4px 15px rgba(128, 0, 0, 0.3);
-            position: sticky; top: 0; z-index: 1000;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .header h1 { font-size: 1.8rem; font-weight: 600; }
-        .user-info { display: flex; align-items: center; gap: 25px; }
-        .notification-bell { position: relative; color: white; font-size: 1.3rem; text-decoration: none; }
-        .notification-badge { position: absolute; top: -5px; right: -8px; background-color: #e74c3c; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; font-weight: 700; display: none; justify-content: center; align-items: center; border: 2px solid var(--primary-dark); }
-        .container { display: flex; min-height: calc(100vh - 77px); }
-        .sidebar {
-            width: 260px; background: white; padding: 2rem 1.5rem;
-            box-shadow: 5px 0 15px rgba(0,0,0,0.05);
-            position: sticky; top: 77px; /* Height of header */
-            height: calc(100vh - 77px);
-            overflow-y: auto;
-        }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: var(--text); min-height: 100vh; }
+        .header { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: white; padding: 1.2rem 2rem; box-shadow: 0 4px 15px rgba(128, 0, 0, 0.3); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.8rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+        .user-info { font-size: 1rem; display: flex; align-items: center; gap: 25px; }
+        .container { display: flex; min-height: calc(100vh - 80px); }
+        .sidebar { width: 260px; background: white; padding: 2rem 1.5rem; box-shadow: 5px 0 15px rgba(0,0,0,0.05); position: sticky; top: 80px; height: calc(100vh - 80px); overflow-y: auto; }
         .sidebar-logo-container { text-align: center; margin-bottom: 2rem; }
         .sidebar-logo { max-width: 120px; height: auto; }
         .sidebar ul { list-style: none; }
         .sidebar ul li { margin-bottom: 8px; }
-        .sidebar ul li a {
-            display: flex; align-items: center; gap: 12px;
-            padding: 14px 18px; color: var(--text); text-decoration: none;
-            border-radius: 12px; font-weight: 500; transition: var(--transition);
-        }
-        .sidebar ul li a:hover, .sidebar ul li a.active {
-            background: var(--primary); color: white;
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(128, 0, 0, 0.2);
-        }
-        .sidebar ul li a i { font-size: 1.1rem; width: 20px; text-align: center; }
-        .main-content { flex: 1; padding: 2.5rem; background: transparent; }
-        .welcome-card { background: white; padding: 2rem; border-radius: 16px; box-shadow: var(--shadow); margin-bottom: 2rem; }
-        .welcome-card h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.8rem; }
-        .welcome-card p { color: var(--text-light); font-size: 1.1rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.8rem; }
-        .stat-card {
-            background: white; padding: 1.8rem; border-radius: 16px;
-            box-shadow: var(--shadow); display: flex; align-items: center; gap: 1.5rem;
-            transition: var(--transition); border: 1px solid #eee;
-        }
-        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 12px 25px rgba(128, 0, 0, 0.1); }
-        .stat-card .icon-container {
-            padding: 1rem; border-radius: 50%; font-size: 1.8rem;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .stat-card .icon-container.blue { background-color: #eaf5ff; color: #3498db; }
-        .stat-card .icon-container.green { background-color: #e8f8f0; color: #27ae60; }
-        .stat-card .icon-container.yellow { background-color: #fff8e1; color: #f1c40f; }
-        .stat-card .icon-container.red { background-color: #feeaed; color: #e74c3c; }
-        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--text); }
-        .stat-card .label { color: var(--text-light); }
-        .recent-users-table { margin-top: 2.5rem; background: white; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
-        .recent-users-table h2 { padding: 1.5rem; font-size: 1.3rem; border-bottom: 1px solid #eee; }
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #f0f0f0; }
-        thead th { background-color: #f9fafb; color: var(--text-light); text-transform: uppercase; font-size: 0.8rem; }
-        tbody tr:hover { background-color: #f5f6fa; }
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; }
-        .status-badge.active { background-color: #e8f8f0; color: #27ae60; }
-        .status-badge.pending { background-color: #fff8e1; color: #f39c12; }
-        .action-link { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .action-link:hover { text-decoration: underline; }
-        /* Calendar Styles */
-        #calendar-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            margin-top: 2.5rem;
-        }
-        .fc .fc-button-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-        .fc .fc-button-primary:hover { background-color: var(--primary-dark); border-color: var(--primary-dark); }
-        .fc .fc-daygrid-day.fc-day-today { background-color: rgba(255, 215, 0, 0.2); }
+        .sidebar ul li a { display: flex; align-items: center; gap: 12px; padding: 14px 18px; color: var(--text); text-decoration: none; border-radius: 12px; font-weight: 500; transition: var(--transition); }
+        .sidebar ul li a:hover, .sidebar ul li a.active { background: var(--primary); color: white; transform: translateX(5px); box-shadow: 0 5px 15px rgba(128, 0, 0, 0.2); }
+        .main-content { flex: 1; padding: 2.5rem; }
+        .welcome-card { background: white; padding: 2rem; border-radius: 16px; box-shadow: var(--shadow); margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .action-buttons { display: flex; gap: 1rem; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #e0e0e0; color: var(--text); }
+        .btn-secondary:hover { background: #d0d0d0; }
+        #calendar-container { background: white; padding: 2rem; border-radius: 16px; box-shadow: var(--shadow); }
         
-        /* Event Display Improvements */
-        .fc-daygrid-day-frame { min-height: 120px; }
-        .fc-daygrid-day-events { margin-top: 0; }
-        .fc-daygrid-event { white-space: normal; word-wrap: break-word; overflow: visible; }
-        .fc-event-title { padding: 4px; font-size: 12px; font-weight: 600; }
-        .fc-event { padding: 2px; margin-bottom: 2px; }
-        
-        /* Event Colors */
-        .fc-event-deadline {
-            background-color: #ff6b6b !important;
-            border-color: #ff5252 !important;
-        }
-        .fc-event-holiday {
-            background-color: #4ecdc4 !important;
-            border-color: #45b7aa !important;
-        }
-        .fc-event-other {
-            background-color: #ffd93d !important;
-            border-color: #ffb800 !important;
-            color: #2d3436 !important;
-        }
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
     </style>
 </head>
 <body>
-
-    <!-- Header -->
     <header class="header">
-        <h1>MNCHS Grade Portal</h1>
+        <h1><i class="fas fa-shield-alt"></i> MNCHS Admin</h1>
         <div class="user-info">
-            <a href="#" class="notification-bell">
-                <i class="fas fa-bell"></i>
-                <span class="notification-badge"></span>
-            </a>
-            <span>Welcome, <?php echo htmlspecialchars(explode(' ', $admin_name)[0]); ?></span>
+            <span><?php echo htmlspecialchars($admin_name); ?></span>
         </div>
     </header>
 
     <div class="container">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-logo-container"><img src="../../assets/images/logo.png" alt="MNCHS Logo" class="sidebar-logo"></div>
             <ul>
                 <li><a href="admindashboard.php" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="adminteachers.php"><i class="fas fa-chalkboard-teacher"></i> Teachers</a></li>
-                <li><a href="adminreports.php"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                <li><a href="adminteachers.php"><i class="fas fa-chalkboard-teacher"></i> Manage Teachers</a></li>
+                <li><a href="adminreports.php"><i class="fas fa-file-alt"></i> Reports</a></li>
                 <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </aside>
-
-        <!-- Main Content -->
         <main class="main-content">
             <div class="welcome-card">
-                <h2>Admin Dashboard</h2>
-                <p>Welcome back! Here's an overview of the portal's status.</p>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="icon-container blue"><i class="fas fa-user-graduate"></i></div>
-                    <div>
-                        <div class="value"><?php echo number_format($total_students); ?></div>
-                        <div class="label">Total Students</div>
-                    </div>
+                <div>
+                    <h2>School Calendar & Schedule</h2>
+                    <p>Manage school events and grade encoding schedules.</p>
                 </div>
-                <div class="stat-card">
-                    <div class="icon-container green"><i class="fas fa-chalkboard-teacher"></i></div>
-                    <div>
-                        <div class="value"><?php echo number_format($total_teachers); ?></div>
-                        <div class="label">Total Teachers</div>
-                    </div>
+                <div class="action-buttons">
+                    <button id="add-event-btn" class="btn btn-primary"><i class="fas fa-plus"></i> Add Event</button>
+                    <button id="manage-events-btn" class="btn btn-secondary"><i class="fas fa-list"></i> Manage Events & Schedule</button>
                 </div>
             </div>
 
-            <!-- Calendar Container -->
-            <div id="calendar-container" style="position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h2 style="color: #800000; margin: 0;">School Calendar</h2>
-                    <div style="display: flex; gap: 1rem;">
-                        <button id="add-event-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-calendar-plus"></i> Add Event
-                        </button>
-                        <button id="manage-events-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-list"></i> Manage Events
-                        </button>
-                        <button id="add-grading-period-btn" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-plus"></i> Add Grading Period
-                        </button>
-                    </div>
-                </div>
+            <div id="calendar-container">
                 <div id="calendar"></div>
-            </div>
-
-            <!-- Recent Users Table -->
-            <div class="recent-users-table">
-                <h2>Recent Portal Activity</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Last Login</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (!empty($recent_activity)): ?>
-                                <?php foreach ($recent_activity as $activity): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars(trim($activity['first_name'] . ' ' . $activity['last_name'])); ?></td>
-                                        <td><?php echo htmlspecialchars($activity['email']); ?></td>
-                                        <td><?php echo htmlspecialchars(ucfirst($activity['user_type'])); ?></td>
-                                        <td>
-                                            <span class="status-badge <?php echo $activity['status'] === 'active' ? 'active' : 'inactive'; ?>">
-                                                <?php echo ucfirst($activity['status']); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <?php 
-                                                if ($activity['last_login']) {
-                                                    echo htmlspecialchars(date('M d, Y g:i A', strtotime($activity['last_login'])));
-                                                } else {
-                                                    echo 'Never';
-                                                }
-                                            ?>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="5" style="text-align: center; padding: 2rem; color: #999;">No recent activity</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </main>
     </div>
 
-    <!-- Grading Period Modal -->
-    <div id="grading-period-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <h2 style="color: #800000; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-calendar-check"></i> Add Grading Period
-            </h2>
-            <form id="grading-period-form">
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="gp-quarter" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Quarter</label>
-                    <select id="gp-quarter" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
-                        <option value="">Select Quarter</option>
-                        <option value="1">1st Quarter</option>
-                        <option value="2">2nd Quarter</option>
-                        <option value="3">3rd Quarter</option>
-                        <option value="4">4th Quarter</option>
+    <!-- Add Event Modal -->
+    <div id="add-event-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add School Event</h3>
+                <button id="add-event-cancel-btn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+            </div>
+            <form id="add-event-form">
+                <div class="form-group">
+                    <label>Event Title</label>
+                    <input type="text" id="add-event-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Event Type</label>
+                    <select id="add-event-type">
+                        <option value="holiday">Holiday</option>
+                        <option value="examination">Examination</option>
+                        <option value="meeting">Meeting</option>
+                        <option value="deadline">Deadline</option>
+                        <option value="celebration">Celebration</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="gp-start-date" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Start Date</label>
-                    <input type="date" id="gp-start-date" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                <div class="form-group" id="add-other-type-container" style="display:none;">
+                    <label>Specify Type</label>
+                    <input type="text" id="add-other-type">
                 </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="gp-end-date" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">End Date</label>
-                    <input type="date" id="gp-end-date" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem;">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="add-event-start" required>
                 </div>
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button type="button" id="gp-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
-                    <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Period</button>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="add-event-end" required>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="add-event-published" checked> Publish to Portal</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add Event</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Manage Events Modal -->
-    <div id="manage-events-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; overflow-y: auto;">
-        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 900px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin: 2rem auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #800000; margin: 0; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-calendar-alt"></i> Manage Events
-                </h2>
-                <button id="close-manage-events-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">
-                    <i class="fas fa-times"></i>
-                </button>
+    <!-- Manage Events & Schedule Modal -->
+    <div id="manage-events-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Manage Events & Grading Schedule</h3>
+                <button id="close-manage-events-btn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
             </div>
             
-            <!-- Events Table -->
-            <div style="overflow-x: auto; max-height: 500px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead style="position: sticky; top: 0; background-color: #f9fafb;">
-                        <tr>
-                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Title</th>
-                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Start Date</th>
-                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">End Date</th>
-                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Type</th>
-                            <th style="padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Status</th>
-                            <th style="padding: 1rem 1.5rem; text-align: center; border-bottom: 1px solid #eee; font-weight: 600; color: #666; font-size: 0.9rem; text-transform: uppercase;">Actions</th>
+            <!-- Grading Periods Section -->
+            <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h4 style="color:var(--primary);">Quarterly Grade Encoding Schedule</h4>
+                    <button id="add-grading-period-btn" class="btn btn-primary" style="font-size:0.9rem;"><i class="fas fa-clock"></i> Set Schedule</button>
+                </div>
+                <div id="grading-periods-section">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Events List -->
+            <div>
+                <h4 style="color:var(--primary); margin-bottom:1rem;">All Events</h4>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f9f9f9; text-align:left;">
+                            <th style="padding:10px;">Title</th>
+                            <th style="padding:10px;">Date</th>
+                            <th style="padding:10px;">Type</th>
+                            <th style="padding:10px;">Status</th>
+                            <th style="padding:10px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="events-table-body">
-                        <tr style="text-align: center; padding: 2rem;">
-                            <td colspan="6" style="padding: 2rem;">Loading events...</td>
-                        </tr>
+                        <!-- Populated by JS -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Add Event Modal (triggered by calendar click) -->
-    <div id="add-event-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2001; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 600px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <h2 style="color: #800000; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-plus-circle"></i> Add New Event
-            </h2>
-            <form id="add-event-form">
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="add-event-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Title</label>
-                    <input type="text" id="add-event-title" required placeholder="Enter event title" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div>
-                        <label for="add-event-start" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Start Date</label>
-                        <input type="date" id="add-event-start" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                    </div>
-                    <div>
-                        <label for="add-event-end" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">End Date</label>
-                        <input type="date" id="add-event-end" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="add-event-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Type</label>
-                    <select id="add-event-type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                        <option value="other">Other</option>
-                        <option value="holiday">Holiday</option>
-                        <option value="examination">Examination</option>
-                        <option value="deadline">Deadline</option>
-                        <option value="celebration">Celebration</option>
-                        <option value="meeting">Meeting</option>
+    <!-- Add Grading Period Modal -->
+    <div id="grading-period-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Set Grade Encoding Schedule</h3>
+            </div>
+            <form id="grading-period-form">
+                <div class="form-group">
+                    <label>Quarter</label>
+                    <select id="gp-quarter" required>
+                        <option value="1">1st Quarter</option>
+                        <option value="2">2nd Quarter</option>
+                        <option value="3">3rd Quarter</option>
+                        <option value="4">4th Quarter</option>
                     </select>
                 </div>
-                
-                <div id="add-other-type-container" style="margin-bottom: 1.5rem;">
-                    <label for="add-other-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Specify Event Type</label>
-                    <input type="text" id="add-other-type" placeholder="Enter custom event type..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                <div class="form-group">
+                    <label>Open Date (Start)</label>
+                    <input type="date" id="gp-start-date" required>
                 </div>
-                
-                <input type="hidden" id="add-event-published" value="1">
-                
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button type="button" id="add-event-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
-                    <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Add Event</button>
+                <div class="form-group">
+                    <label>Close Date (End)</label>
+                    <input type="date" id="gp-end-date" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="gp-cancel-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Schedule</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Edit Event Modal -->
-    <div id="edit-event-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2001; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 12px; padding: 2rem; width: 90%; max-width: 600px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <h2 style="color: #800000; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
-                <i class="fas fa-edit"></i> Edit Event
-            </h2>
+    <!-- Edit Event Modal (Hidden) -->
+    <div id="edit-event-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Event</h3>
+                <button id="edit-event-cancel-btn" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+            </div>
             <form id="edit-event-form">
                 <input type="hidden" id="edit-event-id">
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="edit-event-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Title</label>
-                    <input type="text" id="edit-event-title" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                <div class="form-group">
+                    <label>Event Title</label>
+                    <input type="text" id="edit-event-title" required>
                 </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                    <div>
-                        <label for="edit-event-start" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Start Date</label>
-                        <input type="date" id="edit-event-start" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                    </div>
-                    <div>
-                        <label for="edit-event-end" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">End Date</label>
-                        <input type="date" id="edit-event-end" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 1.5rem;">
-                    <label for="edit-event-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Event Type</label>
-                    <select id="edit-event-type" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
-                        <option value="other">Other</option>
+                <div class="form-group">
+                    <label>Event Type</label>
+                    <select id="edit-event-type">
                         <option value="holiday">Holiday</option>
                         <option value="examination">Examination</option>
+                        <option value="meeting">Meeting</option>
                         <option value="deadline">Deadline</option>
                         <option value="celebration">Celebration</option>
-                        <option value="meeting">Meeting</option>
+                        <option value="other">Other</option>
                     </select>
                 </div>
-                
-                <div id="edit-other-type-container" style="margin-bottom: 1.5rem;">
-                    <label for="edit-other-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d3436;">Specify Event Type</label>
-                    <input type="text" id="edit-other-type" placeholder="Enter custom event type..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box;">
+                <div class="form-group" id="edit-other-type-container" style="display:none;">
+                    <label>Specify Type</label>
+                    <input type="text" id="edit-other-type">
                 </div>
-                
-                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="checkbox" id="edit-event-published" style="width: 18px; height: 18px; cursor: pointer;">
-                    <label for="edit-event-published" style="cursor: pointer; font-weight: 500; color: #2d3436;">Publish immediately</label>
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="edit-event-start" required>
                 </div>
-                
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button type="button" id="edit-event-cancel-btn" style="padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: #f5f6fa; cursor: pointer; font-weight: 500;">Cancel</button>
-                    <button type="submit" style="padding: 10px 20px; background: #800000; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Save Changes</button>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="edit-event-end" required>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="edit-event-published"> Publish to Portal</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Update Event</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Confirmation Modal -->
-    <div id="confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center;">
-        <div style="background: white; border-radius: 8px; padding: 2rem; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); animation: slideIn 0.3s ease-out;">
-            <h3 id="confirm-title" style="margin: 0 0 1rem 0; color: #2d3436; font-size: 1.25rem;">Confirm Action</h3>
-            <p id="confirm-message" style="margin: 0 0 1.5rem 0; color: #636e72; line-height: 1.5;"></p>
-            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                <button id="confirm-cancel-btn" style="padding: 0.6rem 1.5rem; background: #e8e8e8; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; color: #2d3436; transition: background 0.2s;">Cancel</button>
-                <button id="confirm-ok-btn" style="padding: 0.6rem 1.5rem; background: #f44336; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; color: white; transition: background 0.2s;">Delete</button>
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3 id="confirm-title" style="color:var(--primary); margin-bottom:1rem;">Confirm Action</h3>
+            <p id="confirm-message" style="margin-bottom:2rem;">Are you sure?</p>
+            <div class="modal-footer" style="justify-content: center;">
+                <button id="confirm-cancel-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-ok-btn" class="btn btn-primary">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Container for the logout modal -->
     <div id="logout-modal-container"></div>
 
-    <!-- FullCalendar JS -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@5.11.3/main.global.min.js'></script>
-
-    <!-- Pass PHP variables to JavaScript -->
-    <script>
-        window.GOOGLE_API_KEY = '<?php echo htmlspecialchars($google_api_key); ?>';
-    </script>
-
-    <!-- Notification System -->
+    <script>window.GOOGLE_API_KEY = '<?php echo htmlspecialchars($google_api_key); ?>';</script>
     <script src="../../assets/js/NotificationManager.js"></script>
-
-    <!-- Link to the external JavaScript file -->
     <script src="../../assets/js/admindashboard.js"></script>
 </body>
 </html>

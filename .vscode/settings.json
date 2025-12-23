@@ -8,13 +8,13 @@
             },
             "ssh": "Disabled",
             "previewLimit": 50,
-            "server": "10.145.154.69",
+            "server": "localhost",
             "port": 3306,
             "driver": "MySQL",
-            "name": "MNCHS Grade Portal",
-            "database": "mnchs_grade_portal",
-            "username": "christian",
-            "password": "labrador"
+            "name": "Labrador",
+            "database": "portal",
+            "username": "root",
+            "password": ""
         }
     ]
 }

@@ -12,13 +12,13 @@ function sendStudentAccountEmail($to, $username, $password) {
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com'; // Set your SMTP server
         $mail->SMTPAuth   = true; 
-        $mail->Username   = 'mnchsgradeportal@gmail.com'; // <-- REPLACE with your Gmail address
-        $mail->Password   = 'abcd efgh ijkl mnop'; // <-- REPLACE with your 16-character App Password
+        $mail->Username   = 'labradoriiichristian@gmail.com'; // <-- REPLACE with your Gmail address
+        $mail->Password   = 'pdha rcub sobo tpws'; // <-- REPLACE with your 16-character App Password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         //Recipients
-        $mail->setFrom('mnchsgradeportal@gmail.com', 'MNCHS Grade Portal'); // <-- REPLACE with your Gmail address
+        $mail->setFrom('labradoriiichristian@gmail.com', 'Portal'); // <-- REPLACE with your Gmail address
         $mail->addAddress($to);
 
         // Content

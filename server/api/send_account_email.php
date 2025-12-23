@@ -24,13 +24,13 @@ function sendAccountEmail(string $to, string $firstName, string $username, strin
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com'; // Your SMTP server
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'mnchsgradeportal@gmail.com'; // Your Gmail address
-        $mail->Password   = 'abcd efgh ijkl mnop'; // Your 16-character App Password
+        $mail->Username   = 'labradoriiichristian@gmail.com'; // Your Gmail address
+        $mail->Password   = 'pdha rcub sobo tpws'; // Your 16-character App Password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
         //Recipients
-        $mail->setFrom('mnchsgradeportal@gmail.com', 'MNCHS Grade Portal');
+        $mail->setFrom('labradoriiichristian@gmail.com', 'MNCHS Grade Portal');
         $mail->addAddress($to, $firstName);
 
         // Content

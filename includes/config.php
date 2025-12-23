@@ -29,8 +29,8 @@ if (!extension_loaded('mysqli')) {
 $env_file = __DIR__ . '/../.env';
 $db_host = "localhost";
 $db_username = "root";
-$db_password = "password";
-$db_name = "mnchs_grade_portal";
+$db_password = "";
+$db_name = "portal";
 $db_port = 3306;
 
 if (file_exists($env_file)) {

@@ -192,6 +192,10 @@ if (isset($conn)) $conn->close();
                             Student without an account?
                             <a href="routes/student/student_register.php" class="text-[#800000] font-semibold hover:underline">Click here</a>.
                         </p>
+                        <p>
+                            Teacher without an account?
+                            <a href="routes/teacher/teacher_account_recovery.php" class="text-[#800000] font-semibold hover:underline">Click here</a>.
+                        </p>
                     </div>
 
                     <!-- Manual Link -->

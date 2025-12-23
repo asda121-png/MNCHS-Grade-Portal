@@ -1,487 +1,468 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Section and grade level elements for Step 4
-  const sectionSelect = document.getElementById("teacherSection");
-  const gradeLevelSelect = document.getElementById("teacherGradeLevel");
+document.addEventListener('DOMContentLoaded', function() {
+    let teachers = []; // Will be populated from API
+    
+    const tableBody = document.getElementById('teachers-table-body');
+    const modal = document.getElementById('teacher-modal');
+    const form = document.getElementById('teacher-form');
+    const addBtn = document.getElementById('add-teacher-btn');
+    const closeBtn = document.getElementById('close-teacher-modal');
+    
+    // Dynamic Department Fields
+    const deptSelect = document.getElementById('department');
+    const shsGroup = document.getElementById('shs-strand-group');
+    const jhsGroup = document.getElementById('jhs-dept-group');
+    const shsSelect = document.getElementById('shs-strand');
+    const jhsSelect = document.getElementById('jhs-dept');
+    const subjectContainer = document.getElementById('subject-input-wrapper');
+    const subjectLabel = document.getElementById('subject-label');
+    const sectionsContainer = document.getElementById('sections-container');
 
-  // Disable section dropdown until grade level is selected
-  if (sectionSelect && gradeLevelSelect) {
-    sectionSelect.disabled = true;
-    gradeLevelSelect.addEventListener("change", function () {
-      const gradeLevel = gradeLevelSelect.value;
-      console.log("Selected grade level:", gradeLevel); // Debug
-      sectionSelect.innerHTML = '<option value="">Select section</option>';
-      sectionSelect.disabled = !gradeLevel;
-      if (!gradeLevel) return;
-      // Use absolute path for fetch (works for localhost and Windows)
-      const apiUrl =
-        window.location.origin +
-        "/MNCHS%20Grade%20Portal/server/api/get_sections.php?grade_level=" +
-        encodeURIComponent(gradeLevel);
-      console.log("Fetching sections from:", apiUrl); // Debug
-      fetch(apiUrl)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("API response for sections:", data); // Debug
-          if (data.status === "success" && data.data.sections.length > 0) {
-            data.data.sections.forEach((s) => {
-              sectionSelect.innerHTML += `<option value="${s.section_name}">${s.section_name}</option>`;
+    // Subject Data Mapping
+    const subjectData = {
+        "English Department": {
+            JHS: ["English 7", "English 8", "English 9", "English 10"],
+            SHS: ["Oral Communication", "Reading and Writing", "Creative Writing", "21st Century Literature"]
+        },
+        "Mathematics Department": {
+            JHS: ["Mathematics 7", "Mathematics 8", "Mathematics 9", "Mathematics 10"],
+            SHS: ["General Mathematics", "Statistics and Probability", "Pre-Calculus", "Basic Calculus"]
+        },
+        "Science Department": {
+            JHS: ["Science 7", "Science 8", "Science 9", "Science 10"],
+            SHS: ["Earth and Life Science", "Physical Science", "Biology", "Chemistry", "Physics"]
+        },
+        "Social Studies Department": {
+            JHS: ["Araling Panlipunan 7", "Araling Panlipunan 8", "Araling Panlipunan 9", "Araling Panlipunan 10"],
+            SHS: ["Philippine Politics and Governance", "Contemporary Philippine Arts from the Regions", "Introduction to World Religions and Belief Systems"]
+        },
+        "Filipino / Language Department": {
+            JHS: ["Filipino 7", "Filipino 8", "Filipino 9", "Filipino 10"],
+            SHS: ["Komunikasyon at Pananaliksik sa Wika at Kulturang Pilipino", "Pagbasa at Pagsusuri ng Iba’t Ibang Teksto Tungo sa Pananaliksik", "21st Century Literature (Filipino)"]
+        },
+        "MAPEH Department": {
+            JHS: [
+                "Music 7", "Music 8", "Music 9", "Music 10",
+                "Arts 7", "Arts 8", "Arts 9", "Arts 10",
+                "PE 7", "PE 8", "PE 9", "PE 10",
+                "Health 7", "Health 8", "Health 9", "Health 10"
+            ],
+            SHS: [] 
+        },
+        "TLE / TVL Department": {
+            JHS: ["Technology and Livelihood Education 7", "Technology and Livelihood Education 8", "Technology and Livelihood Education 9", "Technology and Livelihood Education 10"],
+            SHS: []
+        }
+    };
+
+    // Section Data Mapping
+    const shsSections = {
+        "11": [
+            "STEM 11-A", "STEM 11-B", 
+            "ABM 11-C", "ABM 11-D", 
+            "HUMSS 11-E", "HUMSS 11-F", 
+            "GAS 11-G", "GAS 11-H", 
+            "ICT 11-I", "HE 11-J", "IA 11-K", "AFA 11-L", 
+            "Sports 11-M", "Sports 11-N", "Sports 11-O", 
+            "Arts 11-P", "Arts 11-Q"
+        ],
+        "12": [
+            "STEM 12-A", "STEM 12-B", 
+            "ABM 12-C", "ABM 12-D", 
+            "HUMSS 12-E", "HUMSS 12-F", 
+            "GAS 12-G", "GAS 12-H", 
+            "ICT 12-I", "HE 12-J", "IA 12-K", "AFA 12-L", 
+            "Sports 12-M", "Sports 12-N", "Sports 12-O", 
+            "Arts 12-P", "Arts 12-Q"
+        ]
+    };
+
+    function generateJHSSections() {
+        const sections = {};
+        for (let i = 7; i <= 10; i++) {
+            sections[i] = [];
+            for (let j = 1; j <= 20; j++) {
+                sections[i].push(`Grade ${i} - Section ${j}`);
+            }
+        }
+        return sections;
+    }
+    const jhsSections = generateJHSSections();
+
+    function updateFormFields() {
+        const level = deptSelect.value;
+        
+        // 1. Update Subject/Grade Level Input
+        subjectContainer.innerHTML = '';
+        if (level === 'Junior High School') {
+            subjectLabel.textContent = 'Grade Level Handled';
+            const gradesDiv = document.createElement('div');
+            gradesDiv.style.display = 'flex';
+            gradesDiv.style.gap = '15px';
+            
+            [7, 8, 9, 10].forEach(grade => {
+                const label = document.createElement('label');
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '5px';
+                label.style.fontWeight = 'normal';
+                
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = grade;
+                cb.name = 'grade_level_checkbox';
+                cb.style.width = 'auto';
+                
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(`Grade ${grade}`));
+                gradesDiv.appendChild(label);
             });
-          } else {
-            sectionSelect.innerHTML +=
-              '<option value="">No sections found</option>';
-          }
+            subjectContainer.appendChild(gradesDiv);
+            
+        } else if (level === 'Senior High School') {
+            subjectLabel.textContent = 'Subject Handled (Select One)';
+            const select = document.createElement('select');
+            select.id = 'subjects';
+            select.innerHTML = '<option value="">Select Subject</option>';
+            
+            let subjects = [];
+            for (const dept in subjectData) {
+                if (subjectData[dept].SHS) {
+                    subjects = subjects.concat(subjectData[dept].SHS);
+                }
+            }
+            
+            subjects.sort().forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                select.appendChild(opt);
+            });
+            subjectContainer.appendChild(select);
+        } else {
+            subjectContainer.innerHTML = '<input type="text" disabled placeholder="Select department first">';
+        }
+
+        // 2. Update Sections Checkboxes & Advisory Dropdown
+        updateSectionsAndAdvisory(level);
+    }
+
+    function updateSectionsAndAdvisory(level) {
+        sectionsContainer.innerHTML = '';
+        const advisorySelect = document.getElementById('advisory-section');
+        // Keep the first option
+        advisorySelect.innerHTML = '<option value="">-- No Advisory Class --</option>';
+
+        let allSections = [];
+
+        if (level === 'Senior High School') {
+            allSections = [...shsSections["11"], ...shsSections["12"]];
+        } else if (level === 'Junior High School') {
+            allSections = [...jhsSections[7], ...jhsSections[8], ...jhsSections[9], ...jhsSections[10]];
+        }
+
+        if (allSections.length === 0) {
+            sectionsContainer.innerHTML = '<p style="color:#999; font-size:0.9rem;">Select a department/level to view sections.</p>';
+            return;
+        }
+
+        // Create Grid for Sections
+        const grid = document.createElement('div');
+        grid.className = 'sections-grid';
+
+        // Get list of sections already taken as advisory by OTHER teachers
+        const currentTeacherId = document.getElementById('teacher-id').value;
+        const takenAdvisorySections = teachers
+            .filter(t => t.id != currentTeacherId && t.advisory)
+            .map(t => t.advisory.split(' - ').pop().trim()); // Assuming format "Class - Section" or just "Section"
+            // Note: The API returns 'advisory' as "Class Name - Section". 
+            // Since we are using raw section names here, we need to match carefully.
+            // For this implementation, we will assume the API returns the full section name in 'advisory' or we match loosely.
+            // Let's refine: The API returns `advisory` string.
+
+        allSections.forEach(section => {
+            // 1. Populate Assigned Sections Checkboxes
+            const label = document.createElement('label');
+            label.style.display = 'flex';
+            label.style.alignItems = 'center';
+            label.style.gap = '5px';
+            label.style.fontSize = '0.85rem';
+            
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = section;
+            cb.name = 'section_checkbox';
+            cb.style.width = 'auto';
+            
+            // Add listener for mutual exclusion
+            cb.addEventListener('change', function() {
+                if (this.checked && advisorySelect.value === this.value) {
+                    alert('You cannot select the same section for both Advisory and Subject Teaching.');
+                    this.checked = false;
+                }
+            });
+
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(section));
+            grid.appendChild(label);
+
+            // 2. Populate Advisory Dropdown (if not taken)
+            // Check if this section is contained in any taken advisory string
+            const isTaken = teachers.some(t => t.id != currentTeacherId && t.advisory && t.advisory.includes(section));
+            
+            if (!isTaken) {
+                const opt = document.createElement('option');
+                
+                // Try to resolve ID from window.dbClasses
+                let val = section;
+                if (window.dbClasses) {
+                    // Try to match section string to DB record
+                    const found = window.dbClasses.find(c => c.section === section || (c.class_name + ' ' + c.section) === section || (c.class_name + '-' + c.section) === section);
+                    if (found) val = found.id;
+                }
+                
+                opt.value = val;
+                opt.textContent = section;
+                advisorySelect.appendChild(opt);
+            }
+        });
+
+        sectionsContainer.appendChild(grid);
+
+        // Add listener to Advisory Select for mutual exclusion
+        advisorySelect.addEventListener('change', function() {
+            const selectedAdvisory = this.value;
+            if (!selectedAdvisory) return;
+
+            const checkboxes = document.querySelectorAll('input[name="section_checkbox"]');
+            checkboxes.forEach(cb => {
+                if (cb.value === selectedAdvisory && cb.checked) {
+                    alert('You cannot select the same section for both Advisory and Subject Teaching.');
+                    this.value = ""; // Reset dropdown
+                }
+            });
+            
+            // Disable the checkbox for the selected advisory? 
+            // The prompt says "cant select". Alerting and resetting is a valid way to enforce.
+        });
+    }
+
+    // Toggle function exposed to global scope for onchange attribute
+    window.toggleDepartmentFields = function() {
+        shsGroup.style.display = 'none';
+        jhsGroup.style.display = 'none';
+        shsSelect.required = false;
+        jhsSelect.required = false;
+
+        if (deptSelect.value === 'Senior High School') {
+            shsGroup.style.display = 'block';
+            shsSelect.required = true;
+        } else if (deptSelect.value === 'Junior High School') {
+            jhsGroup.style.display = 'block';
+            jhsSelect.required = true;
+        }
+        updateFormFields();
+    };
+
+    // Add listener to JHS Dept select to update subjects when it changes
+    // jhsSelect.addEventListener('change', updateFormFields); // Not strictly needed for subjects anymore as it depends on level
+
+    // Render Table
+    function renderTable() {
+        tableBody.innerHTML = teachers.map(t => `
+            <tr>
+                <td>${t.empNo}</td>
+                <td>${t.name}</td>
+                <td>${t.dept}</td>
+                <td>${t.advisory || '<span style="color:#999;font-style:italic;">None</span>'}</td>
+                <td>
+                    <button onclick="editTeacher(${t.id})" style="background:none;border:none;color:#800000;cursor:pointer;margin-right:10px;"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteTeacher(${t.id})" style="background:none;border:none;color:#f44336;cursor:pointer;"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadTeachers() {
+        fetch('../../server/api/teachers.php?action=get_all')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    teachers = data.teachers;
+                    renderTable();
+                }
+            })
+            .catch(error => console.error('Error loading teachers:', error));
+    }
+
+    loadTeachers();
+
+    // Open Modal
+    addBtn.addEventListener('click', () => {
+        document.getElementById('modal-title').textContent = 'Add Teacher Profile';
+        form.reset();
+        document.getElementById('teacher-id').value = '';
+        // Reset dynamic fields
+        shsGroup.style.display = 'none';
+        jhsGroup.style.display = 'none';
+        updateFormFields(); // Reset subjects/sections
+        
+        modal.style.display = 'flex';
+    });
+
+    // Close Modal
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    // Handle Form Submit
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const id = document.getElementById('teacher-id').value;
+        const empNo = document.getElementById('employee-no').value;
+        const name = document.getElementById('full-name').value;
+        
+        // Determine correct department value based on selection
+        let dept = document.getElementById('department').value;
+        if (dept === 'Senior High School') {
+            dept = document.getElementById('shs-strand').value;
+        } else if (dept === 'Junior High School') {
+            dept = document.getElementById('jhs-dept').value;
+        }
+        
+        // Gather Subjects
+        let subjects = '';
+        if (deptSelect.value === 'Senior High School') {
+            subjects = document.getElementById('subjects').value;
+        } else {
+            // JHS Grade Levels
+            subjects = Array.from(document.querySelectorAll('input[name="grade_level_checkbox"]:checked'))
+                .map(cb => 'Grade ' + cb.value)
+                .join(', ');
+        }
+
+        // Gather Sections
+        const sections = Array.from(document.querySelectorAll('input[name="section_checkbox"]:checked'))
+            .map(cb => cb.value)
+            .join(', ');
+        
+        // const sections = document.getElementById('sections').value; // Now using the gathered sections
+        const advisory = document.getElementById('advisory-section').value;
+
+        const payload = {
+            id: id,
+            empNo: empNo,
+            name: name,
+            dept: dept,
+            subjects: subjects,
+            sections: sections,
+            advisory: advisory
+        };
+
+        const action = id ? 'update' : 'add';
+
+        fetch(`../../server/api/teachers.php?action=${action}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         })
-        .catch((err) => {
-          console.error("Error loading sections:", err); // Debug
-          sectionSelect.innerHTML +=
-            '<option value="">Error loading sections</option>';
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(id ? 'Teacher updated!' : 'Teacher added!');
+                modal.style.display = 'none';
+                loadTeachers();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the teacher.');
         });
     });
-  }
-  // Modal elements
-  const addTeacherModal = document.getElementById("addTeacherModal");
-  const addTeacherBtn = document.getElementById("addTeacherBtn");
-  const closeButtons = document.querySelectorAll(
-    ".close-button, #cancelButton"
-  );
-  const addTeacherForm = document.getElementById("addTeacherForm");
-  const modalTitle = document.getElementById("modalTitle");
 
-  // View Modal elements
-  const viewTeacherModal = document.getElementById("viewTeacherModal");
-  const viewCloseButtons = document.querySelectorAll('[data-close="view"]');
-
-  // Form step elements
-  const steps = document.querySelectorAll(".step");
-  const formSteps = document.querySelectorAll(".form-step");
-  const nextButton = document.getElementById("nextButton");
-  const prevButton = document.getElementById("prevButton");
-  const saveButton = document.getElementById("saveButton");
-  let currentStep = 1;
-
-  // Table and filters
-  const searchInput = document.getElementById("searchInput");
-  const gradeFilter = document.getElementById("gradeFilter");
-  const statusFilter = document.getElementById("statusFilter");
-  const teacherTableBody = document.getElementById("teacherTableBody");
-
-  // --- Modal Handling ---
-  const openModal = (modal) => modal.classList.add("show");
-  const closeModal = (modal) => modal.classList.remove("show");
-
-  addTeacherBtn.addEventListener("click", () => {
-    resetForm();
-    modalTitle.textContent = "Add New Teacher";
-    saveButton.textContent = "Save Teacher";
-    openModal(addTeacherModal);
-  });
-
-  closeButtons.forEach((btn) => {
-    btn.addEventListener("click", () => closeModal(addTeacherModal));
-  });
-
-  viewCloseButtons.forEach((btn) => {
-    btn.addEventListener("click", () => closeModal(viewTeacherModal));
-  });
-
-  window.addEventListener("click", (e) => {
-    if (e.target === addTeacherModal) closeModal(addTeacherModal);
-    if (e.target === viewTeacherModal) closeModal(viewTeacherModal);
-  });
-
-  // --- Multi-step Form Logic ---
-  const updateStepIndicator = () => {
-    steps.forEach((step) => {
-      const stepNum = parseInt(step.dataset.step, 10);
-      if (stepNum === currentStep) {
-        step.classList.add("active");
-      } else {
-        step.classList.remove("active");
-      }
-    });
-
-    formSteps.forEach((formStep) => {
-      formStep.classList.toggle(
-        "active",
-        parseInt(formStep.dataset.step, 10) === currentStep
-      );
-    });
-
-    prevButton.style.display = currentStep > 1 ? "inline-block" : "none";
-    // Step count: 4 steps, so nextButton on steps 1-3, saveButton only on 4
-    nextButton.style.display = currentStep < 4 ? "inline-block" : "none";
-    saveButton.style.display = currentStep === 4 ? "inline-block" : "none";
-  };
-
-  const validateStep = (step) => {
-    const inputs = formSteps[step - 1].querySelectorAll(
-      "input[required], select[required]"
-    );
-    for (const input of inputs) {
-      if (!input.reportValidity()) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  nextButton.addEventListener("click", () => {
-    if (validateStep(currentStep) && currentStep < 4) {
-      currentStep++;
-      updateStepIndicator();
-    }
-  });
-
-  prevButton.addEventListener("click", () => {
-    if (currentStep > 1) {
-      currentStep--;
-      updateStepIndicator();
-    }
-  });
-
-  // --- Dynamic Form Fields ---
-  const departmentSelect = document.getElementById("teacherDepartment");
-  const specializationSelect = document.getElementById("teacherSpecialization");
-
-  departmentSelect.addEventListener("change", () => {
-    const selectedDepartment = departmentSelect.value;
-    specializationSelect.disabled = !selectedDepartment;
-    specializationSelect.value = "";
-
-    Array.from(specializationSelect.options).forEach((option) => {
-      if (option.value === "") return;
-      option.style.display =
-        option.dataset.department === selectedDepartment ? "block" : "none";
-    });
-  });
-
-  const statusSelect = document.getElementById("teacherStatus");
-  const adviserClassContainer = document.getElementById(
-    "adviserClassContainer"
-  );
-
-  statusSelect.addEventListener("change", () => {
-    adviserClassContainer.style.display =
-      statusSelect.value === "adviser" ? "block" : "none";
-  });
-
-  // --- Form Submission ---
-  addTeacherForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!validateStep(currentStep)) return;
-
-    // Require grade level and section
-    const gradeLevel = document.getElementById("teacherGradeLevel").value;
-    const section = document.getElementById("teacherSection").value;
-    if (!gradeLevel || !section) {
-      alert("Please select both Grade Level and Section.");
-      return;
-    }
-
-    saveButton.disabled = true;
-    saveButton.textContent = "Saving...";
-
-    const formData = new FormData(addTeacherForm);
-    const data = Object.fromEntries(formData.entries());
-
-    try {
-      const response = await fetch(
-        "http://localhost/MNCHS%20Grade%20Portal/server/api/teachers.php?action=add_teacher",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-          credentials: "include", // Send cookies for session authentication
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok && result.status === "success") {
-        // The API should return the newly created teacher object in result.data.teacher
-        if (result.data && result.data.teacher) {
-          addTeacherToTable(result.data.teacher);
-        }
-        alert(
-          `Success: ${result.data.message}\nUsername: ${result.data.username}\nTemporary Password: ${result.data.temp_password}`
-        );
-        closeModal(addTeacherModal);
-      } else {
-        throw new Error(result.message || "An unknown error occurred.");
-      }
-    } catch (error) {
-      alert(`Error: ${error.message}`);
-    } finally {
-      saveButton.disabled = false;
-      saveButton.textContent = "Save Teacher";
-    }
-  });
-
-  const resetForm = () => {
-    addTeacherForm.reset();
-    currentStep = 1;
-    updateStepIndicator();
-    specializationSelect.disabled = true;
-    adviserClassContainer.style.display = "none";
-    // Reset validation states if any custom validation UI is used
-  };
-
-  /**
-   * Adds a new teacher to the table display.
-   * A teacher is shown with a row for each grade level (7-12).
-   * @param {object} teacherData - The data for the new teacher from the server.
-   */
-  function addTeacherToTable(teacherData) {
-    const tableBody = document.getElementById("teacherTableBody");
-    const noTeachersRow = tableBody.querySelector('td[colspan="6"]');
-
-    // If the "No teachers found" message is present, remove it.
-    if (noTeachersRow) {
-      noTeachersRow.parentElement.remove();
-    }
-
-    // A teacher is displayed for all grade levels by default.
-    const gradeLevels = [7, 8, 9, 10, 11, 12];
-
-    gradeLevels.forEach((gradeLevel) => {
-      const isJHS = gradeLevel <= 10;
-      const schoolLevel = isJHS ? "Junior High School" : "Senior High School";
-      const gradeLevelLabel = `Grade ${gradeLevel}`;
-      const gradeBadgeClass = isJHS ? "jhs" : "shs";
-      const gradeBadgeLabel = isJHS ? "JHS" : "SHS";
-
-      // Determine role display
-      let roleHtml = "";
-      let statusLabel = "Subject Teacher";
-      if (teacherData.is_adviser == 1) {
-        statusLabel = `Adviser (${
-          teacherData.adviser_class_name || "Unassigned"
-        }) & Subject Teacher`;
-        roleHtml = `
-            <span class="status-badge adviser" title="${statusLabel}">
-                <i class="fas fa-user-tie"></i> Adviser
-            </span>`;
-      } else {
-        roleHtml = `
-            <span class="status-badge subject-teacher" title="Subject Teacher">
-                <i class="fas fa-book"></i> Teacher
-            </span>`;
-      }
-
-      const newRow = document.createElement("tr");
-      newRow.dataset.teacherId = teacherData.id;
-      newRow.dataset.teacherEmployeeId = teacherData.teacher_id || "";
-      newRow.dataset.teacherName = `${teacherData.first_name} ${teacherData.last_name}`;
-      newRow.dataset.teacherFirstName = teacherData.first_name;
-      newRow.dataset.teacherLastName = teacherData.last_name;
-      newRow.dataset.teacherUsername = teacherData.username;
-      newRow.dataset.teacherEmail = teacherData.email;
-      newRow.dataset.teacherDepartment = teacherData.department;
-      newRow.dataset.teacherSpecialization = teacherData.specialization;
-      newRow.dataset.teacherGradeLevel = gradeLevel;
-      newRow.dataset.teacherGradeLevelReadable = gradeLevelLabel;
-      newRow.dataset.teacherSections = ""; // New teachers have no sections initially
-      newRow.dataset.teacherSectionsReadable = "Not Assigned";
-      newRow.dataset.teacherSchoolLevel = schoolLevel;
-      newRow.dataset.teacherHireDate = teacherData.hire_date;
-      newRow.dataset.teacherStatus = statusLabel;
-      newRow.dataset.teacherAdviserClass = teacherData.adviser_class_name || "";
-      newRow.dataset.teacherIsAdviser = teacherData.is_adviser;
-
-      newRow.innerHTML = `
-            <td>${teacherData.teacher_id || "N/A"}</td>
-            <td>
-                <div class="teacher-info">
-                    <div class="teacher-name">${teacherData.first_name} ${
-        teacherData.last_name
-      }</div>
-                    <div class="teacher-department">${
-                      teacherData.department || ""
-                    }</div>
-                </div>
-            </td>
-            <td>
-                <span class="grade-badge ${gradeBadgeClass}">
-                    ${gradeBadgeLabel} ${gradeLevel}
-                </span>
-            </td>
-            <td>
-                <div class="sections-container">
-                    <span class="section-badge">—</span>
-                </div>
-            </td>
-            <td>${roleHtml}</td>
-            <td class="action-links">
-                <a href="#" data-action="view" title="View"><i class="fas fa-eye"></i></a>
-                <a href="#" data-action="edit" title="Edit"><i class="fas fa-edit"></i></a>
-            </td>
-        `;
-
-      tableBody.prepend(newRow); // Add the new row to the top of the table
-    });
-  }
-
-  // --- Table Filtering ---
-  const filterTable = () => {
-    const searchText = searchInput.value.toLowerCase();
-    const gradeValue = gradeFilter.value;
-    const statusValue = statusFilter.value;
-
-    teacherTableBody.querySelectorAll("tr").forEach((row) => {
-      const teacherName = row.dataset.teacherName.toLowerCase();
-      const employeeId = row.dataset.teacherEmployeeId.toLowerCase();
-      const gradeLevel = row.dataset.teacherGradeLevel;
-      const status = row.dataset.teacherStatus.toLowerCase();
-
-      const nameMatch =
-        teacherName.includes(searchText) || employeeId.includes(searchText);
-      const gradeMatch = !gradeValue || gradeLevel === gradeValue;
-      const statusMatch = !statusValue || status.includes(statusValue);
-
-      row.style.display = nameMatch && gradeMatch && statusMatch ? "" : "none";
-    });
-  };
-
-  [searchInput, gradeFilter, statusFilter].forEach((el) =>
-    el.addEventListener("input", filterTable)
-  );
-
-  // --- Table Actions (View/Edit) ---
-  teacherTableBody.addEventListener("click", (e) => {
-    const target = e.target.closest("a[data-action]");
-    if (!target) return;
-
-    const action = target.dataset.action;
-    const row = target.closest("tr");
-
-    if (action === "view") {
-      populateViewModal(row.dataset);
-      openModal(viewTeacherModal);
-    } else if (action === "edit") {
-      populateEditForm(row.dataset);
-      modalTitle.textContent = "Edit Teacher";
-      saveButton.textContent = "Update Teacher";
-      openModal(addTeacherModal);
-    }
-    /**
-     * Populates the add/edit teacher form with existing data and disables grade level selection.
-     * @param {object} data - The dataset from the teacher row.
-     */
-    function populateEditForm(data) {
-      resetForm();
-      // Step 1: Personal Info
-      document.getElementById("teacherEmployeeID").value =
-        data.teacherEmployeeId || "";
-      document.getElementById("teacherFirstName").value =
-        data.teacherFirstName || "";
-      document.getElementById("teacherLastName").value =
-        data.teacherLastName || "";
-      // Step 2: Contact Info
-      document.getElementById("teacherEmail").value = data.teacherEmail || "";
-      // Step 3: Assignment
-      document.getElementById("teacherDepartment").value =
-        data.teacherDepartment || "";
-      document.getElementById("teacherSpecialization").value =
-        data.teacherSpecialization || "";
-      // Step 4: Grade Level (fixed)
-      const gradeLevelSelect = document.getElementById("teacherGradeLevel");
-      gradeLevelSelect.value = data.teacherGradeLevel || "";
-      gradeLevelSelect.disabled = true;
-      // Optionally, also disable section selection if needed
-      // document.getElementById("teacherSection").disabled = true;
-      // Move to step 4 directly for editing grade/section if desired
-      currentStep = 4;
-      updateStepIndicator();
-    }
-  });
-
-  const populateViewModal = (data) => {
-    document.getElementById("viewTeacherEmployeeId").textContent =
-      data.teacherEmployeeId || "N/A";
-    document.getElementById("viewTeacherName").textContent =
-      data.teacherName || "N/A";
-    document.getElementById("viewTeacherEmail").textContent =
-      data.teacherEmail || "N/A";
-    document.getElementById("viewTeacherUsername").textContent =
-      data.teacherUsername || "N/A";
-    document.getElementById("viewTeacherSchoolLevel").textContent =
-      data.teacherSchoolLevel || "N/A";
-    document.getElementById("viewTeacherDepartment").textContent =
-      data.teacherDepartment || "N/A";
-    document.getElementById("viewTeacherSpecialization").textContent =
-      data.teacherSpecialization || "N/A";
-    document.getElementById("viewTeacherGradeLevel").textContent =
-      data.teacherGradeLevelReadable || "N/A";
-    document.getElementById("viewTeacherStatus").textContent =
-      data.teacherStatus || "N/A";
-    document.getElementById("viewTeacherAdviserClass").textContent =
-      data.teacherAdviserClass || "N/A";
-    document.getElementById("viewTeacherHireDate").textContent =
-      data.teacherHireDate
-        ? new Date(data.teacherHireDate).toLocaleDateString()
-        : "N/A";
-  };
-
-  // --- Logout Modal ---
-  const logoutLink = document.getElementById("logout-link");
-  const logoutModalContainer = document.getElementById(
-    "logout-modal-container"
-  );
-  console.log("[DEBUG] logoutLink:", logoutLink);
-  console.log("[DEBUG] logoutModalContainer:", logoutModalContainer);
-
-  if (logoutLink && logoutModalContainer) {
-    fetch("../../components/logout_modal.html")
-      .then((response) => {
-        console.log("[DEBUG] logout_modal.html fetch response:", response);
-        return response.text();
-      })
-      .then((html) => {
-        logoutModalContainer.innerHTML = html;
-        const logoutModal = document.getElementById("logout-modal");
-        const cancelLogoutBtn = document.getElementById("cancel-logout");
-        console.log("[DEBUG] logoutModal:", logoutModal);
-        console.log("[DEBUG] cancelLogoutBtn:", cancelLogoutBtn);
-        if (logoutModal && cancelLogoutBtn) {
-          logoutLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            console.log("[DEBUG] Logout link clicked, showing modal");
-            logoutModal.classList.add("show");
-          });
-          cancelLogoutBtn.addEventListener("click", () => {
-            console.log("[DEBUG] Cancel logout clicked, hiding modal");
-            logoutModal.classList.remove("show");
-          });
-          window.addEventListener("click", (e) => {
-            if (e.target === logoutModal) {
-              console.log("[DEBUG] Clicked outside modal, hiding modal");
-              logoutModal.classList.remove("show");
+    // Expose functions to global scope for onclick handlers
+    window.editTeacher = function(id) {
+        const teacher = teachers.find(t => t.id == id);
+        if (teacher) {
+            document.getElementById('modal-title').textContent = 'Edit Teacher Profile';
+            document.getElementById('teacher-id').value = teacher.id;
+            document.getElementById('employee-no').value = teacher.empNo;
+            document.getElementById('full-name').value = teacher.name;
+            
+            // Handle Department Logic for Edit
+            const shsStrands = ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL-ICT', 'TVL-HE', 'TVL-IA', 'TVL-AFA', 'SPORTS', 'ARTS AND DESIGN'];
+            const jhsDepts = ['English Department', 'Mathematics Department', 'Science Department', 'Social Studies Department', 'Filipino / Language Department', 'MAPEH Department', 'TLE / TVL Department'];
+            
+            shsGroup.style.display = 'none';
+            jhsGroup.style.display = 'none';
+            
+            if (shsStrands.includes(teacher.dept)) {
+                deptSelect.value = 'Senior High School';
+                shsGroup.style.display = 'block';
+                shsSelect.value = teacher.dept;
+            } else if (jhsDepts.includes(teacher.dept)) {
+                deptSelect.value = 'Junior High School';
+                jhsGroup.style.display = 'block';
+                jhsSelect.value = teacher.dept;
+            } else {
+                deptSelect.value = teacher.dept; // Fallback
             }
-          });
-        } else {
-          console.warn(
-            "[DEBUG] logoutModal or cancelLogoutBtn not found after injecting HTML"
-          );
+            
+            // Update form fields to generate checkboxes/selects
+            updateFormFields();
+
+            // Restore Subjects/Grades
+            if (teacher.subjects) {
+                if (deptSelect.value === 'Senior High School') {
+                    const subjSelect = document.getElementById('subjects');
+                    if(subjSelect) subjSelect.value = teacher.subjects;
+                } else {
+                    const grades = teacher.subjects.split(',').map(s => s.trim().replace('Grade ', ''));
+                    const checkboxes = document.querySelectorAll('input[name="grade_level_checkbox"]');
+                    checkboxes.forEach(cb => {
+                        if (grades.includes(cb.value)) cb.checked = true;
+                    });
+                }
+            }
+
+            // Restore Sections
+            if (teacher.sections) {
+                const secList = teacher.sections.split(',').map(s => s.trim());
+                document.querySelectorAll('input[name="section_checkbox"]').forEach(cb => {
+                    if (secList.includes(cb.value)) cb.checked = true;
+                });
+            }
+
+            // document.getElementById('sections').value = teacher.sections;
+            document.getElementById('advisory-section').value = teacher.advisory_id || '';
+            modal.style.display = 'flex';
         }
-      })
-      .catch((error) =>
-        console.error("[DEBUG] Error loading logout modal:", error)
-      );
-  } else {
-    console.warn("[DEBUG] logoutLink or logoutModalContainer not found in DOM");
-  }
+    };
 
-  // --- Notifications ---
-  const notificationManager = new NotificationManager({
-    userId: "<?php echo $_SESSION['user_id'] ?? 'admin'; ?>",
-    userType: "admin",
-    bellSelector: ".notification-bell",
-    badgeSelector: ".notification-badge",
-    // Add other necessary selectors and URLs
-  });
-
-  // Initialize notifications
-  // notificationManager.init();
+    window.deleteTeacher = function(id) {
+        if(confirm('Are you sure you want to delete this teacher profile?')) {
+            fetch(`../../server/api/teachers.php?action=delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) loadTeachers();
+                else alert('Error deleting teacher');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the teacher.');
+            });
+        }
+    };
 });
