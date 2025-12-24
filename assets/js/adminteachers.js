@@ -169,17 +169,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const grid = document.createElement('div');
         grid.className = 'sections-grid';
 
+        // Helper to normalize section names for comparison (remove spaces, lowercase)
+        const normalize = s => s ? s.replace(/\s/g, '').toLowerCase() : '';
+
         // Get list of sections already taken as advisory by OTHER teachers
         const currentTeacherId = document.getElementById('teacher-id').value;
-        const takenAdvisorySections = teachers
-            .filter(t => t.id != currentTeacherId && t.advisory)
-            .map(t => t.advisory.split(' - ').pop().trim()); // Assuming format "Class - Section" or just "Section"
-            // Note: The API returns 'advisory' as "Class Name - Section". 
-            // Since we are using raw section names here, we need to match carefully.
-            // For this implementation, we will assume the API returns the full section name in 'advisory' or we match loosely.
-            // Let's refine: The API returns `advisory` string.
+        
+        // Get set of all currently advised sections (by anyone)
+        const allAdvisedSections = new Set();
+        teachers.forEach(t => {
+            if (t.advisory) {
+                allAdvisedSections.add(normalize(t.advisory));
+            }
+        });
+
+        // Get set of sections advised by OTHER teachers (for dropdown exclusion)
+        const otherAdvisedSections = new Set();
+        teachers.forEach(t => {
+            if (t.id != currentTeacherId && t.advisory) {
+                otherAdvisedSections.add(normalize(t.advisory));
+            }
+        });
 
         allSections.forEach(section => {
+            const normalizedSection = normalize(section);
+
             // 1. Populate Assigned Sections Checkboxes
             const label = document.createElement('label');
             label.style.display = 'flex';
@@ -193,6 +207,13 @@ document.addEventListener('DOMContentLoaded', function() {
             cb.name = 'section_checkbox';
             cb.style.width = 'auto';
             
+            // Requirement: Section only available if there is an advisor handling it
+            if (!allAdvisedSections.has(normalizedSection)) {
+                cb.disabled = true;
+                label.style.opacity = '0.5';
+                label.title = "This section has no advisor assigned yet.";
+            }
+            
             // Add listener for mutual exclusion
             cb.addEventListener('change', function() {
                 if (this.checked && advisorySelect.value === this.value) {
@@ -205,18 +226,25 @@ document.addEventListener('DOMContentLoaded', function() {
             label.appendChild(document.createTextNode(section));
             grid.appendChild(label);
 
-            // 2. Populate Advisory Dropdown (if not taken)
-            // Check if this section is contained in any taken advisory string
-            const isTaken = teachers.some(t => t.id != currentTeacherId && t.advisory && t.advisory.includes(section));
-            
-            if (!isTaken) {
+            // 2. Populate Advisory Dropdown (if not taken by others)
+            if (!otherAdvisedSections.has(normalizedSection)) {
                 const opt = document.createElement('option');
                 
                 // Try to resolve ID from window.dbClasses
                 let val = section;
                 if (window.dbClasses) {
                     // Try to match section string to DB record
-                    const found = window.dbClasses.find(c => c.section === section || (c.class_name + ' ' + c.section) === section || (c.class_name + '-' + c.section) === section);
+                    const found = window.dbClasses.find(c => {
+                        const dbStr1 = c.section;
+                        const dbStr2 = c.class_name + ' ' + c.section;
+                        const dbStr3 = c.class_name + '-' + c.section;
+                        const dbStr4 = c.class_name + ' - ' + c.section;
+                        
+                        return normalize(dbStr1) === normalizedSection || 
+                               normalize(dbStr2) === normalizedSection || 
+                               normalize(dbStr3) === normalizedSection ||
+                               normalize(dbStr4) === normalizedSection;
+                    });
                     if (found) val = found.id;
                 }
                 

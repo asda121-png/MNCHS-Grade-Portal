@@ -174,7 +174,7 @@ if ($stmt) {
                 <h3><?php echo htmlspecialchars($advisory_class['class_name']); ?></h3>
                 <p>Grade <?php echo htmlspecialchars($advisory_class['grade_level']); ?> - Section <?php echo htmlspecialchars($advisory_class['section']); ?></p>
                 <div style="margin-top:10px;">
-                    <a href="teacher_advisory.php" class="btn" style="background:#27ae60;">Manage Advisory Class</a>
+                    <a href="teacherstudent.php" class="btn" style="background:#27ae60;">Manage Advisory Class</a>
                 </div>
             </div>
         <?php endif; ?>

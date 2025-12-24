@@ -4,8 +4,75 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'teacher') {
     header('Location: ../../index.php'); // Redirect to login page
     exit();
 }
+
+require_once '../../includes/config.php';
+
 // Get teacher name from session
 $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && isset($_SESSION['last_name']) ? trim($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) : 'Teacher');
+$user_id = $_SESSION['user_id'];
+
+$message = '';
+$messageType = '';
+
+// Handle Password Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['current_password'], $_POST['new_password'], $_POST['confirm_password'])) {
+    $current_password = $_POST['current_password'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
+
+    if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+        $message = "All password fields are required.";
+        $messageType = "error";
+    } elseif ($new_password !== $confirm_password) {
+        $message = "New passwords do not match.";
+        $messageType = "error";
+    } elseif (strlen($new_password) < 8) {
+        $message = "New password must be at least 8 characters long.";
+        $messageType = "error";
+    } else {
+        // Verify current password
+        $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $user = $res->fetch_assoc();
+        $stmt->close();
+
+        if ($user && password_verify($current_password, $user['password'])) {
+            // Update password
+            $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+            $upd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $upd->bind_param("si", $new_hash, $user_id);
+            
+            if ($upd->execute()) {
+                $message = "Password updated successfully!";
+                $messageType = "success";
+            } else {
+                $message = "Error updating password. Please try again.";
+                $messageType = "error";
+            }
+            $upd->close();
+        } else {
+            $message = "Incorrect current password.";
+            $messageType = "error";
+        }
+    }
+}
+
+// Fetch Teacher Profile Data
+$profile = [];
+$query = "SELECT u.first_name, u.last_name, u.email, t.teacher_id, t.department 
+          FROM users u 
+          JOIN teachers t ON u.id = t.user_id 
+          WHERE u.id = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($res->num_rows > 0) {
+    $profile = $res->fetch_assoc();
+}
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -119,6 +186,12 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
         .modal-content p { color:var(--text-light); margin-bottom:2rem; font-size:1.1rem; }
         .modal-buttons { display:flex; justify-content:center; gap:1rem; }
         .modal-buttons button, .modal-buttons a { padding:12px 24px; border-radius:8px; font-weight:600; cursor:pointer; text-decoration:none; }
+        
+        /* Alert Styles */
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: 500; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
         @media (max-width: 768px) {
             .container { flex-direction:column; }
             .sidebar { width:100%; height:auto; position:relative; top:0; padding:1.5rem; }
@@ -164,29 +237,35 @@ $teacher_name = $_SESSION['user_name'] ?? (isset($_SESSION['first_name']) && iss
         <main class="main-content">
             <h1 class="page-title">Profile Settings</h1>
 
+            <?php if (!empty($message)): ?>
+                <div class="alert alert-<?php echo $messageType; ?>">
+                    <?php echo htmlspecialchars($message); ?>
+                </div>
+            <?php endif; ?>
+
             <form action="#" method="POST" class="profile-form">
                 <div class="form-section">
                     <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" value="" readonly>
+                            <input type="text" id="first_name" value="<?php echo htmlspecialchars($profile['first_name'] ?? ''); ?>" readonly>
                         </div>
                         <div class="form-group">
                             <label for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" value="" readonly>
+                            <input type="text" id="last_name" value="<?php echo htmlspecialchars($profile['last_name'] ?? ''); ?>" readonly>
                         </div>
                         <div class="form-group">
                             <label for="employee_id">Employee ID</label>
-                            <input type="text" id="employee_id" name="employee_id" value="" readonly>
+                            <input type="text" id="employee_id" value="<?php echo htmlspecialchars($profile['teacher_id'] ?? ''); ?>" readonly>
                         </div>
                         <div class="form-group">
                             <label for="department">Department</label>
-                            <input type="text" id="department" name="department" value="Senior High School" readonly>
+                            <input type="text" id="department" value="<?php echo htmlspecialchars($profile['department'] ?? ''); ?>" readonly>
                         </div>
                         <div class="form-group">
                             <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" value="">
+                            <input type="email" id="email" value="<?php echo htmlspecialchars($profile['email'] ?? ''); ?>" readonly style="background-color:#eee; cursor:not-allowed;">
                         </div>
                     </div>
                 </div>
